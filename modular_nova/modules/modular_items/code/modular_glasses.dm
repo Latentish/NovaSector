@@ -20,8 +20,6 @@
 	var/mode
 	/// Defines messages that will be shown to the user upon switching modes (e.g. turning it on)
 	var/list/modes_msg = list(MODE_ON = "optical matrix enabled", MODE_OFF = "optical matrix disabled")
-	/// Because initial() will not work on subtypes from within the parent we need to store a reference to the type of the glasses calling the procs
-	var/obj/item/clothing/glasses/hud/ar/glasses_type
 
 /// Reuse logic from engine_goggles.dm
 /obj/item/clothing/glasses/hud/ar/Initialize(mapload)
@@ -30,39 +28,47 @@
 
 	// Set our initial values
 	mode = MODE_ON
-	glasses_type = type
 
 /obj/item/clothing/glasses/hud/ar/Destroy()
-	. = ..()
 	STOP_PROCESSING(SSobj, src)
+	return ..()
+
+/obj/item/clothing/glasses/hud/ar/equipped(mob/living/carbon/human/user, slot)
+	if(mode != MODE_OFF || slot != slot_flags)
+		return ..()
+	// when off: don't apply any huds or traits. but keep the list as-is so that we can still add them later
+	var/traits = clothing_traits
+	clothing_traits = null
+	. = ..()
+	clothing_traits = traits
 
 /obj/item/clothing/glasses/hud/ar/proc/toggle_mode(mob/user, voluntary)
 
-	if(!istype(user) || user.incapacitated())
+	if(!istype(user) || user.incapacitated)
 		return
 
 	if(mode == modes[mode])
 		return // If there is only really one mode to cycle through, early return
 
 	if(mode == MODE_FREEZE_ANIMATION)
-		icon = initial(glasses_type.icon) /// Resets icon to initial value after MODE_FREEZE_ANIMATION, since MODE_FREEZE_ANIMATION replaces it with non-animated version of initial
+		icon = initial(icon) /// Resets icon to initial value after MODE_FREEZE_ANIMATION, since MODE_FREEZE_ANIMATION replaces it with non-animated version of initial
 
 	mode = get_next_mode(mode)
 
 	switch(mode)
 		if(MODE_ON)
-			balloon_alert(user, span_notice("[modes_msg[mode]]"))
+			balloon_alert(user, modes_msg[mode])
 			reset_vars() // Resets all the vars to their initial values (THIS PRESUMES THE DEFAULT STATE IS ON)
 			add_hud(user)
 		if(MODE_FREEZE_ANIMATION)
-			balloon_alert(user, span_notice("[modes_msg[mode]]"))
+			balloon_alert(user, modes_msg[mode])
 			freeze_animation()
 		if(MODE_OFF)
 			if(MODE_OFF_FLASH_PROTECTION in modes)
 				flash_protect = FLASH_PROTECTION_FLASH
-				balloon_alert(user, span_notice("[modes_msg[MODE_OFF_FLASH_PROTECTION]]"))
+				balloon_alert(user, modes_msg[MODE_OFF_FLASH_PROTECTION])
 			else
-				balloon_alert(user, span_notice("[modes_msg[mode]]"))
+				balloon_alert(user, modes_msg[mode])
 			icon_state = off_state
 			disable_vars(user)
 			remove_hud(user)
@@ -85,41 +91,34 @@
 			return MODE_OFF
 
 /obj/item/clothing/glasses/hud/ar/proc/add_hud(mob/user)
-	if(ishuman(user)) // Make sure they're a human wearing the glasses first
-		var/mob/living/carbon/human/human = user
-		if(human.glasses == src)
-			var/datum/atom_hud/our_hud = GLOB.huds[initial(glasses_type.hud_type)]
-			our_hud.show_to(human)
-			for(var/trait in initial(glasses_type.clothing_traits))
-				ADD_TRAIT(human, trait, GLASSES_TRAIT)
+	var/mob/living/carbon/human/human = user
+	if(!ishuman(user) || human.glasses != src) // Make sure they're a human wearing the glasses first
+		return
+	for(var/trait in clothing_traits)
+		if(trait == TRAIT_NEARSIGHTED_CORRECTED) // this isn't a HUD!
+			continue
+		ADD_CLOTHING_TRAIT(human, trait)
 
 /obj/item/clothing/glasses/hud/ar/proc/remove_hud(mob/user)
-	if(ishuman(user)) // Make sure they're a human wearing the glasses first
-		var/mob/living/carbon/human/human = user
-		if(human.glasses == src)
-			var/datum/atom_hud/our_hud = GLOB.huds[initial(glasses_type.hud_type)]
-			our_hud.hide_from(human)
-			for(var/trait in initial(glasses_type.clothing_traits))
-				REMOVE_TRAIT(human, trait, GLASSES_TRAIT)
+	var/mob/living/carbon/human/human = user
+	if(!ishuman(user) || human.glasses != src) // Make sure they're a human wearing the glasses first
+		return
+	for(var/trait in clothing_traits)
+		if(trait == TRAIT_NEARSIGHTED_CORRECTED) // this isn't a HUD!
+			continue
+		REMOVE_CLOTHING_TRAIT(human, trait)
 
 /obj/item/clothing/glasses/hud/ar/proc/reset_vars()
-	worn_icon = initial(glasses_type.worn_icon)
-	icon_state = initial(glasses_type.icon_state)
-	flash_protect = initial(glasses_type.flash_protect)
-	tint = initial(glasses_type.tint)
-	color_cutoffs = initial(glasses_type.color_cutoffs)
-	vision_flags = initial(glasses_type.vision_flags)
-	hud_type = initial(glasses_type.hud_type)
-	//initial does not currently work on lists so we must do this
-	var/obj/item/clothing/glasses/hud/ar/glasses_object = new glasses_type // make a temporary glasses obj
-	clothing_traits = glasses_object.clothing_traits // pull the list from the created obj
-	qdel(glasses_object) // delete the object
+	worn_icon = initial(worn_icon)
+	icon_state = initial(post_init_icon_state) || initial(icon_state)
+	flash_protect = initial(flash_protect)
+	tint = initial(tint)
+	color_cutoffs = initial(color_cutoffs)
+	vision_flags = initial(vision_flags)
 
 /obj/item/clothing/glasses/hud/ar/proc/disable_vars(mob/user)
 	vision_flags = 0 /// Sets vision_flags to 0 to disable meson view mainly
 	color_cutoffs = null // Resets lighting_alpha to user's default one
-	clothing_traits = null /// also disables the options for Science functionality
-	hud_type = null
 
 /// Create new icon and worn_icon, with only the first frame of every state and setting that as icon.
 /// this practically freezes the animation :)
@@ -162,13 +161,16 @@
 	name = "security HUD aviators"
 	desc = "A heads-up display that scans the humanoids in view and provides accurate data about their ID status and security records. This HUD has been fitted inside of a pair of sunglasses with toggleable electrochromatic tinting."
 	icon_state = "aviator_sec"
-	off_state = "aviator_sec_flash"
-	flash_protect = FLASH_PROTECTION_NONE
-	hud_type = DATA_HUD_SECURITY_ADVANCED
-	clothing_traits = list(TRAIT_SECURITY_HUD)
 	glass_colour_type = /datum/client_colour/glass_colour/red
-	modes = list(MODE_OFF_FLASH_PROTECTION, MODE_ON)
-	modes_msg = list(MODE_OFF_FLASH_PROTECTION = "flash protection mode", MODE_ON = "optical matrix enabled")
+	clothing_traits = list(TRAIT_SECURITY_HUD)
+	custom_materials = list(/datum/material/glass = SHEET_MATERIAL_AMOUNT * 0.8, /datum/material/iron = SHEET_MATERIAL_AMOUNT * 0.7, /datum/material/gold = SMALL_MATERIAL_AMOUNT * 4, /datum/material/silver = SMALL_MATERIAL_AMOUNT * 2)
+
+/obj/item/clothing/glasses/hud/ar/aviator/securityblue
+	name = "security HUD aviators"
+	desc = "A heads-up display that scans the humanoids in view and provides accurate data about their ID status and security records. This HUD has been fitted inside of a pair of sunglasses with toggleable electrochromatic tinting."
+	icon_state = "aviator_bluesec"
+	glass_colour_type = /datum/client_colour/glass_colour/blue
+	clothing_traits = list(TRAIT_SECURITY_HUD)
 
 // Medical Aviators
 /obj/item/clothing/glasses/hud/ar/aviator/health
@@ -176,9 +178,9 @@
 	desc = "A heads-up display that scans the humanoids in view and provides accurate data about their health status. This HUD has been fitted inside of a pair of sunglasses."
 	icon_state = "aviator_med"
 	flash_protect = FLASH_PROTECTION_NONE
-	hud_type = DATA_HUD_MEDICAL_ADVANCED
 	clothing_traits = list(TRAIT_MEDICAL_HUD)
 	glass_colour_type = /datum/client_colour/glass_colour/lightblue
+	custom_materials = list(/datum/material/glass = SHEET_MATERIAL_AMOUNT * 0.8, /datum/material/iron = SHEET_MATERIAL_AMOUNT * 0.7, /datum/material/gold = SMALL_MATERIAL_AMOUNT * 4)
 
 // (Normal) meson scanner Aviators
 /obj/item/clothing/glasses/hud/ar/aviator/meson
@@ -190,6 +192,7 @@
 	vision_flags = SEE_TURFS
 	color_cutoffs = list(5, 15, 5)
 	glass_colour_type = /datum/client_colour/glass_colour/lightgreen
+	custom_materials = list(/datum/material/glass = SHEET_MATERIAL_AMOUNT * 0.8, /datum/material/iron = SHEET_MATERIAL_AMOUNT * 0.7, /datum/material/gold = SMALL_MATERIAL_AMOUNT * 4)
 
 // diagnostic Aviators
 /obj/item/clothing/glasses/hud/ar/aviator/diagnostic
@@ -197,9 +200,9 @@
 	desc = "A heads-up display capable of analyzing the integrity and status of robotics and exosuits. This HUD has been fitted inside of a pair of sunglasses."
 	icon_state = "aviator_diagnostic"
 	flash_protect = FLASH_PROTECTION_NONE
-	hud_type = DATA_HUD_DIAGNOSTIC_BASIC
 	clothing_traits = list(TRAIT_DIAGNOSTIC_HUD)
 	glass_colour_type = /datum/client_colour/glass_colour/lightorange
+	custom_materials = list(/datum/material/glass = SHEET_MATERIAL_AMOUNT * 0.8, /datum/material/iron = SHEET_MATERIAL_AMOUNT * 0.7, /datum/material/gold = SMALL_MATERIAL_AMOUNT * 4)
 
 // Science Aviators
 /obj/item/clothing/glasses/hud/ar/aviator/science
@@ -211,6 +214,7 @@
 	resistance_flags = ACID_PROOF
 	armor_type = /datum/armor/aviator_science
 	clothing_traits = list(TRAIT_REAGENT_SCANNER, TRAIT_RESEARCH_SCANNER)
+	custom_materials = list(/datum/material/glass = SHEET_MATERIAL_AMOUNT * 0.8, /datum/material/iron = SHEET_MATERIAL_AMOUNT * 0.7, /datum/material/gold = SMALL_MATERIAL_AMOUNT * 4)
 
 /datum/armor/aviator_science
 	fire = 80
@@ -219,12 +223,12 @@
 /obj/item/clothing/glasses/hud/ar/aviator/security/prescription
 	name = "prescription security HUD aviators"
 	desc = "A heads-up display that scans the humanoids in view and provides accurate data about their ID status and security records. This HUD has been fitted inside of a pair of sunglasses with toggleable electrochromatic tinting which. Has lenses that help correct eye sight."
-	clothing_traits = list(TRAIT_NEARSIGHTED_CORRECTED)
+	clothing_traits = list(TRAIT_SECURITY_HUD, TRAIT_NEARSIGHTED_CORRECTED)
 
 /obj/item/clothing/glasses/hud/ar/aviator/health/prescription
 	name = "prescription medical HUD aviators"
 	desc = "A heads-up display that scans the humanoids in view and provides accurate data about their health status. This HUD has been fitted inside of a pair of sunglasses which has lenses that help correct eye sight."
-	clothing_traits = list(TRAIT_NEARSIGHTED_CORRECTED)
+	clothing_traits = list(TRAIT_MEDICAL_HUD, TRAIT_NEARSIGHTED_CORRECTED)
 
 /obj/item/clothing/glasses/hud/ar/aviator/meson/prescription
 	name = "prescription meson HUD aviators"
@@ -234,7 +238,7 @@
 /obj/item/clothing/glasses/hud/ar/aviator/diagnostic/prescription
 	name = "prescription diagnostic HUD aviators"
 	desc = "A heads-up display capable of analyzing the integrity and status of robotics and exosuits. This HUD has been fitted inside of a pair of sunglasses which has lenses that help correct eye sight."
-	clothing_traits = list(TRAIT_NEARSIGHTED_CORRECTED)
+	clothing_traits = list(TRAIT_DIAGNOSTIC_HUD, TRAIT_NEARSIGHTED_CORRECTED)
 
 /obj/item/clothing/glasses/hud/ar/aviator/science/prescription
 	name = "prescription science aviators"
@@ -259,29 +263,31 @@
 	icon_state = "projector_meson"
 	vision_flags = SEE_TURFS
 	color_cutoffs = list(10, 30, 10)
+	custom_materials = list(/datum/material/glass = SHEET_MATERIAL_AMOUNT * 0.8, /datum/material/iron = SHEET_MATERIAL_AMOUNT * 0.7, /datum/material/silver = SMALL_MATERIAL_AMOUNT * 4)
 
 /obj/item/clothing/glasses/hud/ar/projector/health
 	name = "retinal projector health HUD"
 	icon_state = "projector_med"
-	hud_type = DATA_HUD_MEDICAL_ADVANCED
-	clothing_traits = list(ID_HUD, TRAIT_MEDICAL_HUD)
+	clothing_traits = list(TRAIT_MEDICAL_HUD)
+	custom_materials = list(/datum/material/glass = SHEET_MATERIAL_AMOUNT * 0.8, /datum/material/iron = SHEET_MATERIAL_AMOUNT * 0.7, /datum/material/silver = SMALL_MATERIAL_AMOUNT * 4)
 
 /obj/item/clothing/glasses/hud/ar/projector/security
 	name = "retinal projector security HUD"
 	icon_state = "projector_sec"
-	hud_type = DATA_HUD_SECURITY_ADVANCED
 	clothing_traits = list(TRAIT_SECURITY_HUD)
+	custom_materials = list(/datum/material/glass = SHEET_MATERIAL_AMOUNT * 0.8, /datum/material/iron = SHEET_MATERIAL_AMOUNT * 0.7, /datum/material/silver = SMALL_MATERIAL_AMOUNT * 2)
 
 /obj/item/clothing/glasses/hud/ar/projector/diagnostic
 	name = "retinal projector diagnostic HUD"
 	icon_state = "projector_diagnostic"
-	hud_type = DATA_HUD_DIAGNOSTIC_BASIC
 	clothing_traits = list(TRAIT_DIAGNOSTIC_HUD)
+	custom_materials = list(/datum/material/glass = SHEET_MATERIAL_AMOUNT * 0.8, /datum/material/iron = SHEET_MATERIAL_AMOUNT * 0.7, /datum/material/silver = SMALL_MATERIAL_AMOUNT * 4)
 
 /obj/item/clothing/glasses/hud/ar/projector/science
 	name = "science retinal projector"
 	icon_state = "projector_sci"
 	clothing_traits = list(TRAIT_REAGENT_SCANNER, TRAIT_RESEARCH_SCANNER)
+	custom_materials = list(/datum/material/glass = SHEET_MATERIAL_AMOUNT * 0.8, /datum/material/iron = SHEET_MATERIAL_AMOUNT * 0.7, /datum/material/silver = SMALL_MATERIAL_AMOUNT * 4)
 
 #undef MODE_OFF
 #undef MODE_OFF_FLASH_PROTECTION

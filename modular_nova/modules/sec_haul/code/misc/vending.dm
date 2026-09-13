@@ -1,8 +1,4 @@
 /obj/machinery/vending/security
-	name = "\improper Armadyne Peacekeeper Equipment Vendor"
-	desc = "An Armadyne peacekeeper equipment vendor."
-	product_ads = "Crack capitalist skulls!;Beat some heads in!;Don't forget - harm is good!;Your weapons are right here.;Handcuffs!;Freeze, scumbag!;Don't tase me bro!;Tase them, bro.;Why not have a donut?"
-	icon = 'modular_nova/modules/sec_haul/icons/vending/vending.dmi'
 	products = list(
 		/obj/item/restraints/handcuffs = 8,
 		/obj/item/restraints/handcuffs/cable/zipties = 12,
@@ -13,14 +9,18 @@
 		/obj/item/flashlight/seclite = 6,
 		/obj/item/restraints/legcuffs/bola/energy = 10,
 		/obj/item/clothing/gloves/tackler/security = 5,
+		/obj/item/holosign_creator/security = 2,
+		/obj/item/gun_maintenance_supplies = 2,
+		/obj/item/gun/energy/e_gun/advtaser = 3,
 	)
 	contraband = list(
 		/obj/item/clothing/glasses/sunglasses = 2,
 		/obj/item/storage/fancy/donut_box = 2,
+		/obj/item/melee/baton/security/stun_gun/stun_knife = 3,
 	)
 	premium = list(
+		/obj/item/ammo_workbench_module/lethal = 1,
 		/obj/item/storage/belt/security/webbing = 5,
-		/obj/item/storage/belt/security/webbing/peacekeeper = 5,
 		/obj/item/coin/antagtoken = 1,
 		/obj/item/clothing/head/helmet/blueshirt = 3,
 		/obj/item/clothing/suit/armor/vest/blueshirt = 3,
@@ -28,87 +28,125 @@
 		/obj/item/watertank/pepperspray = 2,
 		/obj/item/storage/belt/holster/energy = 4,
 		/obj/item/storage/box/holobadge = 1,
+		/obj/item/ammo_box/advanced/s12gauge/frangible = 2,
 	)
-
-/obj/item/vending_refill/security
-	machine_name = "Armadyne Peacekeeper Equipment Vendor"
 
 /obj/machinery/vending/wardrobe/sec_wardrobe
-	name = "\improper Peacekeeper Outfitting Station"
-	desc = "A vending machine stocked with Lopland's \"Peacekeeper\" security package, including standardized uniforms and general equipment."
-	icon = 'modular_nova/modules/sec_haul/icons/vending/vending.dmi'
-	light_mask = "sec-light-mask"
-	icon_state = "peace"
-	product_ads = "Beat perps in style!;The stains wash right out!;You have the right to be fashionable!;Now you can be the fashion police you always wanted to be!"
-	vend_reply = "Good luck, Peacekeeper!"
-	products = list(
-		/obj/item/clothing/suit/hooded/wintercoat/security = 5,
-		/obj/item/clothing/suit/toggle/jacket/sec = 5,
-		/obj/item/clothing/suit/armor/vest/peacekeeper/brit = 5,
-		/obj/item/clothing/suit/armor/vest/peacekeeper/jacket = 5,
-		/obj/item/clothing/suit/armor/vest/peacekeeper/jacket/badge = 5,
-		/obj/item/clothing/neck/security_cape = 5,
-		/obj/item/clothing/neck/security_cape/armplate = 5,
-		/obj/item/storage/backpack/security = 5,
-		/obj/item/storage/backpack/satchel/sec = 5,
-		/obj/item/storage/backpack/duffelbag/sec = 5,
-		/obj/item/storage/backpack/duffelbag/sec = 5,
-		/obj/item/clothing/under/rank/security/officer = 10,
-		/obj/item/clothing/under/rank/security/officer/skirt = 10,
-		/obj/item/clothing/under/rank/security/peacekeeper/dress = 10,
-		/obj/item/clothing/under/rank/security/peacekeeper/plain_skirt = 10,
-		/obj/item/clothing/under/rank/security/peacekeeper/miniskirt = 10,
-		/obj/item/clothing/under/rank/security/peacekeeper/jumpsuit = 10,
-		/obj/item/clothing/under/rank/security/peacekeeper = 10,
-		/obj/item/clothing/under/rank/security/nova/utility = 3,
-		/obj/item/clothing/under/rank/security/peacekeeper/trousers = 10,
-		/obj/item/clothing/under/rank/security/peacekeeper/trousers/shorts = 10,
-		/obj/item/clothing/shoes/jackboots/sec = 10,
-		/obj/item/clothing/head/security_garrison = 10,
-		/obj/item/clothing/head/security_cap = 10,
-		/obj/item/clothing/head/beret/sec/peacekeeper = 5,
-		/obj/item/clothing/head/helmet/sec/sol = 5,
-		/obj/item/clothing/head/hats/warden/police/patrol = 5,
-		/obj/item/clothing/head/costume/ushanka/sec = 10,
-		/obj/item/clothing/gloves/color/black/security = 10,
+	product_categories = list(
+		list(
+			"name" = "Main",
+			"icon" = "shield",
+			"products" = list(
+				/obj/item/clothing/neck/security_cape/shoulder = 4,
+				/obj/item/clothing/neck/security_cape/armplate = 4,
+				/obj/item/clothing/neck/security_cape/armplate_caped = 4,
+				/obj/item/clothing/glasses/hud/ar/aviator/security = 4,
+				/obj/item/clothing/glasses/hud/security/sunglasses = 4,
+				/obj/item/clothing/under/rank/security/nova/formal = 4,
+				/obj/item/clothing/under/rank/security/nova/turtleneck = 4,
+				/obj/item/clothing/under/rank/security/nova/skirt = 4,
+				/obj/item/clothing/under/rank/security/nova/plainskirt = 4,
+				/obj/item/clothing/under/rank/security/nova/miniskirt = 4,
+				/obj/item/clothing/under/rank/security/nova/dress = 4,
+				/obj/item/clothing/under/rank/security/nova/shorts = 4,
+				/obj/item/clothing/under/rank/security/nova/trousers = 4,
+				/obj/item/clothing/suit/armor/vest/alt/sec/depgag_vest = 4,
+				/obj/item/clothing/suit/armor/vest/alt/sec/depgag_vest_slim = 4,
+				/obj/item/clothing/suit/armor/vest/depgag_hazard/red = 4,
+				/obj/item/clothing/suit/armor/vest/secjacket/depgag = 4,
+				/obj/item/clothing/suit/hooded/wintercoat/security/depgag/bomber = 4,
+				/obj/item/clothing/suit/hooded/wintercoat/security/depgag/depgag_vested_jacket = 4,
+				/obj/item/clothing/suit/hooded/wintercoat/security/depgag = 4,
+				/obj/item/clothing/gloves/color/black/security/depgag = 4,
+				/obj/item/clothing/head/security_garrison = 4,
+				/obj/item/clothing/head/security_cap = 4,
+				/obj/item/clothing/head/hats/warden/police/patrol = 4,
+				/obj/item/clothing/head/beret/sec/depgag = 4,
+				/obj/item/clothing/head/costume/ushanka/sec/red = 4,
+				/obj/item/clothing/mask/bandana/striped/security/red = 4,
+				/obj/item/clothing/under/rank/security/nova/uniform = 4,
+				/obj/item/clothing/under/rank/security/nova/modskin = 4,
+				/obj/item/clothing/under/rank/security/nova/depgag_pantsuit = 4,
+				/obj/item/clothing/shoes/jackboots/sec = 4,
+				/obj/item/storage/backpack/security = 4,
+				/obj/item/storage/backpack/satchel/sec = 4,
+				/obj/item/storage/backpack/duffelbag/sec = 4,
+				/obj/item/storage/backpack/messenger/sec = 4,
+			),
+		),
+
+		list(
+			"name" = "Alternate",
+			"icon" = "shield-halved",
+			"products" = list(
+				/obj/item/clothing/neck/security_cape/shoulder/blue = 4,
+				/obj/item/clothing/neck/security_cape/armplate_caped/blue = 4,
+				/obj/item/clothing/glasses/hud/ar/aviator/securityblue = 4,
+				/obj/item/clothing/glasses/hud/security/sunglasses/blue = 4,
+				/obj/item/clothing/under/rank/security/nova/formal/blue = 4,
+				/obj/item/clothing/under/rank/security/nova/turtleneck/blue = 4,
+				/obj/item/clothing/under/rank/security/nova/skirt/blue = 4,
+				/obj/item/clothing/under/rank/security/nova/plainskirt/blue = 4,
+				/obj/item/clothing/under/rank/security/nova/miniskirt/blue = 4,
+				/obj/item/clothing/under/rank/security/nova/dress/blue = 4,
+				/obj/item/clothing/under/rank/security/nova/shorts/blue = 4,
+				/obj/item/clothing/under/rank/security/nova/trousers/blue = 4,
+				/obj/item/clothing/suit/armor/vest/alt/sec/depgag_vest/blue = 4,
+				/obj/item/clothing/suit/armor/vest/alt/sec/depgag_vest_slim/blue = 4,
+				/obj/item/clothing/suit/armor/vest/depgag_hazard/blue = 4,
+				/obj/item/clothing/suit/armor/vest/secjacket/depgag/blue = 4,
+				/obj/item/clothing/suit/hooded/wintercoat/security/depgag/bomber/blue = 4,
+				/obj/item/clothing/suit/hooded/wintercoat/security/depgag/depgag_vested_jacket/blue = 4,
+				/obj/item/clothing/suit/hooded/wintercoat/security/depgag/blue = 4,
+				/obj/item/clothing/gloves/color/black/security/depgag/blue = 4,
+				/obj/item/clothing/head/security_garrison/blue = 4,
+				/obj/item/clothing/head/security_cap/blue = 4,
+				/obj/item/clothing/head/hats/warden/police/patrol/blue = 4,
+				/obj/item/clothing/head/beret/sec/depgag/blue = 4,
+				/obj/item/clothing/head/costume/ushanka/sec/blue = 4,
+				/obj/item/clothing/mask/bandana/striped/security/blue = 4,
+				/obj/item/clothing/under/rank/security/nova/uniform/blue = 4,
+				/obj/item/clothing/under/rank/security/nova/modskin/blue = 4,
+				/obj/item/clothing/under/rank/security/nova/depgag_pantsuit/blue = 4,
+				/obj/item/clothing/shoes/jackboots/sec/blue = 4,
+				/obj/item/storage/backpack/security/blue = 4,
+				/obj/item/storage/backpack/satchel/sec/blue = 4,
+				/obj/item/storage/backpack/duffelbag/sec/blue = 4,
+				/obj/item/storage/backpack/messenger/sec/blue = 4,
+			),
+		),
 	)
+
 	premium = list(
+		/obj/item/clothing/neck/security_cape/armplate = 4,
+		/obj/item/clothing/suit/armor/vest/depgag_hazard = 3,
 		/obj/item/clothing/under/rank/security/officer/formal = 3,
 		/obj/item/clothing/suit/jacket/officer/blue = 3,
 		/obj/item/clothing/head/beret/sec/navyofficer = 3,
-		/obj/item/riding_saddle/leather/peacekeeper = 3,
-	)
+		/obj/item/riding_saddle/leather = 3,
+		/obj/item/riding_saddle/leather/blue = 2,
+		/obj/item/clothing/head/helmet/hc_police = 3,
+		/obj/item/clothing/head/soft/hc_police = 3,
+		/obj/item/clothing/mask/gas/hc_police = 3,
+		/obj/item/clothing/head/hats/colonial/hc_police = 3,
+		/obj/item/clothing/neck/cloak/colonial/hc_police = 3,
+		/obj/item/clothing/under/colonial/hc_police = 3,
+		/obj/item/clothing/under/colonial/hc_police/skirt = 3,
+		/obj/item/clothing/suit/armor/vest/hc_police_jacket/suit = 3,
+		/obj/item/clothing/suit/armor/vest/hc_police = 3,
+		/obj/item/clothing/suit/armor/vest/hc_police_jacket = 3,
+		/obj/item/clothing/shoes/jackboots/gogo_boots = 4,
+		/obj/item/clothing/head/playbunnyears/security = 6,
+		/obj/item/clothing/under/rank/security/security_bunnysuit = 6,
+		/obj/item/clothing/suit/armor/security_tailcoat = 6,
+		/obj/item/clothing/neck/tie/bunnytie/security = 6,
+		/obj/item/clothing/head/playbunnyears/security/assistant = 6,
+		/obj/item/clothing/under/rank/security/security_assistant_bunnysuit = 6,
+		/obj/item/clothing/suit/armor/security_tailcoat/assistant = 6,
+		/obj/item/clothing/neck/tie/bunnytie/security_assistant = 6,
+		/obj/item/clothing/head/helmet/sec/white = 3,
+		/obj/item/clothing/under/rank/security/officer/grey = 4,
+		/obj/item/clothing/under/pants/slacks = 4,
+		)
+
 	payment_department = ACCOUNT_SEC
-	light_color = COLOR_MODERATE_BLUE
-
-/obj/item/vending_refill/wardrobe/sec_wardrobe
-	machine_name = "Peacekeeper Outfitting Station"
-
-//List for the old one, for when its mapped in; curates it nicely, adds /redsec to the items, and also prevents some conflicts with the above vendor
-/obj/machinery/vending/wardrobe/sec_wardrobe/red
-	name = "\improper SecDrobe"
-	desc = "A vending machine for security and security-related clothing!"
-	product_ads = "Beat perps in style!;It's red so you can't see the blood!;You have the right to be fashionable!;Now you can be the fashion police you always wanted to be!"
-	vend_reply = "Thank you for using the SecDrobe!"
-	icon = 'icons/obj/machines/vending.dmi'
-	icon_state = "secdrobe"
-	products = list(
-		/obj/item/clothing/suit/hooded/wintercoat/security/redsec = 3,
-		/obj/item/storage/backpack/security/redsec = 3,
-		/obj/item/storage/backpack/satchel/sec/redsec = 3,
-		/obj/item/storage/backpack/duffelbag/sec/redsec = 3,
-		/obj/item/clothing/under/rank/security/officer/redsec = 3,
-		/obj/item/clothing/shoes/jackboots = 3,
-		/obj/item/clothing/head/beret/sec = 3,
-		/obj/item/clothing/head/soft/sec = 3,
-		/obj/item/clothing/mask/bandana/red = 3,
-		/obj/item/clothing/gloves/color/black = 3,
-		/obj/item/clothing/under/rank/security/officer/skirt = 3,
-		/obj/item/clothing/under/rank/security/nova/utility/redsec = 3,
-		/obj/item/clothing/suit/toggle/jacket/sec/old = 3,
-	)
-	premium = list(
-		/obj/item/clothing/under/rank/security/officer/formal = 5,
-		/obj/item/clothing/suit/jacket/officer/tan = 5,
-		/obj/item/clothing/head/beret/sec/navyofficer = 5,
-	)

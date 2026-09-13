@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it } from 'bun:test';
+
 import { ChannelIterator } from './ChannelIterator';
 
 describe('ChannelIterator', () => {
@@ -17,6 +19,7 @@ describe('ChannelIterator', () => {
     expect(channelIterator.next()).toBe('Do');
     // NOVA EDIT ADDITION END
     expect(channelIterator.next()).toBe('OOC');
+    expect(channelIterator.next()).toBe('Pray');
     expect(channelIterator.next()).toBe('Say'); // Admin is blacklisted so it should be skipped
   });
 

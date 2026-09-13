@@ -1,3 +1,5 @@
+#define MECHANICAL_CATEGORY "Mechanical"
+#define VORE_ACT "Vore"
 
 /datum/component/interactable
 	/// A hard reference to the parent
@@ -6,6 +8,10 @@
 	var/list/datum/interaction/interactions
 	var/interact_last = 0
 	var/interact_next = 0
+	/// Whether or not we are using subtler for lewd interactions.
+	var/use_subtler = TRUE
+	/// Whether or not we have an erp interaction available to us right now
+	var/has_erp_interaction = FALSE
 
 /datum/component/interactable/Initialize(...)
 	if(QDELETED(parent))
@@ -67,7 +73,7 @@
 /datum/component/interactable/ui_interact(mob/user, datum/tgui/ui)
 	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, "InteractionMenu")
+		ui = new(user, src, "InteractionPanel")
 		ui.open()
 
 /datum/component/interactable/ui_status(mob/user, datum/ui_state/state)
@@ -76,33 +82,94 @@
 
 	return UI_INTERACTIVE // This UI is always interactive as we handle distance flags via can_interact
 
+/datum/component/interactable/ui_static_data(mob/user)
+	var/list/data = list()
+	data["arousalLimit"] = AROUSAL_LIMIT
+	// Genital config option labels, shared with the standalone layering panel.
+	data["genital_visibility_options"] = assoc_to_keys(GLOB.genital_visibility_options)
+	data["genital_layering_options"] = assoc_to_keys(GLOB.genital_layering_options)
+	data["genital_arousal_options"] = assoc_to_keys(GLOB.genital_arousal_options)
+	return data
+
 /datum/component/interactable/ui_data(mob/user)
 	var/list/data = list()
 	var/list/descriptions = list()
 	var/list/categories = list()
-	var/list/display_categories = list()
 	var/list/colors = list()
-	for(var/datum/interaction/interaction in interactions)
-		if(!can_interact(interaction, user))
+
+	has_erp_interaction = FALSE
+
+	for (var/datum/interaction/interaction in interactions)
+		if (!can_interact(interaction, user))
 			continue
-		if(!categories[interaction.category])
-			categories[interaction.category] = list(interaction.name)
-		else
-			categories[interaction.category] += interaction.name
-			var/list/sorted_category = sort_list(categories[interaction.category])
-			categories[interaction.category] = sorted_category
+
+		if (interaction.lewd)
+			has_erp_interaction = TRUE
+
+		var/category = interaction.category
+		var/list/category_list = categories[category]
+
+		if (isnull(category_list))
+			category_list = list()
+			categories[category] = category_list
+
+		category_list += interaction.name
+
 		descriptions[interaction.name] = interaction.description
 		colors[interaction.name] = interaction.color
+
+	// Main check to see if the user is even opted into bellies on this character.
+	if(TRAIT_PREDATORY in user._status_traits)
+		var/mob/living/carbon/human/human_user = user
+		// Pull the belly helper from the pred's belly quirk, if present.
+		var/datum/quirk/belly/bellyquirk = locate() in human_user.quirks
+		var/obj/item/belly_function/a_belly = bellyquirk?.the_bwelly
+		var/pred_mode = a_belly?.pred_mode || "Never"
+		// Targets currently use prefs rather than having a dedicated on-character object or datum.
+		var/prey_mode = self.client?.prefs?.read_preference(/datum/preference/choiced/erp_vore_prey_pref) || "Never"
+
+		// Don't offer vore if either party opts out, you're targeting yourself,
+		// or one of you is already inside the other.
+		var/already_nested = (self.loc in user.contents) || (user.loc in self.contents) || (self.loc?.loc == user) || (user.loc?.loc == self)
+		if(pred_mode != "Never" && prey_mode != "Never" && user != self && !already_nested && self.Adjacent(user))
+			LAZYADD(categories[MECHANICAL_CATEGORY], VORE_ACT)
+			categories[MECHANICAL_CATEGORY] = sort_list(categories[MECHANICAL_CATEGORY])
+			descriptions[VORE_ACT] = "Put someone in your belly - if they're cool with it."
+			colors[VORE_ACT] = "red"
+
+	// Sort category contents once
+	for (var/category in categories)
+		categories[category] = sort_list(categories[category])
+
+	// Build and sort category names
+	data["categories"] = sort_list(assoc_to_keys(categories))
+	data["interactions"] = categories
 	data["descriptions"] = descriptions
 	data["colors"] = colors
-	for(var/category in categories)
-		display_categories += category
-	data["categories"] = sort_list(display_categories)
+
 	data["ref_user"] = REF(user)
 	data["ref_self"] = REF(self)
 	data["self"] = self.name
 	data["block_interact"] = interact_next >= world.time
-	data["interactions"] = categories
+	data["use_subtler"] = use_subtler
+	data["erp_interaction"] = self.client?.prefs?.read_preference(/datum/preference/toggle/erp)
+	data["has_erp_interaction"] = has_erp_interaction
+
+	var/mob/living/carbon/human/human_user = user
+
+	data["isTargetSelf"] = (user == self)
+
+	// user (the one who opened the ui)
+	if(user)
+		data["pleasure"] = human_user.pleasure
+		data["arousal"] = human_user.arousal
+		data["pain"] = human_user.pain
+
+	// self - the one who the interaction component belongs to, aka who it's opened on (confusing var name yep)
+	if(user != self)
+		data["theirPleasure"] = self.pleasure
+		data["theirArousal"] = self.arousal
+		data["theirPain"] = self.pain
 
 	var/list/parts = list()
 
@@ -117,6 +184,17 @@
 			parts += list(generate_strip_entry(ORGAN_SLOT_NIPPLES, self, user, self.nipples))
 
 	data["lewd_slots"] = parts
+
+	// Genital visibility/layering config - only for your own body, so it only
+	// populates (and the tab only appears) when the panel is opened on yourself.
+	var/list/genital_config = list()
+	if(user == self)
+		for(var/obj/item/organ/genital/genital as anything in self.get_configurable_genitals())
+			genital_config += list(genital.get_layering_ui_entry())
+	data["genital_config"] = genital_config
+
+	// Underwear visibility, same deal.
+	data["underwear_config"] = (user == self) ? self.get_underwear_ui_entries() : list()
 
 	return data
 
@@ -136,21 +214,73 @@
 		"img" = (item && can_lewd_strip(source, target, name)) ? icon2base64(icon(item.icon, item.icon_state, SOUTH, 1)) : null
 		)
 
-/datum/component/interactable/ui_act(action, list/params)
+/datum/component/interactable/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
 	. = ..()
 	if(.)
 		return
 
-	if(!ishuman(usr))
+	if(!ishuman(ui.user))
 		return
+
+	if(action == "toggle_subtler")
+		use_subtler = !use_subtler
+		return TRUE
+
+	if(action == "set_genital_visibility" || action == "set_genital_layering" || action == "set_genital_arousal")
+		var/mob/living/carbon/human/actor = ui.user
+		if(actor != self) // You configure your own body, nobody else's.
+			return
+		// Locating within the actor's own configurable set is the ref whitelist.
+		var/obj/item/organ/genital/organ = locate(params["ref"]) in actor.get_configurable_genitals()
+		if(!organ)
+			return
+		var/success = FALSE
+		switch(action)
+			if("set_genital_visibility")
+				success = organ.apply_visibility_label(params["option"])
+			if("set_genital_layering")
+				success = organ.apply_layering_label(params["option"])
+			if("set_genital_arousal")
+				success = organ.apply_arousal_label(params["option"])
+		return success
+
+	if(action == "set_underwear_visibility" || action == "set_all_underwear_visibility")
+		var/mob/living/carbon/human/actor = ui.user
+		if(actor != self)
+			return
+		if(IS_UNCONSCIOUS_OR_CRIT(actor))
+			to_chat(actor, span_warning("You can't toggle underwear visibility right now..."))
+			return
+		var/hidden = !!params["hidden"]
+		if(action == "set_all_underwear_visibility")
+			return actor.set_all_underwear_visibility(hidden)
+		return actor.set_underwear_visibility(params["slot"], hidden)
 
 	if(params["interaction"])
 		var/interaction_id = params["interaction"]
-		if(GLOB.interaction_instances[interaction_id])
+		// Vore is a bespoke interaction added programmatically until such time as a better setup is figured out.
+		if(interaction_id == VORE_ACT)
+			// Grab the associated player mobs.
+			var/mob/living/carbon/human/source = locate(params["userref"])
+			var/mob/living/carbon/human/target = locate(params["selfref"])
+			if(!source.Adjacent(target))
+				source.show_message(span_warning("You can't eat someone with your mind- get next to them!"))
+				return FALSE
+			// Pull the belly object from the pred's belly quirk.
+			var/datum/quirk/belly/bellyquirk = locate() in source.quirks
+			var/obj/item/belly_function/a_belly = bellyquirk?.the_bwelly
+			// And if the belly object is there as expected, we move to the next phase: actually trying to nom.
+			if(a_belly != null)
+				a_belly.try_nom(target, source)
+				return TRUE
+			else
+				source.show_message(span_warning("Couldn't find the belly helper to try to do vore with- yell at an admin!"))
+				return
+		else if(GLOB.interaction_instances[interaction_id])
 			var/mob/living/carbon/human/user = locate(params["userref"])
 			if(!can_interact(GLOB.interaction_instances[interaction_id], user))
 				return FALSE
-			GLOB.interaction_instances[interaction_id].act(user, locate(params["selfref"]))
+			GLOB.interaction_instances[interaction_id].act(user, locate(params["selfref"]), use_subtler)
 			var/datum/component/interactable/interaction_component = user.GetComponent(/datum/component/interactable)
 			interaction_component.interact_last = world.time
 			interact_next = interaction_component.interact_last + INTERACTION_COOLDOWN
@@ -162,6 +292,7 @@
 		var/item_index = params["item_slot"]
 		var/mob/living/carbon/human/source = locate(params["userref"])
 		var/mob/living/carbon/human/target = locate(params["selfref"])
+
 		var/obj/item/clothing/sextoy/new_item = source.get_active_held_item()
 		var/obj/item/clothing/sextoy/existing_item = target.vars[item_index]
 
@@ -178,12 +309,17 @@
 			var/insert_or_attach = internal ? "insert" : "attach"
 			var/into_or_onto = internal ? "into" : "onto"
 
+			// Do not show visible_messages to people without erp prefs
+			var/list/ignoring_mobs = list()
+			for(var/mob/not_interested in get_hearers_in_view(SAMETILE_MESSAGE_RANGE, source))
+				if(!not_interested.client?.prefs?.read_preference(/datum/preference/toggle/erp))
+					ignoring_mobs += not_interested
 			if(existing_item)
-				source.visible_message(span_purple("[source.name] starts trying to remove something from [target.name]'s [item_index]."), span_purple("You start to remove [existing_item.name] from [target.name]'s [item_index]."), span_purple("You hear someone trying to remove something from someone nearby."), vision_distance = 1, ignored_mobs = list(target))
+				source.visible_message(span_purple("[source.name] starts trying to remove something from [target.name]'s [item_index]."), span_purple("You start to remove [existing_item.name] from [target.name]'s [item_index]."), span_purple("You hear someone trying to remove something from someone nearby."), vision_distance = SAMETILE_MESSAGE_RANGE, ignored_mobs = ignoring_mobs + list(target))
 			else if (new_item)
-				source.visible_message(span_purple("[source.name] starts trying to [insert_or_attach] the [new_item.name] [into_or_onto] [target.name]'s [item_index]."), span_purple("You start to [insert_or_attach] the [new_item.name] [into_or_onto] [target.name]'s [item_index]."), span_purple("You hear someone trying to [insert_or_attach] something [into_or_onto] someone nearby."), vision_distance = 1, ignored_mobs = list(target))
+				source.visible_message(span_purple("[source.name] starts trying to [insert_or_attach] the [new_item.name] [into_or_onto] [target.name]'s [item_index]."), span_purple("You start to [insert_or_attach] the [new_item.name] [into_or_onto] [target.name]'s [item_index]."), span_purple("You hear someone trying to [insert_or_attach] something [into_or_onto] someone nearby."), vision_distance = SAMETILE_MESSAGE_RANGE, ignored_mobs = ignoring_mobs + list(target))
 			if (source != target)
-				target.show_message(span_warning("[source.name] is trying to [existing_item ? "remove the [existing_item.name] [internal ? "in" : "on"]" : new_item ? "is trying to [insert_or_attach] the [new_item.name] [into_or_onto]" : span_alert("What the fuck, impossible condition? interaction_component.dm!")] your [item_index]!"))
+				target.show_message(span_warning("[source.name] is trying to [existing_item ? "remove the [existing_item.name] [internal ? "in" : "on"]" : new_item ? "[insert_or_attach] the [new_item.name] [into_or_onto]" : span_alert("What the fuck, impossible condition? interaction_component.dm!")] your [item_index]!"))
 			if(do_after(
 				source,
 				5 SECONDS,
@@ -192,11 +328,11 @@
 				) && can_lewd_strip(source, target, item_index))
 
 				if(existing_item)
-					source.visible_message(span_purple("[source.name] removes [existing_item.name] from [target.name]'s [item_index]."), span_purple("You remove [existing_item.name] from [target.name]'s [item_index]."), span_purple("You hear someone remove something from someone nearby."), vision_distance = 1)
+					source.visible_message(span_purple("[source.name] removes [existing_item.name] from [target.name]'s [item_index]."), span_purple("You remove [existing_item.name] from [target.name]'s [item_index]."), span_purple("You hear someone remove something from someone nearby."), vision_distance = SAMETILE_MESSAGE_RANGE, ignored_mobs = ignoring_mobs)
 					target.dropItemToGround(existing_item, force = TRUE) // Force is true, cause nodrop shouldn't affect lewd items.
 					target.vars[item_index] = null
 				else if (new_item)
-					source.visible_message(span_purple("[source.name] [internal ? "inserts" : "attaches"] the [new_item.name] [into_or_onto] [target.name]'s [item_index]."), span_purple("You [insert_or_attach] the [new_item.name] [into_or_onto] [target.name]'s [item_index]."), span_purple("You hear someone [insert_or_attach] something [into_or_onto] someone nearby."), vision_distance = 1)
+					source.visible_message(span_purple("[source.name] [internal ? "inserts" : "attaches"] the [new_item.name] [into_or_onto] [target.name]'s [item_index]."), span_purple("You [insert_or_attach] the [new_item.name] [into_or_onto] [target.name]'s [item_index]."), span_purple("You hear someone [insert_or_attach] something [into_or_onto] someone nearby."), vision_distance = SAMETILE_MESSAGE_RANGE, ignored_mobs = ignoring_mobs)
 					target.vars[item_index] = new_item
 					new_item.forceMove(target)
 					new_item.lewd_equipped(target, item_index)
@@ -251,3 +387,6 @@
 			return item.lewd_slot_flags & LEWD_SLOT_NIPPLES
 		else
 			return FALSE
+
+#undef MECHANICAL_CATEGORY
+#undef VORE_ACT

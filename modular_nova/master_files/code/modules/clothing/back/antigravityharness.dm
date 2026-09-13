@@ -61,7 +61,7 @@
 /// This cycles the harness's current mode to the next one, likely using the action button. Goes from Off to Anti to Extra, always.
 /obj/item/gravity_harness/proc/toggle_mode(mob/user, voluntary)
 
-	if(!istype(user) || user.incapacitated())
+	if(!istype(user) || user.incapacitated)
 		return FALSE
 
 	if(!gravity_on && (!current_cell || current_cell.charge < GRAVITY_FIELD_COST))
@@ -156,7 +156,7 @@
 
 			//are we a spacer? if so, make the quirk assert the correct condition based on where we are
 			if (!isnull(spacer))
-				spacer.check_z(user)
+				spacer.update_effects(user)
 
 		else
 			return FALSE
@@ -198,6 +198,7 @@
 	// If we got here, the gravity field is on. If there's no cell, turn that shit off
 	if(!current_cell)
 		change_mode(MODE_GRAVOFF)
+		return
 
 	// cell.use will return FALSE if charge is lower than GRAVITY_FIELD_COST
 	if(!current_cell.use(GRAVITY_FIELD_COST))
@@ -207,14 +208,6 @@
 /obj/item/gravity_harness/get_cell()
 	if(cell_cover_open)
 		return current_cell
-
-/obj/item/gravity_harness/Exited(atom/movable/gone, direction)
-	. = ..()
-	if(gone == current_cell)
-		change_mode(MODE_GRAVOFF)
-		current_cell = null
-
-	return ..()
 
 // Show the status of the harness and cell
 /obj/item/gravity_harness/examine(mob/user)
@@ -245,8 +238,8 @@
 	cell_cover_open = !cell_cover_open
 	return TRUE
 
-/obj/item/gravity_harness/attack_hand(mob/user)
-	if(!cell_cover_open)
+/obj/item/gravity_harness/attack_hand(mob/user, list/modifiers)
+	if(!cell_cover_open || loc != user)
 		return ..()
 
 	if(!current_cell)
@@ -258,6 +251,7 @@
 		balloon_alert(user, "interrupted!")
 		return
 
+	change_mode(MODE_GRAVOFF)
 	balloon_alert(user, "cell removed")
 	playsound(src, 'sound/machines/click.ogg', 50, TRUE, SILENCED_SOUND_EXTRARANGE)
 	if(!user.put_in_hands(current_cell))
@@ -272,18 +266,18 @@
 		current_cell.emp_act(severity)
 		change_mode(MODE_GRAVOFF)
 
-/obj/item/gravity_harness/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+/obj/item/gravity_harness/tool_act(mob/living/user, obj/item/tool, list/modifiers)
 	if(!istype(tool, /obj/item/stock_parts/power_store/cell))
 		return ..()
 
 	if(!cell_cover_open)
 		balloon_alert(user, "open the cell cover first!")
-		playsound(src, 'sound/machines/buzz-sigh.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+		playsound(src, 'sound/machines/buzz/buzz-sigh.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
 		return ITEM_INTERACT_BLOCKING
 
 	if(current_cell)
 		balloon_alert(user, "cell already installed!")
-		playsound(src, 'sound/machines/buzz-sigh.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+		playsound(src, 'sound/machines/buzz/buzz-sigh.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
 		return ITEM_INTERACT_BLOCKING
 
 	/// Shadow realm? I'm sending you to Lake City, FL!

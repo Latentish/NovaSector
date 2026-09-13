@@ -1,48 +1,51 @@
 /datum/sprite_accessory/spines
-	key = "spines"
-	generic = "Spines"
+	key = FEATURE_SPINES
 	default_color = DEFAULT_SECONDARY
-	recommended_species = list(SPECIES_LIZARD, SPECIES_UNATHI, SPECIES_LIZARD_ASH, SPECIES_LIZARD_SILVER)
-	relevent_layers = list(BODY_BEHIND_LAYER, BODY_ADJ_LAYER)
-	genetic = TRUE
-	organ_type = /obj/item/organ/external/spines
+	recommended_species = list(
+		SPECIES_LIZARD = 1,
+		SPECIES_UNATHI = 1,
+		SPECIES_LIZARD_ASH = 1,
+		SPECIES_LIZARD_SILVER = 1,
+	)
+	organ_type = /obj/item/organ/spines
+	flags_custom_mod_icon = MOD_ACCESSORY_CHESTPLATE|MOD_ACCESSORY_HELMET
 
-/datum/sprite_accessory/spines/is_hidden(mob/living/carbon/human/wearer)
-	if(wearer.w_uniform)
-		if(wearer.w_uniform.flags_inv & HIDESPINE)
-			return TRUE
-	if(wearer.wear_suit)
-		if(wearer.wear_suit.flags_inv & HIDESPINE)
-			return TRUE
-	if(key in wearer.try_hide_mutant_parts)
-		return TRUE
+/datum/sprite_accessory/spines/none
+	name = SPRITE_ACCESSORY_NONE
+	icon_state = "none"
 
-	return FALSE
+/datum/sprite_accessory/spines/is_hidden(mob/living/carbon/human/wearer, datum/bodypart_overlay/mutant/bodypart_overlay)
+	. = ..()
+	if(.)
+		return
+
+	return !!(wearer.obscured_slots & HIDESPINE)
 
 /datum/sprite_accessory/tail_spines
-	key = "tailspines"
+	key = FEATURE_TAILSPINES
 	default_color = DEFAULT_SECONDARY
-	relevent_layers = list(BODY_BEHIND_LAYER, BODY_ADJ_LAYER)
 
-/datum/sprite_accessory/tail_spines/is_hidden(mob/living/carbon/human/wearer)
-	var/list/used_in_turf = list("tail")
-	if(wearer.owned_turf?.name in used_in_turf)
+/datum/sprite_accessory/tail_spines/none
+	name = SPRITE_ACCESSORY_NONE
+	icon_state = "none"
+	factual = FALSE
+	natural_spawn = FALSE
+
+/datum/sprite_accessory/tail_spines/is_hidden(mob/living/carbon/human/wearer, datum/bodypart_overlay/mutant/bodypart_overlay)
+	. = ..()
+	if(.)
+		return
+
+	if(wearer.owned_turf?.name == "tail")
 	// Emote exception
 		return TRUE
 
-	if(!wearer.w_uniform && !wearer.wear_suit)
-		return FALSE
-	if("spines" in wearer.try_hide_mutant_parts)
+	if(FEATURE_SPINES in wearer.try_hide_mutant_parts)
 		return TRUE
-	if("tail" in wearer.try_hide_mutant_parts)
+	if(FEATURE_TAIL in wearer.try_hide_mutant_parts)
 		return TRUE
 
-	if(wearer.wear_suit)
-		// Exception for MODs
-		if(istype(wearer.wear_suit, /obj/item/clothing/suit/mod))
-			return FALSE
-		// Hide accessory if flagged to do so
-		else if(wearer.wear_suit.flags_inv & HIDETAIL)
-			return TRUE
+	if(wearer.obscured_slots & HIDETAIL)
+		return TRUE
 
 	return FALSE

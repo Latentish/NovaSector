@@ -4,7 +4,6 @@
 	description = "Pure happiness"
 	taste_description = "an indescribable, slightly sour taste. Something in it relaxes you, filling you with pleasure."
 	color = "#97ffee"
-	reagent_state = LIQUID
 	overdose_threshold = 10
 	life_pref_datum = /datum/preference/toggle/erp/aphro
 	overdose_pref_datum = /datum/preference/toggle/erp/aphro
@@ -33,7 +32,7 @@
 	if(prob(drugginess_chance))
 		exposed_mob.emote(pick("twitch", "drool", "moan", "giggle", "shaking"))
 
-/datum/reagent/drug/aphrodisiac/dopamine/overdose_start(mob/living/carbon/human/exposed_mob)
+/datum/reagent/drug/aphrodisiac/dopamine/overdose_start(mob/living/carbon/human/exposed_mob, metabolization_ratio)
 	. = ..()
 	to_chat(exposed_mob, span_purple("You feel so happy!"))
 	exposed_mob.add_mood_event("[type]_overdose", /datum/mood_event/overgasm, name)
@@ -48,5 +47,5 @@
 		exposed_mob.emote(pick("moan", "twitch_s"))
 
 // This chem shouldn't affect user's mood negatively.
-/datum/reagent/drug/aphrodisiac/dopamine/overdose_process(mob/living/carbon/human/exposed_mob)
+/datum/reagent/drug/aphrodisiac/dopamine/overdose_process(mob/living/carbon/human/exposed_mob, seconds_per_tick, metabolization_ratio)
 	return

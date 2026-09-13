@@ -31,7 +31,6 @@
 		/datum/material/glass = SMALL_MATERIAL_AMOUNT * 5,
 		/datum/material/silver = SMALL_MATERIAL_AMOUNT,
 	)
-	id = "treatment_zone_projector"
 	category = list(
 		RND_CATEGORY_TOOLS + RND_SUBCATEGORY_TOOLS_MEDICAL
 	)
@@ -39,11 +38,10 @@
 
 /datum/techweb_node/holographics/New()
 	. = ..()
-	design_ids.Add("treatment_zone_projector")
+	unlocked_designs += /datum/design/treatment_zone_projector
 
 // Adds the funny projector to medical borgs
 
-/obj/item/robot_model/medical/New(loc, ...)
-	. = ..()
-	var/obj/item/holosign_creator/medical/treatment_zone/new_holosign = new(src)
-	basic_modules.Add(new_holosign)
+/obj/item/robot_model/medical/Initialize(mapload)
+	basic_modules += /obj/item/holosign_creator/medical/treatment_zone
+	return ..()

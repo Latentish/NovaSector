@@ -1,19 +1,31 @@
+/mob/living/carbon/human
+	/// Used for footstep type pref, to apply to any new legs that get added to this mob. Uses a var instead of checking prefs because there are a lot of clientless mob situations.
+	var/footstep_type
+
 /mob/living/carbon/human/Initialize(mapload)
 	. = ..()
 	mob_examine_panel = new(src) //create the datum
 	AddComponent(/datum/component/interactable)
 	//Removing ERP IC verbs depending on config
 	if(CONFIG_GET(flag/disable_erp_preferences))
-		verbs -= /mob/living/carbon/human/verb/toggle_genitals
-		verbs -= /mob/living/carbon/human/verb/toggle_arousal
+		UNASSIGN_GAME_VERB(src, /mob/living/carbon/human, toggle_genitals)
+		UNASSIGN_GAME_VERB(src, /mob/living/carbon/human, toggle_arousal)
 	if(CONFIG_GET(flag/disable_erp_preferences))
-		verbs -= /mob/living/carbon/human/verb/climax_verb
+		UNASSIGN_GAME_VERB(src, /mob/living/carbon/human, climax_verb)
 	if(CONFIG_GET(flag/disable_lewd_items))
-		verbs -= /mob/living/carbon/human/verb/safeword
+		UNASSIGN_GAME_VERB(src, /mob/living/carbon/human, safeword)
 
 
 /mob/living/carbon/human/Destroy()
 	QDEL_NULL(mob_examine_panel)
+	QDEL_NULL(genital_layering_panel)
+
+	if(held_left)
+		held_left.UnregisterSignal(src, COMSIG_ATOM_DIR_CHANGE)
+		QDEL_NULL(held_left)
+	if(held_right)
+		held_right.UnregisterSignal(src, COMSIG_ATOM_DIR_CHANGE)
+		QDEL_NULL(held_right)
 	return ..()
 
 

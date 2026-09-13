@@ -20,7 +20,7 @@
 
 /// Saves the NIF data for a individual user.
 /mob/living/carbon/human/proc/save_nif_data(datum/modular_persistence/persistence, remove_nif = FALSE)
-	var/obj/item/organ/internal/cyberimp/brain/nif/installed_nif = get_organ_by_type(/obj/item/organ/internal/cyberimp/brain/nif)
+	var/obj/item/organ/cyberimp/brain/nif/installed_nif = get_organ_by_type(/obj/item/organ/cyberimp/brain/nif)
 
 	if(HAS_TRAIT(src, TRAIT_GHOSTROLE)) //Nothing is lost from playing a ghost role
 		return FALSE
@@ -75,22 +75,23 @@
 	if(!persistence.nif_path)
 		return
 
-	var/obj/item/organ/internal/cyberimp/brain/nif/new_nif = new persistence.nif_path
+	var/obj/item/organ/cyberimp/brain/nif/new_nif = new persistence.nif_path
 
 	new_nif.durability = persistence.nif_durability
 	new_nif.current_theme = persistence.nif_theme
 	new_nif.is_calibrated = persistence.nif_is_calibrated
 	new_nif.rewards_points = persistence.stored_rewards_points
 
-	var/list/persistent_nifsoft_paths = list()
-	for(var/text as anything in splittext(persistence.persistent_nifsofts, "&"))
-		var/datum/nifsoft/nifsoft_to_add = text2path(text)
-		if(!ispath(nifsoft_to_add, /datum/nifsoft) || !initial(nifsoft_to_add.able_to_keep))
-			continue
+	var/list/persistent_nifsoft_paths
+	if(LAZYLEN(persistence.persistent_nifsofts))
+		for(var/text in splittext(persistence.persistent_nifsofts, "&"))
+			var/datum/nifsoft/nifsoft_to_add = text2path(text)
+			if(!ispath(nifsoft_to_add, /datum/nifsoft) || !initial(nifsoft_to_add.able_to_keep))
+				continue
 
-		persistent_nifsoft_paths.Add(nifsoft_to_add)
+			LAZYADD(persistent_nifsoft_paths, nifsoft_to_add)
 
-	new_nif.persistent_nifsofts = persistent_nifsoft_paths.Copy()
+	new_nif.persistent_nifsofts = LAZYLISTDUPLICATE(persistent_nifsoft_paths)
 	new_nif.Insert(src)
 
 	var/datum/component/nif_examine/examine_component = GetComponent(/datum/component/nif_examine)
@@ -108,7 +109,7 @@
 /datum/nifsoft/proc/load_persistence_data()
 	if(!linked_mob || !persistence)
 		return FALSE
-	var/obj/item/organ/internal/brain/linked_brain = linked_mob.get_organ_slot(ORGAN_SLOT_BRAIN)
+	var/obj/item/organ/brain/linked_brain = linked_mob.get_organ_slot(ORGAN_SLOT_BRAIN)
 	if(!linked_brain || !linked_brain.modular_persistence)
 		return FALSE
 

@@ -22,7 +22,7 @@
 		var/name = crew_record.name
 		var/rank = crew_record.rank
 //		var/truerank = crew_record.truerank
-		var/datum/job/job = SSjob.GetJob(rank)
+		var/datum/job/job = SSjob.get_job(rank)
 
 		if(!job || !(job.job_flags & JOB_CREW_MANIFEST) || !LAZYLEN(job.departments_list) && (!exploitables_empty)) // In case an unlawful custom rank is added.
 			var/list/exp_misc_list = exp_manifest_out[DEPARTMENT_UNASSIGNED]
@@ -34,7 +34,7 @@
 			)
 			continue
 
-		for(var/department_type as anything in job.departments_list)
+		for(var/department_type in job.departments_list)
 			var/datum/job_department/department = departments_by_type[department_type]
 
 			if(!department)
@@ -84,13 +84,13 @@
 		var/exploitable_id = params["exploitable_id"]
 		var/datum/record/crew/target_record = find_record(exploitable_id)
 		if(!isnull(target_record)) // this can be null
-			to_chat(usr, "<b>Exploitable information:</b> [target_record.exploitable_information]")
+			to_chat(ui.user, fieldset_block("Exploitable Information", span_info(target_record.exploitable_information), "boxed_message"), type = MESSAGE_TYPE_INFO)
 
 	else if(action == "show_background")
 		var/background_id = params["background_id"]
 		var/datum/record/crew/target_record = find_record(background_id)
 		if(!isnull(target_record))
-			to_chat(usr, "<b>Background information:</b> [target_record.background_information]")
+			to_chat(ui.user, fieldset_block("Background Information", span_info(target_record.background_information), "boxed_message"), type = MESSAGE_TYPE_INFO)
 
 
 /datum/record_manifest/ui_data(mob/user)

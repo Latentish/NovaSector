@@ -1,9 +1,9 @@
-/datum/design/stasisbag
-	name = "Stasis Body Bag"
-	desc = "A stasis body bag, powered by cryogenic stasis technology. It can hold only one body, but it prevents decay."
-	id = "stasisbag"
+/datum/design/stasisbag_mortuary
+	name = "Mortuary Stasis Bodybag"
+	desc = "A long-term cadaver stasis body bag, powered by integrated stasis technology. It can hold only one body, but it prevents decay. \
+		The reinforced materials and improved stasis generator prevent it from falling apart easily."
 	build_type = PROTOLATHE | AWAY_LATHE
-	build_path = /obj/item/bodybag/stasis
+	build_path = /obj/item/bodybag/stasis_mortuary
 	materials = list(
 		/datum/material/iron = SHEET_MATERIAL_AMOUNT * 2,
 		/datum/material/plasma = SHEET_MATERIAL_AMOUNT,
@@ -13,13 +13,3 @@
 		RND_CATEGORY_EQUIPMENT + RND_SUBCATEGORY_EQUIPMENT_MEDICAL,
 	)
 	departmental_flags = DEPARTMENT_BITFLAG_MEDICAL | DEPARTMENT_BITFLAG_SCIENCE
-
-/datum/design/board/stasissleeper
-	name = "Machine Design (Lifeform Stasis Unit)"
-	desc = "The circuit board for a Stasis Unit"
-	id = "stasissleeper"
-	build_path = /obj/item/circuitboard/machine/stasissleeper
-	category = list(
-		RND_CATEGORY_MACHINE + RND_SUBCATEGORY_MACHINE_MEDICAL,
-	)
-	departmental_flags = DEPARTMENT_BITFLAG_MEDICAL

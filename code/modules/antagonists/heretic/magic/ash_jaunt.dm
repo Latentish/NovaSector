@@ -1,6 +1,6 @@
 /datum/action/cooldown/spell/jaunt/ethereal_jaunt/ash
 	name = "Ashen Passage"
-	desc = "A short range spell that allows you to pass unimpeded through walls."
+	desc = "A short range spell that allows you to pass unimpeded through walls, removing restraints if empowered."
 	background_icon_state = "bg_heretic"
 	overlay_icon_state = "bg_heretic_border"
 	button_icon = 'icons/mob/actions/actions_ecult.dmi'
@@ -10,14 +10,14 @@
 	school = SCHOOL_FORBIDDEN
 	cooldown_time = 15 SECONDS
 
-	invocation = "Askgraar' goetur!"
+	invocation = "ASH'N P'SSG'"
 	invocation_type = INVOCATION_WHISPER
 	spell_requirements = NONE
 
 	exit_jaunt_sound = null
 	jaunt_duration = 1.1 SECONDS
 	jaunt_in_time = 1.3 SECONDS
-	jaunt_out_time = 0.6 SECONDS
+	jaunt_type = /obj/effect/dummy/phased_mob/spell_jaunt/red
 	jaunt_in_type = /obj/effect/temp_visual/dir_setting/ash_shift
 	jaunt_out_type = /obj/effect/temp_visual/dir_setting/ash_shift/out
 

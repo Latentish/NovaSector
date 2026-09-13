@@ -4,7 +4,6 @@
 	description = "Chemically condensed camphor. Causes an extreme reduction in libido and a permanent one if overdosed. Non-addictive."
 	taste_description = "tranquil celibacy"
 	color = "#D9D9D9"//rgb(255, 255, 255)
-	reagent_state = SOLID
 	overdose_threshold = 20
 	arousal_adjust_amount = -18
 	overdose_pref_datum = /datum/preference/toggle/erp/aphro
@@ -19,7 +18,7 @@
 	if(exposed_mob.reagents.has_reagent(/datum/reagent/drug/aphrodisiac/crocin/hexacrocin))
 		exposed_mob.reagents.remove_reagent(/datum/reagent/drug/aphrodisiac/crocin/hexacrocin, reagent_reduction_amount)
 
-/datum/reagent/drug/aphrodisiac/camphor/pentacamphor/overdose_start(mob/living/carbon/human/exposed_mob)
+/datum/reagent/drug/aphrodisiac/camphor/pentacamphor/overdose_start(mob/living/carbon/human/exposed_mob, metabolization_ratio)
 	if(HAS_TRAIT(exposed_mob, TRAIT_BIMBO))
 		exposed_mob.cure_trauma_type(/datum/brain_trauma/very_special/bimbo, TRAUMA_RESILIENCE_ABSOLUTE)
 		to_chat(exposed_mob, span_notice("Your mind is free. Your thoughts are pure and innocent once more."))

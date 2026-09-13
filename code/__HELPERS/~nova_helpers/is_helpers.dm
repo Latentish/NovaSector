@@ -1,5 +1,6 @@
 //Robots
 #define issynthetic(A) (is_species(A,/datum/species/synthetic))
+#define isholosynth(A) (is_species(A,/datum/species/synthetic/holosynth))
 //Actual Species
 #define isvox(A) (is_species(A,/datum/species/vox))
 #define isvoxprimalis(A) (is_species(A,/datum/species/vox_primalis))
@@ -18,18 +19,17 @@
 #define issnail(A) (is_species(A, /datum/species/snail))
 #define isluminescent(A) (is_species(A, /datum/species/jelly/luminescent))
 #define isprimitivedemihuman(A) (is_species(A, /datum/species/human/felinid/primitive))
+#define isrogue(A) (is_species(A, /datum/species/abductor/abductorweak))
+#define iskobold(A) (is_species(A, /datum/species/monkey/kobold))
 //Antags
-#define ishorrorling(A) (istype(A, /mob/living/simple_animal/hostile/true_changeling))
+#define ishorrorling(A) (istype(A, /mob/living/basic/true_changeling))
 #define iscorticalborer(A) (istype(A, /mob/living/basic/cortical_borer))
 #define ismutant(A) (is_species(A, /datum/species/mutant))
 //Customisation bases
 #define isaquatic(A) (is_species(A,/datum/species/aquatic))
 #define ishumanoid(A) (is_species(A,/datum/species/humanoid))
 #define ismammal(A) (is_species(A,/datum/species/mammal))
-#define isinsect(A) (is_species(A,/datum/species/insect))
+#define isinsect(A) (is_species(A,/datum/species/insect) || is_species(A,/datum/species/insectoid))
 #define isfeline(A) (isfelinid(A) || istajaran(A) || HAS_TRAIT(A, TRAIT_FELINE))
 #define iscanine(A) (isvulpkanin(A) || HAS_TRAIT(A, TRAIT_CANINE))
 #define isavian(A) (isteshari(A) || isvox(A) || isvoxprimalis(A) || HAS_TRAIT(A, TRAIT_AVIAN))
-
-// Xen mobs
-#define isxenmob(A) (istype(A, /mob/living/simple_animal/hostile/blackmesa/xen))

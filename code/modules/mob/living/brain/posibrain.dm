@@ -9,19 +9,20 @@ GLOBAL_VAR(posibrain_notify_cooldown)
 	w_class = WEIGHT_CLASS_NORMAL
 	req_access = list(ACCESS_ROBOTICS)
 	braintype = "Android"
+	custom_materials = list(/datum/material/iron = SHEET_MATERIAL_AMOUNT * 0.85, /datum/material/glass = SHEET_MATERIAL_AMOUNT * 0.67, /datum/material/gold = HALF_SHEET_MATERIAL_AMOUNT)
 
 	///Message sent to the user when polling ghosts
-	var/begin_activation_message = "<span class='notice'>You carefully locate the manual activation switch and start the positronic brain's boot process.</span>"
+	var/begin_activation_message = span_notice("You carefully locate the manual activation switch and start the positronic brain's boot process.")
 	///Message sent as a visible message on success
-	var/success_message = "<span class='notice'>The positronic brain pings, and its lights start flashing. Success!</span>"
+	var/success_message = span_notice("The positronic brain pings, and its lights start flashing. Success!")
 	///Message sent as a visible message on failure
-	var/fail_message = "<span class='notice'>The positronic brain buzzes quietly, and the golden lights fade away. Perhaps you could try again?</span>"
+	var/fail_message = span_notice("The positronic brain buzzes quietly, and the golden lights fade away. Perhaps you could try again?")
 	///Visible message sent when a player possesses the brain
-	var/new_mob_message = "<span class='notice'>The positronic brain chimes quietly.</span>"
+	var/new_mob_message = span_notice("The positronic brain chimes quietly.")
 	///Examine message when the posibrain has no mob
-	var/dead_message = "<span class='deadsay'>It appears to be completely inactive. The reset light is blinking.</span>"
+	var/dead_message = span_deadsay("It appears to be completely inactive. The reset light is blinking.")
 	///Examine message when the posibrain cannot poll ghosts due to cooldown
-	var/recharge_message = "<span class='warning'>The positronic brain isn't ready to activate again yet! Give it some time to recharge.</span>"
+	var/recharge_message = span_warning("The positronic brain isn't ready to activate again yet! Give it some time to recharge.")
 
 	///Can be set to tell ghosts what the brain will be used for
 	var/ask_role = ""
@@ -76,11 +77,9 @@ GLOBAL_VAR(posibrain_notify_cooldown)
 	addtimer(CALLBACK(src, PROC_REF(check_success)), ask_delay)
 
 /obj/item/mmi/posibrain/click_alt(mob/living/user)
-	var/input_seed = tgui_input_text(user, "Enter a personality seed", "Enter seed", ask_role, MAX_NAME_LEN)
-	if(isnull(input_seed))
+	var/input_seed = tgui_input_text(user, "Enter a personality seed", "Enter seed", ask_role, max_length = MAX_NAME_LEN)
+	if(isnull(input_seed) || !user.can_perform_action(src))
 		return CLICK_ACTION_BLOCKING
-	if(!user.can_perform_action(src))
-		return
 	to_chat(user, span_notice("You set the personality seed to \"[input_seed]\"."))
 	ask_role = input_seed
 	update_appearance()
@@ -135,9 +134,9 @@ GLOBAL_VAR(posibrain_notify_cooldown)
 			brainmob.stored_dna = new /datum/dna/stored(brainmob)
 		transferred_user.dna.copy_dna(brainmob.stored_dna)
 	brainmob.timeofdeath = transferred_user.timeofdeath
-	brainmob.set_stat(CONSCIOUS)
+	brainmob.set_stat(STABLE)
 	if(brainmob.mind)
-		brainmob.mind.set_assigned_role(SSjob.GetJobType(posibrain_job_path))
+		brainmob.mind.set_assigned_role(SSjob.get_job_type(posibrain_job_path))
 	if(transferred_user.mind)
 		transferred_user.mind.transfer_to(brainmob)
 
@@ -155,13 +154,14 @@ GLOBAL_VAR(posibrain_notify_cooldown)
 	if(candidate.mind && !isobserver(candidate))
 		candidate.mind.transfer_to(brainmob)
 	else
-		brainmob.ckey = candidate.ckey
+		brainmob.PossessByPlayer(candidate.ckey)
 	name = "[initial(name)] ([brainmob.name])"
 	var/policy = get_policy(ROLE_POSIBRAIN)
 	if(policy)
 		to_chat(brainmob, policy)
-	brainmob.mind.set_assigned_role(SSjob.GetJobType(posibrain_job_path))
-	brainmob.set_stat(CONSCIOUS)
+	brainmob.mind.set_assigned_role(SSjob.get_job_type(posibrain_job_path))
+	brainmob.set_stat(STABLE)
+	brainmob.grant_language(/datum/language/machine, source = LANGUAGE_ATOM)
 
 	visible_message(new_mob_message)
 	check_success()
@@ -173,7 +173,7 @@ GLOBAL_VAR(posibrain_notify_cooldown)
 	. = ..()
 	if(brainmob?.key)
 		switch(brainmob.stat)
-			if(CONSCIOUS)
+			if(STABLE)
 				if(!brainmob.client)
 					. += "It appears to be in stand-by mode." //afk
 			if(DEAD)
@@ -210,7 +210,10 @@ GLOBAL_VAR(posibrain_notify_cooldown)
 	icon_state = "[base_icon_state]"
 	return
 
-/obj/item/mmi/posibrain/attackby(obj/item/O, mob/user, params)
+/obj/item/mmi/posibrain/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	return ITEM_INTERACT_BLOCKING
+
+/obj/item/mmi/posibrain/attackby(obj/item/attacking_item, mob/user, list/modifiers, list/attack_modifiers)
 	return
 
 /obj/item/mmi/posibrain/add_mmi_overlay()
@@ -231,6 +234,7 @@ GLOBAL_VAR(posibrain_notify_cooldown)
 	icon_state = "spheribrain"
 	base_icon_state = "spheribrain"
 	immobilize = FALSE
+	custom_materials = list(/datum/material/iron = SMALL_MATERIAL_AMOUNT * 4.2, /datum/material/glass = SMALL_MATERIAL_AMOUNT * 3.2, /datum/material/gold = SMALL_MATERIAL_AMOUNT * 2.5)
 	/// Delay between movements
 	var/move_delay = 0.5 SECONDS
 	/// when can we move again?

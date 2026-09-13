@@ -1,8 +1,5 @@
 /// Prompts the parent mob to send a say message to the soulcatcher. Returns False if no soulcatcher or message could be found.
-/mob/living/proc/soulcatcher_say()
-	set name = "Soul Say"
-	set category = "IC"
-	set desc = "Send a Say message to your currently targeted soulcatcher room."
+GAME_VERB_PROC_DESC(/mob/living, soulcatcher_say, "Soul Say", "Send a Say message to your currently targeted soulcatcher room.", "IC")
 	var/datum/component/soulcatcher/target_soulcatcher = find_soulcatcher()
 	if(!target_soulcatcher || !target_soulcatcher.targeted_soulcatcher_room)
 		return FALSE
@@ -15,15 +12,12 @@
 	return TRUE
 
 /// Prompts the parent mob to send a emote to the soulcatcher. Returns False if no soulcatcher or emote could be found.
-/mob/living/proc/soulcatcher_emote()
-	set name = "Soul Me"
-	set category = "IC"
-	set desc = "Send an emote to your currently targeted soulcatcher room."
+GAME_VERB_PROC_DESC(/mob/living, soulcatcher_emote, "Soul Me", "Send an emote to your currently targeted soulcatcher room.", "IC")
 	var/datum/component/soulcatcher/target_soulcatcher = find_soulcatcher()
 	if(!target_soulcatcher || !target_soulcatcher.targeted_soulcatcher_room)
 		return FALSE
 
-	var/message_to_send = tgui_input_text(usr, "Input the emote you want to send", "Soulcatcher", multiline = TRUE)
+	var/message_to_send = tgui_input_text(usr, "Input the emote you want to send", "Soulcatcher", max_length = MAX_MESSAGE_LEN, multiline = TRUE)
 	if(!message_to_send)
 		return FALSE
 
@@ -33,11 +27,11 @@
 /// Attempts to find and return the soulcatcher the parent mob is currently using. If none can be found, returns `FALSE`
 /mob/living/proc/find_soulcatcher()
 	var/obj/item/soulcatcher_holder/soul_holder = locate(/obj/item/soulcatcher_holder) in contents
-	if(!soul_holder)
+	if(QDELETED(soul_holder))
 		return FALSE
 
 	var/datum/component/soulcatcher/target_soulcatcher = soul_holder.GetComponent(/datum/component/soulcatcher)
-	if(!target_soulcatcher)
+	if(QDELETED(target_soulcatcher))
 		return FALSE
 
 	return target_soulcatcher
@@ -48,11 +42,11 @@
 		return .
 
 	var/datum/nifsoft/soulcatcher/souclatcher_nifsoft = find_nifsoft(/datum/nifsoft/soulcatcher)
-	if(!souclatcher_nifsoft)
+	if(QDELETED(souclatcher_nifsoft))
 		return FALSE
 
 	var/datum/component/soulcatcher/target_soulcatcher = souclatcher_nifsoft.linked_soulcatcher.resolve()
-	if(!target_soulcatcher)
+	if(QDELETED(target_soulcatcher))
 		return FALSE
 
 	return target_soulcatcher

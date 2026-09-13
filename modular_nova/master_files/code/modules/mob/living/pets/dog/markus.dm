@@ -10,9 +10,8 @@
 		/obj/item/food/meat/slab = 2,
 		/obj/item/trash/syndi_cakes = 1,
 		)
-	ai_controller = /datum/ai_controller/basic_controller/dog/corgi
+	ai_controller = /datum/ai_controller/basic_controller/dog/corgi/markus
 	gender = MALE
-	can_be_held = FALSE
 	gold_core_spawnable = FRIENDLY_SPAWN
 	///can this mob breed?
 	var/can_breed = TRUE
@@ -23,22 +22,39 @@
 /mob/living/basic/pet/dog/markus/Initialize(mapload)
 	. = ..()
 	ADD_TRAIT(src, TRAIT_TRASHMAN, TRAIT_GENERIC) //The burgers in his belly protect him
-	if(!can_breed)
-		return
-	AddComponent(\
-		/datum/component/breed,\
-		can_breed_with = typecacheof(list(/mob/living/basic/pet/dog/corgi)),\
-		baby_path = /mob/living/basic/pet/dog/corgi/puppy,\
-	) // no mixed breed puppies sadly
+	if(can_breed)
+		add_breeding_component()
 
 /mob/living/basic/pet/dog/markus/treat_message(message)
 	if(client)
 		message = pick(markus_speak) // markus only talks business
 	return ..()
 
-/mob/living/basic/pet/dog/markus/update_dog_speech(datum/ai_planning_subtree/random_speech/speech)
-	. = ..()
-	speech.speak = markus_speak
+/// Corgi controller but with markus' own dialogue instead of the generic corgi barks.
+/datum/ai_controller/basic_controller/dog/corgi/markus
+	blackboard = list(
+		BB_DOG_HARASS_HARM = TRUE,
+		BB_VISION_RANGE = AI_DOG_VISION_RANGE,
+		BB_PET_TARGETING_STRATEGY = /datum/targeting_strategy/basic/not_friends,
+		BB_TARGETING_STRATEGY = /datum/targeting_strategy/basic/holding_object,
+		BB_TARGET_HELD_ITEM = /obj/item/kitchen/tongs,
+		BB_BABIES_PARTNER_TYPES = list(/mob/living/basic/pet/dog),
+		BB_BASIC_MOB_SPEAK_LINES = list(
+			BB_EMOTE_SAY = list("Borf!", "Boof!", "Bork!", "Bowwow!", "Burg?"),
+			BB_SPEAK_CHANCE = 5,
+		),
+	)
+
+/mob/living/basic/pet/dog/markus/proc/add_breeding_component()
+	var/static/list/partner_paths = typecacheof(list(/mob/living/basic/pet/dog/corgi))
+	var/static/list/baby_paths = list(
+		/mob/living/basic/pet/dog/corgi/puppy = 1,
+	)
+	AddComponent(\
+		/datum/component/breed,\
+		can_breed_with = partner_paths,\
+		baby_paths = baby_paths,\
+	)
 
 /datum/chemical_reaction/mark_reaction
 	results = list(/datum/reagent/consumable/liquidgibs = 15)

@@ -51,7 +51,7 @@
 		target_stabbed = TRUE
 		to_chat(stabbed_mob, span_userdanger("You are impaled by [src]!"))
 		stabbed_mob.emote("scream")
-		playsound(src, 'modular_nova/modules/clock_cult/sound/machinery/brass_skewer.ogg')
+		playsound(src, 'sound/machines/clockcult/brass_skewer.ogg')
 		stabbed_mob.apply_damage(SKEWER_DAMAGE, BRUTE, BODY_ZONE_CHEST)
 
 		if(ishuman(stabbed_mob))
@@ -68,9 +68,6 @@
 /obj/structure/destructible/clockwork/trap/skewer/unbuckle_mob(mob/living/buckled_mob, force, can_fall)
 	if(force)
 		return ..()
-
-	if(!buckled_mob.break_do_after_checks())
-		return
 
 	balloon_alert(buckled_mob, "climbing off of [src]...")
 

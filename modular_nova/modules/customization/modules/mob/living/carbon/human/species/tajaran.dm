@@ -7,11 +7,14 @@
 		TRAIT_LITERATE,
 		TRAIT_HATED_BY_DOGS,
 		TRAIT_MUTANT_COLORS,
-		TRAIT_CATLIKE_GRACE,
+		TRAIT_CATLIKE_INSTINCT,
+		TRAIT_WATER_HATER,
 	)
-	mutanttongue = /obj/item/organ/internal/tongue/cat/tajaran
+	mutanttongue = /obj/item/organ/tongue/cat/tajaran
+	// Tajarans used to get their bite from /obj/item/organ/tongue/cat before TG split fangs out into their own organ.
+	mutant_organs = list(/obj/item/organ/fangs/cat/tajaran)
 	inherent_biotypes = MOB_ORGANIC|MOB_HUMANOID
-	mutant_bodyparts = list()
+
 	payday_modifier = 1.0
 	species_language_holder = /datum/language_holder/tajaran
 	changesource_flags = MIRROR_BADMIN | WABBAJACK | MIRROR_MAGIC | MIRROR_PRIDE | ERT_SPAWN | RACE_SWAP | SLIME_EXTRACT
@@ -27,15 +30,18 @@
 
 /datum/species/tajaran/get_default_mutant_bodyparts()
 	return list(
-		"tail" = list("Cat (Big)", TRUE),
-		"snout" = list("Cat, normal", TRUE),
-		"ears" = list("Cat, normal", TRUE),
-		"legs" = list("Normal Legs", FALSE),
+		FEATURE_TAIL = MUTPART_BLUEPRINT("Cat (Big)", is_randomizable = TRUE),
+		FEATURE_SNOUT = MUTPART_BLUEPRINT("Mammal, Short", is_randomizable = TRUE),
+		FEATURE_EARS = MUTPART_BLUEPRINT("Cat, Alert", is_randomizable = TRUE),
+		FEATURE_LEGS = MUTPART_BLUEPRINT(NORMAL_LEGS, is_randomizable = FALSE, is_feature = TRUE),
 	)
 
-/obj/item/organ/internal/tongue/cat/tajaran
+/obj/item/organ/tongue/cat/tajaran
 	liked_foodtypes = GRAIN | MEAT
 	disliked_foodtypes = CLOTH
+
+/obj/item/organ/fangs/cat/tajaran
+	name = "tajaran fangs"
 
 
 /datum/species/tajaran/randomize_features()
@@ -60,9 +66,9 @@
 		if(5)
 			main_color = "#DDCC99"
 			second_color = "#DDCCAA"
-	features["mcolor"] = main_color
-	features["mcolor2"] = second_color
-	features["mcolor3"] = second_color
+	features[FEATURE_MUTANT_COLOR] = main_color
+	features[FEATURE_MUTANT_COLOR_TWO] = second_color
+	features[FEATURE_MUTANT_COLOR_THREE] = second_color
 	return features
 
 /datum/species/tajaran/get_random_body_markings(list/passed_features)
@@ -83,12 +89,12 @@
 	var/main_color = "#AA9988"
 	var/second_color = "#AAAA99"
 
-	cat.dna.features["mcolor"] = main_color
-	cat.dna.features["mcolor2"] = second_color
-	cat.dna.features["mcolor3"] = second_color
-	cat.dna.mutant_bodyparts["snout"] = list(MUTANT_INDEX_NAME = "Mammal, Short", MUTANT_INDEX_COLOR_LIST = list(main_color, main_color, main_color))
-	cat.dna.mutant_bodyparts["tail"] = list(MUTANT_INDEX_NAME = "Cat", MUTANT_INDEX_COLOR_LIST = list(second_color, main_color, main_color))
-	cat.dna.mutant_bodyparts["ears"] = list(MUTANT_INDEX_NAME = "Cat, normal", MUTANT_INDEX_COLOR_LIST = list(main_color, second_color, second_color))
+	cat.dna.features[FEATURE_MUTANT_COLOR] = main_color
+	cat.dna.features[FEATURE_MUTANT_COLOR_TWO] = second_color
+	cat.dna.features[FEATURE_MUTANT_COLOR_THREE] = second_color
+	cat.dna.mutant_bodyparts[FEATURE_SNOUT] = build_mutant_part("Mammal, Short", list(main_color, main_color, main_color))
+	cat.dna.mutant_bodyparts[FEATURE_TAIL] = build_mutant_part("Cat", list(second_color, main_color, main_color))
+	cat.dna.mutant_bodyparts[FEATURE_EARS] = build_mutant_part("Cat, Alert", list(main_color, second_color, second_color))
 	regenerate_organs(cat, src, visual_only = TRUE)
 	cat.update_body(TRUE)
 

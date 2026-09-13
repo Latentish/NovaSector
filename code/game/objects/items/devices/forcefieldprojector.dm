@@ -10,7 +10,7 @@
 	worn_icon_state = "electronic"
 	lefthand_file = 'icons/mob/inhands/items/devices_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/items/devices_righthand.dmi'
-	custom_materials = list(/datum/material/iron= SMALL_MATERIAL_AMOUNT * 2.5, /datum/material/glass= SMALL_MATERIAL_AMOUNT * 5)
+	custom_materials = list(/datum/material/iron = SHEET_MATERIAL_AMOUNT * 1.25, /datum/material/glass = HALF_SHEET_MATERIAL_AMOUNT)
 	var/max_shield_integrity = 250
 	var/shield_integrity = 250
 	var/max_fields = 3
@@ -21,10 +21,10 @@
 	/// Checks to make sure the projector isn't busy with making another forcefield.
 	var/force_proj_busy = FALSE
 
-/obj/item/forcefield_projector/ranged_interact_with_atom(atom/interacting_with, mob/living/user, list/modifiers)
-	return interact_with_atom(interacting_with, user, modifiers)
-
 /obj/item/forcefield_projector/interact_with_atom(atom/interacting_with, mob/living/user, list/modifiers)
+	return ranged_interact_with_atom(interacting_with, user, modifiers)
+
+/obj/item/forcefield_projector/ranged_interact_with_atom(atom/interacting_with, mob/living/user, list/modifiers)
 	if(!check_allowed_items(interacting_with, not_inside = TRUE))
 		return NONE
 	if(istype(interacting_with, /obj/structure/projected_forcefield))
@@ -59,7 +59,7 @@
 			return ITEM_INTERACT_BLOCKING
 		force_proj_busy = FALSE
 
-	playsound(src,'sound/weapons/resonator_fire.ogg',50,TRUE)
+	playsound(src,'sound/items/weapons/resonator_fire.ogg',50,TRUE)
 	user.visible_message(span_warning("[user] projects a forcefield!"),span_notice("You project a forcefield."))
 	var/obj/structure/projected_forcefield/F = new(T, src)
 	current_fields += F
@@ -124,14 +124,14 @@
 
 /obj/structure/projected_forcefield/Destroy()
 	visible_message(span_warning("[src] flickers and disappears!"))
-	playsound(src,'sound/weapons/resonator_blast.ogg',25,TRUE)
+	playsound(src,'sound/items/weapons/resonator_blast.ogg',25,TRUE)
 	if(generator)
 		generator.current_fields -= src
 		generator = null
 	return ..()
 
 /obj/structure/projected_forcefield/play_attack_sound(damage_amount, damage_type = BRUTE, damage_flag = 0)
-	playsound(loc, 'sound/weapons/egloves.ogg', 80, TRUE)
+	playsound(loc, 'sound/items/weapons/egloves.ogg', 80, TRUE)
 
 /obj/structure/projected_forcefield/take_damage(damage_amount, damage_type = BRUTE, damage_flag = 0, sound_effect = 1, attack_dir)
 	if(sound_effect)

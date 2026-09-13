@@ -1,22 +1,26 @@
 /datum/sprite_accessory/fluff/moth
 	icon = 'modular_nova/master_files/icons/mob/sprite_accessory/moth_fluff.dmi'
 	default_color = "#FFFFFF"
-	key = "fluff"
-	generic = "Fluff"
-	recommended_species = list(SPECIES_MOTH, SPECIES_MAMMAL, SPECIES_INSECT)
-	relevent_layers = list(BODY_ADJ_LAYER, BODY_FRONT_LAYER)
-	genetic = TRUE
-	organ_type = /obj/item/organ/external/fluff
+	key = FEATURE_FLUFF
+	recommended_species = list(
+		SPECIES_MOTH = 1,
+		SPECIES_MAMMAL = 1,
+		SPECIES_INSECT = 1,
+	)
+	organ_type = /obj/item/organ/fluff
 
 /datum/sprite_accessory/fluff/moth/none
-	name = "None"
+	name = SPRITE_ACCESSORY_NONE
 	icon_state = "none"
+	factual = FALSE
+	natural_spawn = FALSE
 
-/datum/sprite_accessory/fluff/moth/is_hidden(mob/living/carbon/human/human)
-	if((human.head?.flags_inv & HIDEHAIR) || (human.wear_mask?.flags_inv & HIDEHAIR))
-		return TRUE
+/datum/sprite_accessory/fluff/moth/is_hidden(mob/living/carbon/human/human, datum/bodypart_overlay/mutant/bodypart_overlay)
+	. = ..()
+	if(.)
+		return
 
-	return FALSE
+	return !!(human.obscured_slots & HIDEHAIR)
 
 /datum/sprite_accessory/fluff/moth/plain
 	name = "Plain"
@@ -114,6 +118,10 @@
 	icon_state = "snowdual"
 	color_src = USE_MATRIXED_COLORS
 
+/datum/sprite_accessory/fluff/moth/insectoid
+	name = "Insectoid"
+	icon_state = "insect"
+
 /datum/sprite_accessory/fluff/moth/teshari
 	name = "Teshari Mane"
 	icon_state = "teshmane"
@@ -123,3 +131,7 @@
 	name = "Teshari Mane (Top)"
 	icon_state = "teshmane_top"
 	default_color = DEFAULT_TERTIARY
+
+/datum/sprite_accessory/fluff/moth/thick
+	name = "Thick"
+	icon_state = "thick"

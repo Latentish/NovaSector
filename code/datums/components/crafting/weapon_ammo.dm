@@ -25,8 +25,9 @@
 	name = "jagged iron rod"
 	result = /obj/item/ammo_casing/rebar/syndie
 	reqs = list(
-		/obj/item/stack/rods = 1,
+		/obj/item/stack/sheet/plasteel = 1,
 	)
+	result_amount = 2
 	tool_behaviors = list(TOOL_WIRECUTTER)
 	time = 0.1 SECONDS
 	category = CAT_WEAPON_AMMO
@@ -101,6 +102,7 @@
 	tool_behaviors = list(TOOL_SCREWDRIVER)
 	time = 1.2 SECONDS
 	category = CAT_WEAPON_AMMO
+	crafting_flags = CRAFT_SKIP_MATERIALS_PARITY
 
 /datum/crafting_recipe/trashball
 	name = "Trashball"
@@ -111,3 +113,79 @@
 	)
 	category = CAT_WEAPON_AMMO
 	crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_MUST_BE_LEARNED
+	unit_test_spawn_extras = list(/obj/item/stack/sheet/iron = 5) //the sheet type is abstract
+
+/datum/crafting_recipe/arrow
+	name = "Arrow"
+	result = /obj/item/ammo_casing/arrow
+	reqs = list(
+		/obj/item/stack/sheet/mineral/wood = 1,
+		/obj/item/stack/sheet/cloth = 1,
+		/obj/item/stack/sheet/iron = 1,
+	)
+	tool_paths = list(
+		/obj/item/hatchet,
+	)
+	time = 5 SECONDS
+	category = CAT_WEAPON_AMMO
+	crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_MUST_BE_LEARNED
+
+/datum/crafting_recipe/sticky_arrow
+	name = "Sticky arrow"
+	result = /obj/item/ammo_casing/arrow/sticky
+	reqs = list(
+		/obj/item/ammo_casing/arrow = 1,
+		/obj/item/food/honeycomb = 3,
+	)
+	time = 5 SECONDS
+	category = CAT_WEAPON_AMMO
+	crafting_flags = CRAFT_CHECK_DENSITY
+
+/datum/crafting_recipe/poison_arrow
+	name = "Poison arrow"
+	result = /obj/item/ammo_casing/arrow/poison
+	reqs = list(
+		/obj/item/ammo_casing/arrow = 1,
+		/obj/item/food/grown/berries/poison = 5,
+	)
+	time = 5 SECONDS
+	category = CAT_WEAPON_AMMO
+	crafting_flags = CRAFT_CHECK_DENSITY
+
+/datum/crafting_recipe/plastic_arrow
+	name = "Plastic Arrow"
+	result = /obj/item/ammo_casing/arrow/plastic
+	reqs = list(
+		/obj/item/stack/sheet/plastic = 1,
+	)
+	tool_paths = list(
+		/obj/item/hatchet,
+	)
+	time = 5 SECONDS
+	category = CAT_WEAPON_AMMO
+	crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_MUST_BE_LEARNED
+
+
+/datum/crafting_recipe/holy_arrow
+	name = "Holy Arrow"
+	result = /obj/item/ammo_casing/arrow/holy
+	reqs = list(
+		/obj/item/ammo_casing/arrow = 1,
+		/datum/reagent/water/holywater = 10,
+	)
+	tool_paths = list(
+		/obj/item/gun/ballistic/bow/divine,
+	)
+	time = 5 SECONDS
+	category = CAT_WEAPON_AMMO
+	crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_MUST_BE_LEARNED
+
+/datum/crafting_recipe/ashen_arrow
+	name = "Ashen Arrow"
+	result = /obj/item/ammo_casing/arrow/ashen
+	reqs = list(
+		/obj/item/stack/sheet/bone = 1,
+		/obj/item/stack/sheet/sinew = 1,
+	)
+	time = 5 SECONDS
+	category = CAT_WEAPON_AMMO

@@ -6,6 +6,7 @@
 /obj/machinery/computer/crew
 	name = "crew monitoring console"
 	desc = "Used to monitor active health sensors built into most of the crew's uniforms."
+	icon_state = MAP_SWITCH("computer", "/obj/machinery/computer/crew")
 	icon_screen = "crew"
 	icon_keyboard = "med_key"
 	circuit = /obj/item/circuitboard/computer/crew
@@ -13,9 +14,7 @@
 
 /obj/machinery/computer/crew/Initialize(mapload, obj/item/circuitboard/C)
 	. = ..()
-	AddComponent(/datum/component/usb_port, list(
-		/obj/item/circuit_component/medical_console_data,
-	))
+	AddComponent(/datum/component/usb_port, typecacheof(list(/obj/item/circuit_component/medical_console_data), only_root_path = TRUE))
 
 /obj/item/circuit_component/medical_console_data
 	display_name = "Crew Monitoring Data"
@@ -78,6 +77,7 @@
 	records.set_output(new_table)
 
 /obj/machinery/computer/crew/syndie
+	icon_state = MAP_SWITCH("computer", "/obj/machinery/computer/crew/syndie")
 	icon_keyboard = "syndie_key"
 
 /obj/machinery/computer/crew/ui_interact(mob/user)
@@ -180,7 +180,7 @@ GLOBAL_DATUM_INIT(crewmonitor, /datum/crewmonitor, new)
 /datum/crewmonitor/ui_interact(mob/user, datum/tgui/ui)
 	ui = SStgui.try_update_ui(user, src, ui)
 	if (!ui)
-		ui = new(user, src, "CrewConsoleNova") // NOVA EDIT CHANGE - ORIGINAL: ui = new(user, src, "CrewConsole")
+		ui = new(user, src, "CrewConsole")
 		ui.open()
 
 /datum/crewmonitor/proc/show(mob/M, source)
@@ -198,7 +198,7 @@ GLOBAL_DATUM_INIT(crewmonitor, /datum/crewmonitor, new)
 		z = T.z
 	. = list(
 		"sensors" = update_data(z),
-		"link_allowed" = HAS_AI_ACCESS(user)
+		"link_allowed" = HAS_AI_ACCESS(user),
 	)
 
 /datum/crewmonitor/proc/update_data(z)
@@ -239,7 +239,7 @@ GLOBAL_DATUM_INIT(crewmonitor, /datum/crewmonitor, new)
 			continue
 
 		// Check if their uniform is in a compatible mode.
-		if((uniform.has_sensor == NO_SENSORS) || !uniform.sensor_mode) // NOVA EDIT CHANGE - ORIGINAL if((uniform.has_sensor <= NO_SENSORS) || !uniform.sensor_mode)
+		if((uniform.has_sensor == NO_SENSORS) || !uniform.sensor_mode)
 			stack_trace("Human without active suit sensors is in suit_sensors_list: [tracked_human] ([tracked_human.type]) ([uniform.type])")
 			continue
 
@@ -258,49 +258,61 @@ GLOBAL_DATUM_INIT(crewmonitor, /datum/crewmonitor, new)
 			entry["name"] = id_card.registered_name
 			entry["assignment"] = id_card.assignment
 			var/trim_assignment = id_card.get_trim_assignment()
+			/* // NOVA EDIT REMOVAL START - Just so we can indent this after an else
 			if (jobs[trim_assignment] != null)
 				entry["ijob"] = jobs[trim_assignment]
-
-		// NOVA EDIT ADDITION START - EMP SENSORS
-		if(uniform.has_sensor == BROKEN_SENSORS)
-			entry["is_robot"] = rand(0,1)
-			entry["life_status"] = rand(0,1)
-			entry["area"] = pick_list (ION_FILE, "ionarea")
-			entry["oxydam"] = rand(0,1000)
-			entry["toxdam"] = rand(0,1000)
-			entry["burndam"] =rand(0,1000)
-			entry["brutedam"] = rand(0,1000)
-			entry["health"] = -50
-			entry["can_track"] = tracked_living_mob.can_track()
-			results[++results.len] = entry
+			*/ // NOVA EDIT REMOVAL END
+		// NOVA EDIT ADDITION START
+			if(show_command_only)
+				if (jobs_command[trim_assignment] != null)
+					entry["ijob"] = jobs_command[trim_assignment]
+				else
+					continue
+			else
+				if (jobs[trim_assignment] != null)
+					entry["ijob"] = jobs[trim_assignment]
+		else if(show_command_only) // Skip unknowns on blueshield
 			continue
 		// NOVA EDIT ADDITION END
-		// NOVA EDIT BEGIN: Checking for robotic race
-		if (issynthetic(tracked_human))
-			entry["is_robot"] = TRUE
-		// NOVA EDIT END
 
-		// Binary living/dead status
+		// NOVA EDIT ADDITION START - Checking for synthetic races
+		if (issynthetic(tracked_human) || isprotean(tracked_human))
+			entry["is_robot"] = TRUE
+		// NOVA EDIT ADDITION END
+
+		// Broken sensors show garbage data
+		if (uniform.has_sensor == BROKEN_SENSORS)
+			entry["life_status"] = rand(0,1)
+			entry["area"] = pick_list (ION_FILE, "ionarea")
+			entry["oxydam"] = rand(0,175)
+			entry["toxdam"] = rand(0,175)
+			entry["burndam"] = rand(0,175)
+			entry["brutedam"] = rand(0,175)
+			entry["health"] = -50
+			results[++results.len] = entry
+			continue
+
 		// Current status
-		if (sensor_mode >= SENSOR_LIVING)
+		if (sensor_mode >= SENSOR_VITALS)
 			entry["life_status"] = tracked_living_mob.stat
+		else if (sensor_mode == SENSOR_LIVING)
+			// binary sensors should only report alive or dead
+			entry["life_status"] = (tracked_living_mob.stat == DEAD) ? DEAD : STABLE
 
 		// Damage
 		if (sensor_mode >= SENSOR_VITALS)
 			entry += list(
-				"oxydam" = round(tracked_living_mob.getOxyLoss(), 1),
-				"toxdam" = round(tracked_living_mob.getToxLoss(), 1),
-				"burndam" = round(tracked_living_mob.getFireLoss(), 1),
-				"brutedam" = round(tracked_living_mob.getBruteLoss(), 1),
+				"oxydam" = round(tracked_living_mob.get_oxy_loss(), 1),
+				"toxdam" = round(tracked_living_mob.get_tox_loss(), 1),
+				"burndam" = round(tracked_living_mob.get_fire_loss(), 1),
+				"brutedam" = round(tracked_living_mob.get_brute_loss(), 1),
 				"health" = round(tracked_living_mob.health, 1),
 			)
 
 		// Location
 		if (sensor_mode >= SENSOR_COORDS)
 			entry["area"] = get_area_name(tracked_living_mob, format_text = TRUE)
-
-		// Trackability
-		entry["can_track"] = tracked_living_mob.can_track()
+		entry["can_track"] = tracked_living_mob.can_track() // NOVA EDIT ADDITION
 
 		results[++results.len] = entry
 
@@ -310,7 +322,7 @@ GLOBAL_DATUM_INIT(crewmonitor, /datum/crewmonitor, new)
 
 	return results
 
-/datum/crewmonitor/ui_act(action, params)
+/datum/crewmonitor/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
 	. = ..()
 	if(.)
 		return
@@ -319,7 +331,11 @@ GLOBAL_DATUM_INIT(crewmonitor, /datum/crewmonitor, new)
 			var/mob/living/silicon/ai/AI = usr
 			if(!istype(AI))
 				return
-			AI.ai_tracking_tool.track_name(AI, params["name"])
+			// We need to do this because the ID might add an honorific and otherwise break tracking
+			var/mob/living/target = locate(params["ref"]) in GLOB.mob_living_list
+			if(isnull(target))
+				return
+			AI.ai_tracking_tool.track_mob(AI, target)
 
 #undef SENSORS_UPDATE_PERIOD
 #undef UNKNOWN_JOB_ID

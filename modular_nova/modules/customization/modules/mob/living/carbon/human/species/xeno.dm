@@ -2,7 +2,10 @@
 	// A cloning mistake, crossing human and xenomorph DNA
 	name = "Xenomorph Hybrid"
 	id = SPECIES_XENO
-	family_heirlooms = list(/obj/item/toy/plush/rouny, /obj/item/clothing/mask/facehugger/toy)
+	family_heirlooms = list(
+		/obj/item/toy/plush/rouny,
+		/obj/item/clothing/mask/facehugger/toy
+		)
 	inherent_traits = list(
 		TRAIT_ADVANCEDTOOLUSER,
 		TRAIT_CAN_STRIP,
@@ -10,19 +13,17 @@
 		TRAIT_MUTANT_COLORS,
 	)
 	inherent_biotypes = MOB_ORGANIC|MOB_HUMANOID
-	mutantbrain = /obj/item/organ/internal/brain/xeno_hybrid
-	mutanttongue = /obj/item/organ/internal/tongue/xeno_hybrid
-	mutantliver = /obj/item/organ/internal/liver/xeno_hybrid
-	mutantstomach = /obj/item/organ/internal/stomach/xeno_hybrid
+	mutantbrain = /obj/item/organ/brain/xeno_hybrid
+	mutanttongue = /obj/item/organ/tongue/xeno_hybrid
+	mutantliver = /obj/item/organ/liver/xeno_hybrid
+	mutantstomach = /obj/item/organ/stomach/xeno_hybrid
 	mutant_organs = list(
-		/obj/item/organ/internal/alien/plasmavessel/roundstart,
-		/obj/item/organ/internal/alien/resinspinner/roundstart,
-		/obj/item/organ/internal/alien/hivenode,
+		/obj/item/organ/alien/plasmavessel/roundstart,
+		/obj/item/organ/alien/resinspinner/roundstart,
 		)
-	exotic_blood = /datum/reagent/toxin/acid
+	exotic_bloodtype = /datum/blood_type/xeno
 	heatmod = 2.5
-	mutant_bodyparts = list()
-	external_organs = list()
+
 	payday_modifier = 1.0
 	changesource_flags = MIRROR_BADMIN | WABBAJACK | MIRROR_MAGIC | MIRROR_PRIDE | ERT_SPAWN | RACE_SWAP | SLIME_EXTRACT
 	bodypart_overrides = list(
@@ -30,20 +31,22 @@
 		BODY_ZONE_CHEST = /obj/item/bodypart/chest/mutant/xenohybrid,
 		BODY_ZONE_L_ARM = /obj/item/bodypart/arm/left/mutant/xenohybrid,
 		BODY_ZONE_R_ARM = /obj/item/bodypart/arm/right/mutant/xenohybrid,
-		BODY_ZONE_L_LEG = /obj/item/bodypart/leg/left/digitigrade/xenohybrid,
-		BODY_ZONE_R_LEG = /obj/item/bodypart/leg/right/digitigrade/xenohybrid,
+		BODY_ZONE_L_LEG = /obj/item/bodypart/leg/left/mutant/xenohybrid,
+		BODY_ZONE_R_LEG = /obj/item/bodypart/leg/right/mutant/xenohybrid,
 	)
 
 	meat = /obj/item/food/meat/slab/xeno
 	skinned_type = /obj/item/stack/sheet/animalhide/xeno
+	gib_anim = "gibbed-a"
 
 /datum/species/xeno/get_default_mutant_bodyparts()
 	return list(
-		"tail" = list("Xenomorph Tail", FALSE),
-		"xenodorsal" = list("Standard", TRUE),
-		"xenohead" = list("Standard", TRUE),
-		"legs" = list(DIGITIGRADE_LEGS,FALSE),
-		"taur" = list("None", FALSE),
+		FEATURE_EARS = MUTPART_BLUEPRINT(SPRITE_ACCESSORY_NONE, is_randomizable = FALSE),
+		FEATURE_TAIL = MUTPART_BLUEPRINT("Xenomorph Tail", is_randomizable = FALSE),
+		FEATURE_XENODORSAL = MUTPART_BLUEPRINT("Standard", is_randomizable = TRUE),
+		FEATURE_XENOHEAD = MUTPART_BLUEPRINT("Standard", is_randomizable = TRUE),
+		FEATURE_LEGS = MUTPART_BLUEPRINT(DIGITIGRADE_LEGS, is_randomizable = FALSE, is_feature = TRUE),
+		FEATURE_TAUR = MUTPART_BLUEPRINT(SPRITE_ACCESSORY_NONE, is_randomizable = FALSE),
 	)
 
 /datum/species/xeno/get_species_description()
@@ -73,12 +76,11 @@
 
 /datum/species/xeno/prepare_human_for_preview(mob/living/carbon/human/xeno)
 	var/xeno_color = "#525288"
-	xeno.dna.features["mcolor"] = xeno_color
-	xeno.eye_color_left = "#30304F"
-	xeno.eye_color_right = "#30304F"
-	xeno.dna.mutant_bodyparts["tail"] = list(MUTANT_INDEX_NAME = "Xenomorph Tail", MUTANT_INDEX_COLOR_LIST = list(xeno_color, xeno_color, xeno_color))
-	xeno.dna.mutant_bodyparts["xenodorsal"] = list(MUTANT_INDEX_NAME = "Standard", MUTANT_INDEX_COLOR_LIST = list(xeno_color))
-	xeno.dna.mutant_bodyparts["xenohead"] = list(MUTANT_INDEX_NAME = "Standard", MUTANT_INDEX_COLOR_LIST = list(xeno_color, xeno_color, xeno_color))
+	xeno.dna.features[FEATURE_MUTANT_COLOR] = xeno_color
+	xeno.set_eye_color( "#30304F")
+	xeno.dna.mutant_bodyparts[FEATURE_TAIL] = build_mutant_part("Xenomorph Tail", list(xeno_color, xeno_color, xeno_color))
+	xeno.dna.mutant_bodyparts[FEATURE_XENODORSAL] = build_mutant_part("Standard", list(xeno_color))
+	xeno.dna.mutant_bodyparts[FEATURE_XENOHEAD] = build_mutant_part("Standard", list(xeno_color, xeno_color, xeno_color))
 	regenerate_organs(xeno, src, visual_only = TRUE)
 	xeno.update_body(TRUE)
 
@@ -86,11 +88,12 @@
 #define BUILD_DURATION 0.5 SECONDS
 
 //Plasma vessel
-/obj/item/organ/internal/alien/plasmavessel/roundstart
+/obj/item/organ/alien/plasmavessel/roundstart
 	stored_plasma = 55
 	max_plasma = 55
 	plasma_rate = 2
-	heal_rate = 0
+	heal_rate = 1.5
+	visual = FALSE
 	actions_types = list(
 		/datum/action/cooldown/alien/make_structure/plant_weeds/roundstart,
 		/datum/action/cooldown/alien/transfer,
@@ -109,7 +112,8 @@
 	return ..()
 
 //Resin spinner
-/obj/item/organ/internal/alien/resinspinner/roundstart
+/obj/item/organ/alien/resinspinner/roundstart
+	visual = FALSE
 	actions_types = list(/datum/action/cooldown/alien/make_structure/resin/roundstart)
 
 /datum/action/cooldown/alien/make_structure/resin
@@ -120,21 +124,42 @@
 	//Non-modularly checked in `code\modules\mob\living\carbon\alien\adult\alien_powers.dm`
 
 //Organ resprites
-/obj/item/organ/internal/brain/xeno_hybrid
+/obj/item/organ/brain/xeno_hybrid
 	icon_state = "brain-x" //rebranding
 
-/obj/item/organ/internal/stomach/xeno_hybrid
+/obj/item/organ/brain/xeno_hybrid/Initialize(mapload)
+	. = ..()
+	AddComponent(/datum/component/bubble_icon_override, "alien", BUBBLE_ICON_PRIORITY_ORGAN)
+
+/obj/item/organ/stomach/xeno_hybrid
 	icon_state = "stomach-x"
 
-/obj/item/organ/internal/liver/xeno_hybrid
+/obj/item/organ/liver/xeno_hybrid
 	icon_state = "liver-x"
 
 //Liver modification (xenohybrids can process plasma!)
-/obj/item/organ/internal/liver/xeno_hybrid/handle_chemical(mob/living/carbon/owner, datum/reagent/toxin/chem, seconds_per_tick, times_fired)
+/obj/item/organ/liver/xeno_hybrid/handle_chemical(mob/living/carbon/owner, datum/reagent/toxin/chem, seconds_per_tick)
 	. = ..()
-	if(. & COMSIG_MOB_STOP_REAGENT_CHECK)
+	if(. & COMSIG_MOB_STOP_REAGENT_TICK)
 		return
 	if(chem.type == /datum/reagent/toxin/plasma)
 		chem.toxpwr = 0
 
 #undef BUILD_DURATION
+
+///Xenohybrid gib and dust tweaks
+/mob/living/carbon/human/spawn_gibs(drop_bitflags=NONE)
+	if(!isxenohybrid(src))
+		return ..()
+	if(drop_bitflags & DROP_BODYPARTS)
+		new /obj/effect/gibspawner/xeno(drop_location(), src, get_static_viruses())
+	else
+		new /obj/effect/gibspawner/xeno/bodypartless(drop_location(), src, get_static_viruses())
+
+/mob/living/carbon/human/spawn_dust(just_ash = FALSE)
+	if(!isxenohybrid(src))
+		return ..()
+	if(just_ash)
+		new /obj/effect/decal/cleanable/ash(loc)
+	else
+		new /obj/effect/decal/remains/xeno(loc)

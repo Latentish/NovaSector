@@ -5,10 +5,8 @@ GLOBAL_LIST_EMPTY(ckey_to_aooc_name)
 #define AOOC_LISTEN_PLAYER 1
 #define AOOC_LISTEN_ADMIN 2
 
-/client/verb/aooc(msg as text)
-	set name = "AOOC"
-	set category = "OOC"
-
+GAME_VERB(/client, aooc, "AOOC", "OOC")
+	VERB_ARG(msg, VERB_ARG_TYPE_TEXT, VERB_ARG_SOURCE_INPUT)
 	if(GLOB.say_disabled)	//This is here to try to identify lag problems
 		to_chat(usr, span_danger("Speech is currently admin-disabled."))
 		return
@@ -32,7 +30,7 @@ GLOBAL_LIST_EMPTY(ckey_to_aooc_name)
 	if(QDELETED(src))
 		return
 
-	msg = copytext_char(sanitize(msg), 1, MAX_MESSAGE_LEN)
+	msg = copytext_char(sanitize(html_decode(msg)), 1, MAX_MESSAGE_LEN)
 	var/raw_msg = msg
 
 	if(!msg)
@@ -58,24 +56,23 @@ GLOBAL_LIST_EMPTY(ckey_to_aooc_name)
 
 	var/list/listeners = list()
 
-	for(var/mind as anything in get_antag_minds(/datum/antagonist))
+	for(var/mind in get_antag_minds(/datum/antagonist))
 		var/datum/mind/antag_mind = mind
 		if(!antag_mind.current || !antag_mind.current.client || isnewplayer(antag_mind.current))
 			continue
 		listeners[antag_mind.current.client] = AOOC_LISTEN_PLAYER
 
-	for(var/iterated_player as anything in GLOB.player_list)
+	for(var/iterated_player in GLOB.player_list)
 		var/mob/iterated_mob = iterated_player
 		//Admins with muted OOC do not get to listen to AOOC, but normal players do, as it could be admins talking important stuff to them
 		if(iterated_mob.client?.holder && !iterated_mob.client?.holder.deadmined && iterated_mob.client?.prefs?.chat_toggles & CHAT_OOC)
 			listeners[iterated_mob.client] = AOOC_LISTEN_ADMIN
 
-	for(var/iterated_listener as anything in listeners)
-		var/client/iterated_client = iterated_listener
-		var/mode = listeners[iterated_listener]
+	for(var/client/iterated_client as anything in listeners)
+		var/mode = listeners[iterated_client]
 		var/color = (!anon && CONFIG_GET(flag/allow_admin_ooccolor) && iterated_client?.prefs?.read_preference(/datum/preference/color/ooc_color)) ? iterated_client?.prefs?.read_preference(/datum/preference/color/ooc_color) : GLOB.AOOC_COLOR
 		var/name = (mode == AOOC_LISTEN_ADMIN && anon) ? "([key])[keyname]" : keyname
-		to_chat(iterated_client, span_oocplain("<font color='[color]'><b><span class='prefix'>AOOC:</span> <EM>[name]:</EM> <span class='message linkify'>[msg]</span></b></font>"))
+		to_chat(iterated_client, span_oocplain("<font color='[color]'><b><span class='prefix'>AOOC:</span> <EM>[name]:</EM> <span class='message linkify'>[msg]</span></b></font>"), avoid_highlighting = (iterated_client == src))
 
 #undef AOOC_LISTEN_PLAYER
 #undef AOOC_LISTEN_ADMIN
@@ -88,7 +85,7 @@ GLOBAL_LIST_EMPTY(ckey_to_aooc_name)
 	else //otherwise just toggle it
 		GLOB.aooc_allowed = !GLOB.aooc_allowed
 	var/list/listeners = list()
-	for(var/mind as anything in get_antag_minds(/datum/antagonist))
+	for(var/mind in get_antag_minds(/datum/antagonist))
 		var/datum/mind/antag_mind = mind
 		if(!antag_mind.current || !antag_mind.current.client || isnewplayer(antag_mind.current))
 			continue

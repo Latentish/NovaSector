@@ -59,16 +59,22 @@
 	SEND_SIGNAL(src, COMSIG_MOVELOOP_START)
 	status |= MOVELOOP_STATUS_RUNNING
 	//If this is our first time starting to move with this loop
-	//And we're meant to start instantly
+	//And we want to start consistently fast
 	if(!timer && flags & MOVEMENT_LOOP_START_FAST)
-		timer = world.time
+		// + tick_lag because we want to avoid weird jumping in atoms that were just created (and avoid inconsistencies around subsystem timing)
+		timer = NEXT_VISUAL_TICK + world.tick_lag
 		return
-	timer = world.time + delay
+	//And we're meant to start instantly
+	if(!timer && flags & MOVEMENT_LOOP_START_INSTANT)
+		timer = NEXT_VISUAL_TICK
+		return
+	timer = NEXT_VISUAL_TICK + delay
 
 ///Called when a loop is stopped, doesn't stop the loop itself
 /datum/move_loop/proc/loop_stopped()
 	SHOULD_CALL_PARENT(TRUE)
 	status &= ~MOVELOOP_STATUS_RUNNING
+	EVLOG_TEXT(moving, EVLOG_CATEGORY_MOVELOOPS, "Moveloop stopped")
 	SEND_SIGNAL(src, COMSIG_MOVELOOP_STOP)
 
 /datum/move_loop/proc/info_deleted(datum/source)
@@ -122,9 +128,12 @@
 
 	owner?.processing_move_loop_flags = flags
 	var/result = move() //Result is an enum value. Enums defined in __DEFINES/movement.dm
+
 	if(moving)
 		var/direction = get_dir(old_loc, moving.loc)
 		SEND_SIGNAL(moving, COMSIG_MOVABLE_MOVED_FROM_LOOP, src, old_dir, direction)
+		if(result)
+			EVLOG_PATH(moving, EVLOG_CATEGORY_MOVELOOPS, "Moved using [src]", list(old_loc, moving.loc)) //You might think, this runs a lot; but if not logging, it only does a lookup on the event logger.
 	owner?.processing_move_loop_flags = NONE
 
 	SEND_SIGNAL(src, COMSIG_MOVELOOP_POSTPROCESS, result, delay * visual_delay)
@@ -154,7 +163,7 @@
 
 ///Resume our loop after being paused by pause_loop()
 /datum/move_loop/proc/resume_loop()
-	if(!controller || (status & MOVELOOP_STATUS_RUNNING|MOVELOOP_STATUS_PAUSED) != (MOVELOOP_STATUS_RUNNING|MOVELOOP_STATUS_PAUSED))
+	if(!controller || (status & (MOVELOOP_STATUS_RUNNING|MOVELOOP_STATUS_PAUSED)) != (MOVELOOP_STATUS_RUNNING|MOVELOOP_STATUS_PAUSED))
 		return
 
 	timer = world.time
@@ -409,8 +418,11 @@
 	. = ..()
 	movement_path = null
 
+
 /datum/move_loop/has_target/jps/Destroy()
 	avoid = null
+	// Pending pathfinds share this list so we need to clear it to release their callbacks to us
+	on_finish_callbacks.Cut()
 	on_finish_callbacks = null
 	return ..()
 
@@ -427,6 +439,8 @@
 /datum/move_loop/has_target/jps/proc/on_finish_pathing(list/path)
 	movement_path = path
 	is_pathing = FALSE
+	if(moving)
+		EVLOG_PATH(moving, EVLOG_CATEGORY_JPS, "Planned AI path", movement_path)
 	SEND_SIGNAL(src, COMSIG_MOVELOOP_JPS_FINISHED_PATHING, path)
 
 /datum/move_loop/has_target/jps/move()
@@ -434,6 +448,7 @@
 		if(is_pathing)
 			return MOVELOOP_NOT_READY
 		else
+			EVLOG_TEXT(moving, EVLOG_CATEGORY_JPS, "Path recalculating due to lack of path")
 			INVOKE_ASYNC(src, PROC_REF(recalculate_path))
 			return MOVELOOP_FAILURE
 
@@ -448,6 +463,95 @@
 		if(length(movement_path))
 			movement_path.Cut(1,2)
 	else
+		return handle_move_attempt_failure()
+
+
+/datum/move_loop/has_target/jps/proc/handle_move_attempt_failure()
+	EVLOG_TEXT(moving, EVLOG_CATEGORY_MOVELOOPS, "Path recalculating due to obstruction")
+	INVOKE_ASYNC(src, PROC_REF(recalculate_path))
+	return MOVELOOP_FAILURE
+
+/datum/move_loop/has_target/jps/frustrations
+	///maximum amount of frustrations before we recalculate path
+	var/maximum_frustrations
+	///what is our current frustration?
+	var/current_frustrations = 0
+	///how long before we're able to increment frustration?
+	var/frustration_delay
+	///have we drawn our initial path?
+	var/initial_path_drawn = FALSE
+	///cooldown between frustration increments
+	COOLDOWN_DECLARE(frustration_cooldown)
+
+
+/datum/move_manager/proc/frustrations_move(moving,
+	chasing,
+	delay,
+	timeout,
+	repath_delay,
+	max_path_length,
+	minimum_distance,
+	list/access,
+	simulated_only,
+	turf/avoid,
+	skip_first,
+	subsystem,
+	diagonal_handling,
+	priority,
+	flags,
+	datum/extra_info,
+	initial_path)
+	return add_to_loop(moving,
+		subsystem,
+		/datum/move_loop/has_target/jps/frustrations,
+		priority,
+		flags,
+		extra_info,
+		delay,
+		timeout,
+		chasing,
+		repath_delay,
+		max_path_length,
+		minimum_distance,
+		access,
+		simulated_only,
+		avoid,
+		skip_first,
+		diagonal_handling,
+		initial_path)
+
+/datum/move_loop/has_target/jps/frustrations/setup(delay, timeout, atom/chasing, maximum_frustrations = 10, frustration_delay = 2 SECONDS)
+	. = ..()
+	if(!.)
+		return
+	src.maximum_frustrations = maximum_frustrations
+	src.frustration_delay = frustration_delay
+
+/datum/move_loop/has_target/jps/frustrations/recalculate_path()
+	if(initial_path_drawn && current_frustrations < maximum_frustrations)
+		return
+	return ..()
+
+/datum/move_loop/has_target/jps/frustrations/loop_stopped()
+	. = ..()
+
+/datum/move_loop/has_target/jps/frustrations/on_finish_pathing(list/path)
+	. = ..()
+	if(movement_path)
+		initial_path_drawn = TRUE
+
+/datum/move_loop/has_target/jps/frustrations/handle_move_attempt_failure()
+	if(!initial_path_drawn)
+		INVOKE_ASYNC(src, PROC_REF(recalculate_path))
+		return MOVELOOP_FAILURE
+	if(!COOLDOWN_FINISHED(src, frustration_cooldown))
+		return NONE
+	COOLDOWN_START(src, frustration_cooldown, frustration_delay)
+	current_frustrations++
+	SEND_SIGNAL(src, COMSIG_MOVELOOP_JPS_FRUSTRATION_INCREMENTED, current_frustrations)
+	if(current_frustrations >= maximum_frustrations)
+		current_frustrations = 0
+		EVLOG_TEXT(moving, EVLOG_CATEGORY_MOVELOOPS, "Path recalculating due to obstruction")
 		INVOKE_ASYNC(src, PROC_REF(recalculate_path))
 		return MOVELOOP_FAILURE
 
@@ -655,6 +759,9 @@
 
 /datum/move_loop/has_target/move_towards/proc/handle_move(source, atom/OldLoc, Dir, Forced = FALSE)
 	SIGNAL_HANDLER
+	if(QDELETED(src))
+		return
+
 	if(moving.loc != moving_towards && home) //If we didn't go where we should have, update slope to account for the deviation
 		update_slope()
 
@@ -675,6 +782,8 @@
 **/
 /datum/move_loop/has_target/move_towards/proc/update_slope()
 	SIGNAL_HANDLER
+	if(QDELETED(src))
+		return
 
 	//You'll notice this is rise over run, except we flip the formula upside down depending on the larger number
 	//This is so we never move more then one tile at once
@@ -703,7 +812,7 @@
 		y_rate = 1
 
 /**
- * Wrapper for walk_towards, not reccomended, as it's movement ends up being a bit stilted
+ * Wrapper for walk_towards, not reccomended, as its movement ends up being a bit stilted
  *
  * Returns TRUE if the loop sucessfully started, or FALSE if it failed
  *
@@ -869,3 +978,95 @@
 	var/atom/old_loc = moving.loc
 	holder.current_pipe = holder.current_pipe.transfer(holder)
 	return old_loc != moving?.loc ? MOVELOOP_SUCCESS : MOVELOOP_FAILURE
+
+
+/**
+ * Helper proc for the smooth_move datum
+ *
+ * Returns TRUE if the loop sucessfully started, or FALSE if it failed
+ *
+ * Arguments:
+ * moving - The atom we want to move
+ * angle - Angle at which we want to move
+ * delay - How many deci-seconds to wait between fires. Defaults to the lowest value, 0.1
+ * timeout - Time in deci-seconds until the moveloop self expires. Defaults to INFINITY
+ * subsystem - The movement subsystem to use. Defaults to SSmovement. Only one loop can exist for any one subsystem
+ * priority - Defines how different move loops override each other. Lower numbers beat higher numbers, equal defaults to what currently exists. Defaults to MOVEMENT_DEFAULT_PRIORITY
+ * flags - Set of bitflags that effect move loop behavior in some way. Check _DEFINES/movement.dm
+ *
+**/
+
+/datum/move_manager/proc/smooth_move(moving, angle, delay, timeout, subsystem, priority, flags, datum/extra_info)
+	return add_to_loop(moving, subsystem, /datum/move_loop/smooth_move, priority, flags, extra_info, delay, timeout, angle)
+
+/datum/move_loop/smooth_move
+	/// Angle at which we move. 0 is north because byond.
+	var/angle = 0
+	/// When this gets bigger than 1, we move a turf
+	var/x_ticker = 0
+	var/y_ticker = 0
+	/// The rate at which we move, between 0 and 1. Cached to cut down on trig
+	var/x_rate = 0
+	var/y_rate = 1
+	/// Sign for our movement
+	var/x_sign = 1
+	var/y_sign = 1
+	/// Actual move delay, as delay will be modified by move() depending on what direction we move in
+	var/saved_delay
+
+/datum/move_loop/smooth_move/setup(delay, timeout, angle)
+	. = ..()
+	if(!.)
+		return FALSE
+	set_angle(angle)
+	saved_delay = delay
+
+/datum/move_loop/smooth_move/set_delay(new_delay)
+	new_delay = round(new_delay, world.tick_lag)
+	. = ..()
+	saved_delay = delay
+
+/datum/move_loop/smooth_move/compare_loops(datum/move_loop/loop_type, priority, flags, extra_info, delay, timeout, atom/chasing, home = FALSE)
+	if(..() && angle == src.angle)
+		return TRUE
+	return FALSE
+
+/datum/move_loop/smooth_move/move()
+	var/atom/old_loc = moving.loc
+	// Defaulting to 2 because if one rate is 0 the other is guaranteed to be 1, so maxing out at 1 to_move
+	var/x_to_move = x_rate > 0 ? (1 - x_ticker) / x_rate : 2
+	var/y_to_move = y_rate > 0 ? (1 - y_ticker) / y_rate : 2
+	var/move_dist = min(x_to_move, y_to_move)
+	x_ticker += x_rate * move_dist
+	y_ticker += y_rate * move_dist
+
+	// Per Bresenham's, if we are closer to the next tile's center move diagonally. Checked by seeing if we pass into the next tile after moving another half a tile
+	var/move_x = (x_ticker + x_rate * 0.5) > 1
+	var/move_y = (y_ticker + y_rate * 0.5) > 1
+	if (move_x)
+		x_ticker = 0
+	if (move_y)
+		y_ticker = 0
+
+	var/turf/next_turf = locate(moving.x + (move_x ? x_sign : 0), moving.y + (move_y ? y_sign : 0), moving.z)
+	moving.Move(next_turf, get_dir(moving, next_turf), FALSE, !(flags & MOVEMENT_LOOP_NO_DIR_UPDATE))
+
+	if (old_loc == moving?.loc)
+		return MOVELOOP_FAILURE
+
+	delay = saved_delay
+	if (move_x && move_y)
+		delay *= 1.4
+
+	return MOVELOOP_SUCCESS
+
+/datum/move_loop/smooth_move/proc/set_angle(new_angle)
+	angle = new_angle
+	x_rate = sin(angle)
+	y_rate = cos(angle)
+	x_sign = sign(x_rate)
+	y_sign = sign(y_rate)
+	x_rate = abs(x_rate)
+	y_rate = abs(y_rate)
+	x_ticker = 0
+	y_ticker = 0

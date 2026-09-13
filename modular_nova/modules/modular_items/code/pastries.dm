@@ -6,7 +6,7 @@
 	icon = 'modular_nova/modules/modular_items/icons/pastries.dmi'
 	icon_state = "mince_pie"
 	food_flags = FOOD_FINGER_FOOD
-	foodtypes = GRAIN | SUGAR | FRUIT
+	foodtypes = GRAIN | SUGAR | DAIRY | FRUIT
 	food_reagents = list(/datum/reagent/consumable/nutriment = 6, /datum/reagent/consumable/nutriment/vitamin = 2)
 	tastes = list("fruit" = 1, "raisins" = 1, "christmas spirit" = 1)
 	crafting_complexity = FOOD_COMPLEXITY_3
@@ -18,7 +18,7 @@
 	icon = 'modular_nova/modules/modular_items/icons/pastries.dmi'
 	icon_state = "mimce_pie"
 	food_flags = FOOD_FINGER_FOOD
-	foodtypes = GRAIN | SUGAR | FRUIT
+	foodtypes = GRAIN | FRUIT | DAIRY | SUGAR
 	food_reagents = list(/datum/reagent/consumable/nutriment = 6, /datum/reagent/consumable/nutriment/vitamin = 2)
 	tastes = list("nothing" = 1, "christmas spirit" = 1)
 	crafting_complexity = FOOD_COMPLEXITY_3
@@ -33,7 +33,9 @@
 		/obj/item/food/pastrybase = 1
 	)
 	result = /obj/item/food/mince_pie
-	category = CAT_PASTRY
+	removed_foodtypes = JUNKFOOD
+	dish_category = DISH_PASTRY
+	meal_category = MEAL_DESSERT
 
 /datum/crafting_recipe/food/mimce_pie
 	name = "Mimce pie"
@@ -44,4 +46,7 @@
 		/obj/item/food/pastrybase = 1
 	)
 	result = /obj/item/food/mimce_pie
-	category = CAT_PASTRY
+
+	removed_foodtypes = JUNKFOOD
+	dish_category = DISH_PASTRY
+	meal_category = MEAL_DESSERT

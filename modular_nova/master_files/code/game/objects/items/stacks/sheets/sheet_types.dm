@@ -29,10 +29,13 @@ GLOBAL_LIST_INIT(nova_metal_recipes, list(
 	new/datum/stack_recipe("elevated floor tile", /obj/item/stack/tile/iron/elevated, 1, 4, 20, category = CAT_TILES),
 	new/datum/stack_recipe("wrestling turnbuckle", /obj/structure/wrestling_corner, 3, time = 2.5 SECONDS, crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_ONE_PER_TURF | CRAFT_ON_SOLID_GROUND, category = CAT_STRUCTURE),
 	new/datum/stack_recipe("metal barricade", /obj/structure/deployable_barricade/metal, 2, time = 1 SECONDS, crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_ON_SOLID_GROUND | CRAFT_CHECK_DIRECTION, category = CAT_STRUCTURE),
+	new/datum/stack_recipe("gun rack", /obj/structure/rack/gunrack, 1, time = 2 SECONDS, crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_ONE_PER_TURF | CRAFT_ON_SOLID_GROUND, category = CAT_STRUCTURE),
+	new/datum/stack_recipe("gun locker", /obj/structure/guncase, 5, time = 2 SECONDS, crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_ONE_PER_TURF | CRAFT_ON_SOLID_GROUND, category = CAT_STRUCTURE),
 	new/datum/stack_recipe("metal shelf", /obj/structure/rack/shelf, 1, time = 2 SECONDS, crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_ONE_PER_TURF | CRAFT_ON_SOLID_GROUND, category = CAT_STRUCTURE),
 	new/datum/stack_recipe("anvil", /obj/structure/reagent_anvil, 10, time = 2 SECONDS, crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_ONE_PER_TURF | CRAFT_ON_SOLID_GROUND, category = CAT_TOOLS),
 	new/datum/stack_recipe("forge", /obj/structure/reagent_forge, 10, time = 2 SECONDS, crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_ONE_PER_TURF | CRAFT_ON_SOLID_GROUND, category = CAT_TOOLS),
 	new/datum/stack_recipe("throwing wheel", /obj/structure/throwing_wheel, 10, time = 2 SECONDS, crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_ONE_PER_TURF | CRAFT_ON_SOLID_GROUND, category = CAT_TOOLS),
+	new/datum/stack_recipe("crate shelf parts", /obj/item/rack_parts/cargo_shelf, 4, category = CAT_FURNITURE), \
 ))
 
 GLOBAL_LIST_INIT(nova_metal_airlock_recipes, list(
@@ -49,6 +52,8 @@ GLOBAL_LIST_INIT(nova_metal_airlock_recipes, list(
 
 GLOBAL_LIST_INIT(nova_plasteel_recipes, list(
 	new/datum/stack_recipe("plasteel barricade", /obj/structure/deployable_barricade/metal/plasteel, 2, time = 1 SECONDS, crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_ONE_PER_TURF | CRAFT_ON_SOLID_GROUND | CRAFT_CHECK_DIRECTION, category = CAT_STRUCTURE),
+	// FLOORS_AND_WALLS - re-added from tgstation #97241
+	new/datum/stack_recipe("plasteel tile", /obj/item/stack/tile/plasteel, 1, 4, 20, crafting_flags = NONE, category = CAT_TILES),
 ))
 
 /obj/item/stack/sheet/plasteel/get_main_recipes()
@@ -97,6 +102,16 @@ GLOBAL_LIST_INIT(nova_wood_recipes, list(
 	. = ..()
 	. += GLOB.nova_wood_recipes
 
+// Cardboard
+
+GLOBAL_LIST_INIT(nova_cardboard_recipes, list(
+	new/datum/stack_recipe("coffee tray", /obj/item/storage/box/coffee_tray, 1, category = CAT_CONTAINERS),
+))
+
+/obj/item/stack/sheet/cardboard/get_main_recipes()
+	. = ..()
+	. += GLOB.nova_cardboard_recipes
+
 // Cloth
 
 GLOBAL_LIST_INIT(nova_cloth_recipes, list(
@@ -104,7 +119,7 @@ GLOBAL_LIST_INIT(nova_cloth_recipes, list(
 	new/datum/stack_recipe("towel", /obj/item/towel, 2, category = CAT_CLOTHING),
 	new/datum/stack_recipe("eyepatch wrap", /obj/item/clothing/glasses/eyepatch/wrap, 2, category = CAT_CLOTHING),
 	new/datum/stack_recipe("eyepatch", /obj/item/clothing/glasses/eyepatch, 2, category = CAT_CLOTHING),
-	new/datum/stack_recipe("xenoarch bag", /obj/item/storage/bag/xenoarch, 4, category = CAT_CONTAINERS),
+	new/datum/stack_recipe("xenoarch bag", /obj/item/storage/bag/xenoarch, 4, crafting_flags = CRAFT_SKIP_MATERIALS_PARITY, category = CAT_CONTAINERS),
 	new/datum/stack_recipe("saddlebags", /obj/item/storage/backpack/saddlebags, 5, category = CAT_CONTAINERS),
 ))
 
@@ -115,17 +130,19 @@ GLOBAL_LIST_INIT(nova_cloth_recipes, list(
 // Leather
 
 GLOBAL_LIST_INIT(nova_leather_recipes, list(
+	new/datum/stack_recipe("bag of dice", /obj/item/storage/dice/empty, 2, category = CAT_CONTAINERS),
 ))
 
 GLOBAL_LIST_INIT(nova_leather_belt_recipes, list(
-	new/datum/stack_recipe("xenoarch belt", /obj/item/storage/belt/utility/xenoarch, 4, category = CAT_CONTAINERS),
+	new/datum/stack_recipe("xenoarch belt", /obj/item/storage/belt/utility/xenoarch, 4, crafting_flags = CRAFT_SKIP_MATERIALS_PARITY, category = CAT_CONTAINERS),
 	new/datum/stack_recipe("medical bandolier", /obj/item/storage/belt/medbandolier, 5, category = CAT_CONTAINERS),
 	new/datum/stack_recipe("gear harness", /obj/item/clothing/under/misc/nova/gear_harness, 6, category = CAT_CLOTHING),
 	new/datum/stack_recipe("ammo pouch", /obj/item/storage/pouch/ammo, 4, category = CAT_CONTAINERS),
-	new/datum/stack_recipe("cowboy belt (thigh holster)", /obj/item/storage/belt/holster/cowboy, 3, crafting_flags = NONE, category = CAT_CONTAINERS),
+	new/datum/stack_recipe("thigh holster (cowboy belt)", /obj/item/storage/belt/holster/thigh, 3, crafting_flags = NONE, category = CAT_CONTAINERS),
+	new/datum/stack_recipe("thigh satchel (black belt)", /obj/item/storage/belt/thigh_satchel, 3, crafting_flags = NONE, category = CAT_CONTAINERS),
 	new/datum/stack_recipe_list("saddles", list(
 		new/datum/stack_recipe("riding saddle (normal)", /obj/item/riding_saddle/leather, 5, category = CAT_CLOTHING),
-		new/datum/stack_recipe("riding saddle (peacekeeper)", /obj/item/riding_saddle/leather/peacekeeper, 5, category = CAT_CLOTHING),
+		new/datum/stack_recipe("riding saddle (blue)", /obj/item/riding_saddle/leather/blue, 5, category = CAT_CLOTHING),
 	)),
 ))
 
@@ -137,12 +154,22 @@ GLOBAL_LIST_INIT(nova_leather_belt_recipes, list(
 // Titanium
 
 GLOBAL_LIST_INIT(nova_titanium_recipes, list(
-	new/datum/stack_recipe("spaceship plating", /obj/item/stack/sheet/spaceship, 1, time = 5, category = CAT_MISC),
+	new/datum/stack_recipe("spaceship plating", /obj/item/stack/sheet/spaceship, 1, 1, max_res_amount = 50, category = CAT_MISC),
 ))
 
 /obj/item/stack/sheet/mineral/titanium/get_main_recipes()
 	. = ..()
 	. += GLOB.nova_titanium_recipes
+
+// Titanium Glass
+
+GLOBAL_LIST_INIT(nova_titaniumglass_recipes, list(
+	new/datum/stack_recipe("spaceship glass", /obj/item/stack/sheet/spaceshipglass, 1, 1, max_res_amount = 50, category = CAT_MISC),
+))
+
+/obj/item/stack/sheet/titaniumglass/get_main_recipes()
+	. = ..()
+	. += GLOB.nova_titaniumglass_recipes
 
 // Snow
 
@@ -154,6 +181,17 @@ GLOBAL_LIST_INIT(nova_snow_recipes, list(
 	. = ..()
 	. += GLOB.nova_snow_recipes
 
+// Plastic
+
+GLOBAL_LIST_INIT(nova_plastic_recipes, list(
+	new /datum/stack_recipe("cone collar", /obj/item/clothing/head/cone_of_shame, time = 1 SECONDS, category = CAT_CLOTHING),
+	new /datum/stack_recipe("pet training clicker", /obj/item/petclicker, time = 1 SECONDS, category = CAT_ENTERTAINMENT),
+))
+
+/obj/item/stack/sheet/plastic/get_main_recipes()
+	. = ..()
+	. += GLOB.nova_plastic_recipes
+
 // Sand
 
 GLOBAL_LIST_INIT(nova_sand_recipes, list(
@@ -163,3 +201,15 @@ GLOBAL_LIST_INIT(nova_sand_recipes, list(
 /obj/item/stack/ore/glass/get_main_recipes()
 	. = ..()
 	. += GLOB.nova_sand_recipes
+
+// Sandstone
+
+GLOBAL_LIST_INIT(nova_sandstone_recipes, list(
+	new/datum/stack_recipe("brick well", /obj/structure/water_source/brick_well, 5, crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_ONE_PER_TURF | CRAFT_ON_SOLID_GROUND | CRAFT_SKIP_MATERIALS_PARITY, category = CAT_STRUCTURE),
+	// FLOORS_AND_WALLS - #97241 added sandstone wall fillings without a way to make them; this mirrors the plastitanium one
+	new/datum/stack_recipe("sandstone wall filler", /obj/item/stack/wall_filling/sandstone/basic, 2, 1, 10, crafting_flags = NONE, category = CAT_STRUCTURE),
+))
+
+/obj/item/stack/sheet/mineral/sandstone/get_main_recipes()
+	. = ..()
+	. += GLOB.nova_sandstone_recipes

@@ -47,14 +47,14 @@
 	if(model && model.model_features && (TRAIT_R_TALL in model.model_features))
 		maptext_height = 48 //Offset value of tallborgs
 
-/mob/living/silicon/robot/proc/rest_style()
-	set name = "Switch Rest Style"
-	set category = "AI Commands"
-	set desc = "Select your resting pose."
+GAME_VERB_PROC_DESC(/mob/living/silicon/robot, rest_style, "Switch Rest Style", "Select your resting pose.", "AI Commands")
 	if(!can_rest())
 		to_chat(src, span_warning("You can't do that!"))
 		return
-	var/choice = tgui_alert(src, "Select resting pose", "", list("Resting", "Sitting", "Belly up"))
+	var/list/choices = list("Resting", "Sitting", "Belly up")
+	if(model && model.model_features && (TRAIT_RESTING_ALTS in model.model_features))
+		choices = list("Resting", "Sitting", "Belly up", "Sleep", "Rest Wagging", "Sit Wagging")
+	var/choice = tgui_input_list(src, "Select resting pose", "", choices)
 	switch(choice)
 		if("Resting")
 			robot_rest_style = ROBOT_REST_NORMAL
@@ -62,20 +62,26 @@
 			robot_rest_style = ROBOT_REST_SITTING
 		if("Belly up")
 			robot_rest_style = ROBOT_REST_BELLY_UP
+		if("Sleep")
+			robot_rest_style = ROBOT_REST_SLEEP
+		if("Rest Wagging")
+			robot_rest_style = ROBOT_REST_NORMAL_ALT
+		if("Sit Wagging")
+			robot_rest_style = ROBOT_REST_SITTING_ALT
 	robot_resting = robot_rest_style
 	if (robot_resting)
 		on_lying_down()
 	update_icons()
 
-/mob/living/silicon/robot/proc/robot_lay_down()
-	set name = "Lay down"
-	set category = "AI Commands"
+GAME_VERB_PROC(/mob/living/silicon/robot, robot_lay_down, "Lay down", "AI Commands")
 	if(!can_rest())
 		to_chat(src, span_warning("You can't do that!"))
 		return
-	if(stat != CONSCIOUS) //Make sure we don't enable movement when not concious
+	if(IS_UNCONSCIOUS_OR_CRIT(src)) //Make sure we don't enable movement when not concious
 		return
 	if(robot_resting)
+		if(GetComponent(/datum/component/robot_smoke))
+			dissipate()
 		to_chat(src, span_notice("You are now getting up."))
 		robot_resting = FALSE
 		mobility_flags = MOBILITY_FLAGS_DEFAULT
@@ -94,6 +100,7 @@
 
 /mob/living/silicon/robot/update_module_innate()
 	..()
+	var/atom/movable/screen/robot/module/hands = hud_used?.screen_objects[HUD_CYBORG_HANDS]
 	if(hands)
 		hands.icon = (model.model_select_alternate_icon ? model.model_select_alternate_icon : initial(hands.icon))
 

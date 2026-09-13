@@ -1,7 +1,7 @@
 /datum/body_marking/moth
 	icon = 'modular_nova/master_files/icons/mob/body_markings/moth_markings.dmi'
 	default_color = "#FFFFFF"
-	recommended_species = list(SPECIES_MOTH)
+	recommended_species = list(SPECIES_MOTH = 1)
 	affected_bodyparts = HEAD | CHEST | ARM_LEFT | ARM_RIGHT | LEG_RIGHT | LEG_LEFT
 
 /datum/body_marking/moth/reddish
@@ -55,6 +55,10 @@
 /datum/body_marking/moth/lovers
 	name = "Lovers"
 	icon_state = "lovers"
+
+/datum/body_marking/moth/lightbearer
+	name = "Lightbearer"
+	icon_state = "lightbearer"
 
 /datum/body_marking/moth/grayscale
 	icon = 'modular_nova/master_files/icons/mob/body_markings/moth_grayscale_markings.dmi'

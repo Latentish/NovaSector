@@ -13,7 +13,7 @@
  * Sensitive areas like the vault, command quarters, heads' offices, etc. are not applicable.
 */
 
-/area/station/ai_monitored/command/storage/eva
+/area/station/command/eva
 	engineering_override_eligible = TRUE
 
 /area/station/cargo
@@ -81,14 +81,10 @@
 	RegisterSignal(door_area, COMSIG_AREA_FIRE_CHANGED, PROC_REF(update_fire_status))
 	RegisterSignal(SSdcs, COMSIG_GLOB_FORCE_ENG_OVERRIDE, PROC_REF(force_eng_override))
 
-///Check for the three states of open access. Emergency, Unrestricted, and Engineering Override
+/// If the station has the engineering override set, or
+/// the area has a fire alarm, allows peoples with [ACCESS_ENGINEERING]
+/// to open the airlock anyway (falls back to TG behavior otherwise)
 /obj/machinery/door/airlock/allowed(mob/user)
-	if(emergency)
-		return TRUE
-
-	if(unrestricted_side(user))
-		return TRUE
-
 	if(engineering_override || fire_active)
 		var/mob/living/carbon/human/interacting_human = user
 		if(!istype(interacting_human))
@@ -132,7 +128,7 @@
 	switch(wire)
 		if(WIRE_IDSCAN)
 			if(airlock.hasPower() && airlock.density)
-				airlock.do_animate("deny")
+				airlock.run_animation(DOOR_DENY_ANIMATION)
 				if(airlock.emergency)
 					airlock.emergency = FALSE
 					airlock.update_appearance()
@@ -145,7 +141,7 @@ GLOBAL_VAR_INIT(force_eng_override, FALSE)
 /proc/toggle_eng_override()
 	if(!GLOB.force_eng_override)
 		GLOB.force_eng_override = TRUE
-		minor_announce("Engineering staff will have expanded access to areas of the station during the emergency.", "Engineering Emergency", sound_override = 'sound/misc/notice1.ogg')
+		minor_announce("Engineering staff will have expanded access to areas of the station during the emergency.", "Engineering Emergency", sound_override = 'sound/announcer/notice/notice1.ogg')
 		SEND_GLOBAL_SIGNAL(COMSIG_GLOB_FORCE_ENG_OVERRIDE, TRUE)
 		SSblackbox.record_feedback("nested tally", "keycard_auths", 1, list("engineer override access", "enabled"))
 	else

@@ -5,6 +5,17 @@
 	implant_color = "r"
 	uses = FREEDOM_IMPLANT_CHARGES
 
+	implant_info = "Activated manually. \
+		Unlocks bindings on arms and legs when activated, but not larger ones e.g. straightjackets."
+
+	implant_lore = "The CSMD Freedom Beacon is a hybrid signal transmitter and specialized nanite manufactory \
+		designed to defeat handcuffs, legcuffs, and other equivalent arm and leg bindings by both transmitting \
+		unlock signals for electrical cuff lock systems and, in the event of failure, generating thin nanite tendrils \
+		to nondestructively unsecure relevant bindings. Unfortunately, this only works for bindings on the arms and legs; \
+		larger restraints, such as straightjackets are too complex for the nanites to deal with."
+
+	var/resist_strength = 3 MINUTES
+
 /obj/item/implant/freedom/implant(mob/living/target, mob/user, silent, force)
 	. = ..()
 	if(!.)
@@ -23,35 +34,31 @@
 
 	uses--
 
-	carbon_imp_in.uncuff()
-	var/obj/item/clothing/shoes/shoes = carbon_imp_in.shoes
+	carbon_imp_in.uncuff(resist_strength)
+	var/obj/item/clothing/shoes/shoes = carbon_imp_in.get_item_by_slot(ITEM_SLOT_FEET)
 	if(istype(shoes) && shoes.tied == SHOES_KNOTTED)
 		shoes.adjust_laces(SHOES_TIED, carbon_imp_in)
 
 	if(!uses)
 		addtimer(CALLBACK(carbon_imp_in, TYPE_PROC_REF(/atom, balloon_alert), carbon_imp_in, "implant degraded!"), 1 SECONDS)
 		qdel(src)
+	carbon_imp_in.remove_status_effect(/datum/status_effect/tased) // NOVA EDIT ADDITION - if being tased, removes the status on use, and detaches the electrode.
 
 /obj/item/implant/freedom/proc/can_trigger(mob/living/carbon/implanted_in)
-	if(implanted_in.handcuffed || implanted_in.legcuffed)
-		return TRUE
+	for(var/obj/item/restraint in implanted_in.get_all_attached_restraints())
+		if(restraint.breakouttime <= resist_strength)
+			return TRUE
 
-	var/obj/item/clothing/shoes/shoes = implanted_in.shoes
+	// NOVA EDIT ADDITION START
+	if(implanted_in.has_status_effect(/datum/status_effect/tased))
+		return TRUE
+	// NOVA EDIT ADDITION END
+	var/obj/item/clothing/shoes/shoes = implanted_in.get_item_by_slot(ITEM_SLOT_FEET)
 	if(istype(shoes) && shoes.tied == SHOES_KNOTTED)
 		return TRUE
 
 	return FALSE
 
-/obj/item/implant/freedom/get_data()
-	return "<b>Implant Specifications:</b><BR> \
-		<b>Name:</b> Freedom Beacon<BR> \
-		<b>Life:</b> Optimum [initial(uses)] uses<BR> \
-		<b>Important Notes:</b> <font color='red'>Illegal</font><BR> \
-		<HR> \
-		<b>Implant Details:</b> <BR> \
-		<b>Function:</b> Transmits a specialized cluster of signals to override handcuff locking \
-		mechanisms. These signals will release any bindings on both the arms and legs.<BR> \
-		<b>Disclaimer:</b> Heavy-duty restraints such as straightjackets are deemed \"too complex\" to release from."
 
 /obj/item/implanter/freedom
 	name = "implanter" // NOVA EDIT , was implanter (freedom)

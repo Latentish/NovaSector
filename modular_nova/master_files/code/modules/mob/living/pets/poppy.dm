@@ -35,19 +35,15 @@
 	light_on = TRUE
 
 /datum/ai_controller/basic_controller/poppy
+	behavior_tree_json = "modular_nova/master_files/code/modules/mob/living/pets/poppy.bt.json"
 	blackboard = list(
 		BB_TARGETING_STRATEGY = /datum/targeting_strategy/basic,
 	)
 
 	ai_traits = STOP_MOVING_WHEN_PULLED
 	ai_movement = /datum/ai_movement/basic_avoidance
-	idle_behavior = /datum/idle_behavior/idle_random_walk
 
-	planning_subtrees = list(
-		/datum/ai_planning_subtree/random_speech/poppy,
-	)
-
-/datum/ai_planning_subtree/random_speech/poppy
+/datum/bt_node/ai_behavior/random_speech/poppy
 	speak = list("Hiss!", "HISS!", "Hissss?")
 	emote_hear = list("hisses.")
 	emote_see = list("runs in a circle.", "shakes.")
@@ -94,7 +90,7 @@
 		set_light_on(TRUE)
 	regenerate_icons()
 
-/mob/living/basic/pet/poppy/Life(seconds_per_tick = SSMOBS_DT, times_fired)
+/mob/living/basic/pet/poppy/Life(seconds_per_tick = SSMOBS_DT)
 	if(client || stat)
 		return
 
@@ -108,11 +104,11 @@
 	if(!SPT_PROB(0.5, seconds_per_tick))
 		return
 	if(!resting)
-		manual_emote(pick("lets out a hiss before resting.", "catches a break.", "gives a simmering hiss before lounging.", "exams her surroundings before relaxing."))
+		INVOKE_ASYNC(src, TYPE_PROC_REF(/atom, manual_emote), (pick("lets out a hiss before resting.", "catches a break.", "gives a simmering hiss before lounging.", "exams her surroundings before relaxing.")))
 		set_resting(TRUE)
 		return
 	else
-		manual_emote(pick("stretches her claws, rising...", "diligently gets up, ready to inspect!", "stops her resting."))
+		INVOKE_ASYNC(src, TYPE_PROC_REF(/atom, manual_emote), (pick("stretches her claws, rising...", "diligently gets up, ready to inspect!", "stops her resting.")))
 		set_resting(FALSE)
 
 	return ..()
@@ -128,9 +124,9 @@
 	upset = TRUE
 	icon_state = "poppypossum_aaa"
 
-	emote("sweatdrop")
+	INVOKE_ASYNC(src, TYPE_PROC_REF(/mob, emote), "sweatdrop")
 	do_jitter_animation(60)
-	manual_emote("'s fur stands up, [src.p_their()] body trembling...")
+	INVOKE_ASYNC(src, TYPE_PROC_REF(/atom, manual_emote), "'s fur stands up, [src.p_their()] body trembling...")
 
 	notify_ghosts("[src] was startled by the supermatter!",
 		source = src,

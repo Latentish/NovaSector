@@ -1,11 +1,11 @@
 /obj/item/scythe
 	name = "scythe"
 	desc = "A sharp and curved blade on a long fibremetal handle, this tool makes it easy to reap what you sow."
-	icon = 'modular_nova/modules/space_vines/items_and_weapons.dmi'
+	icon = 'modular_nova/modules/space_vines/icons/items_and_weapons.dmi'
 	icon_state = "scythe_t1"
-	worn_icon = 'modular_nova/modules/space_vines/back.dmi'
-	lefthand_file = 'modular_nova/modules/space_vines/polearms_lefthand.dmi'
-	righthand_file = 'modular_nova/modules/space_vines/polearms_righthand.dmi'
+	worn_icon = 'modular_nova/modules/space_vines/icons/back.dmi'
+	lefthand_file = 'modular_nova/modules/space_vines/icons/polearms_lefthand.dmi'
+	righthand_file = 'modular_nova/modules/space_vines/icons/polearms_righthand.dmi'
 	force = 13
 	throwforce = 5
 	throw_speed = 2
@@ -17,7 +17,7 @@
 	slot_flags = ITEM_SLOT_BACK
 	attack_verb_continuous = list("chops", "slices", "cuts", "reaps")
 	attack_verb_simple = list("chop", "slice", "cut", "reap")
-	hitsound = 'sound/weapons/bladeslice.ogg'
+	hitsound = 'sound/items/weapons/bladeslice.ogg'
 	item_flags = CRUEL_IMPLEMENT //maybe they want to use it in surgery
 
 	var/hit_range = 0
@@ -39,29 +39,32 @@
 /obj/item/scythe/tier1
 	name = "scythe (tier 1)"
 	icon_state = "scythe_t1"
+	custom_materials = list(/datum/material/iron = HALF_SHEET_MATERIAL_AMOUNT, /datum/material/glass = HALF_SHEET_MATERIAL_AMOUNT)
 
 /obj/item/scythe/tier2
 	name = "scythe (tier 2)"
 	icon_state = "scythe_t2"
 	force = 15
 	hit_range = 1
+	custom_materials = list(/datum/material/iron = HALF_SHEET_MATERIAL_AMOUNT, /datum/material/glass = HALF_SHEET_MATERIAL_AMOUNT)
 
 /obj/item/scythe/tier3
 	name = "scythe (tier 3)"
 	icon_state = "scythe_t3"
 	force = 18
 	hit_range = 2
+	custom_materials = list(/datum/material/iron = HALF_SHEET_MATERIAL_AMOUNT, /datum/material/glass = HALF_SHEET_MATERIAL_AMOUNT)
 
 /obj/item/scythe/tier4
 	name = "scythe (tier 4)"
 	icon_state = "scythe_t4"
 	force = 22
 	hit_range = 3
+	custom_materials = list(/datum/material/iron = HALF_SHEET_MATERIAL_AMOUNT, /datum/material/glass = HALF_SHEET_MATERIAL_AMOUNT)
 
 /datum/design/scythe
 	name = "Scythe (Tier 1)"
 	desc = "A sharp and curved blade on a long fibremetal handle, this tool makes it easy to reap what you sow."
-	id = "scythet1"
 	build_type = PROTOLATHE | AWAY_LATHE
 	materials = list(
 		/datum/material/iron = HALF_SHEET_MATERIAL_AMOUNT,
@@ -71,38 +74,75 @@
 	category = list(
 		RND_CATEGORY_TOOLS + RND_SUBCATEGORY_TOOLS_BOTANY,
 	)
-	departmental_flags = DEPARTMENT_BITFLAG_SERVICE
+	departmental_flags = DEPARTMENT_BITFLAG_SERVICE | DEPARTMENT_BITFLAG_SECURITY
 
 /datum/design/scythe/tier2
 	name = "Scythe (Tier 2)"
-	id = "scythet2"
 	materials = list(
 		/datum/material/iron = HALF_SHEET_MATERIAL_AMOUNT,
 		/datum/material/glass = HALF_SHEET_MATERIAL_AMOUNT,
 	)
 	build_path = /obj/item/scythe/tier2
 
+/datum/design/scythe/tier3
+	name = "Scythe (Tier 3)"
+	materials = list(
+		/datum/material/iron = HALF_SHEET_MATERIAL_AMOUNT,
+		/datum/material/glass = HALF_SHEET_MATERIAL_AMOUNT,
+	)
+	build_path = /obj/item/scythe/tier3
+
+/datum/design/scythe/tier4
+	name = "Scythe (Tier 4)"
+	materials = list(
+		/datum/material/iron = HALF_SHEET_MATERIAL_AMOUNT,
+		/datum/material/glass = HALF_SHEET_MATERIAL_AMOUNT,
+	)
+	build_path = /obj/item/scythe/tier4
+
 /datum/techweb_node/scythe_t1
-	id = TECHWEB_NODE_SCYTHE_1
 	display_name = "Scythe (Tier 1)"
-	description = "Culling tools"
-	prereq_ids = list(TECHWEB_NODE_EXP_TOOLS, TECHWEB_NODE_CHEM_SYNTHESIS, TECHWEB_NODE_BOTANY_EQUIP)
-	design_ids = list(
-		"scythet1",
+	description = "Improved scythe for efficient culling."
+	prerequisite_nodes = list(/datum/techweb_node/exp_tools, /datum/techweb_node/chem_synthesis, /datum/techweb_node/botany_equip)
+	unlocked_designs = list(
+		/datum/design/scythe,
 	)
 	research_costs = list(TECHWEB_POINT_TYPE_GENERIC = TECHWEB_TIER_1_POINTS)
-	discount_experiments = list(/datum/experiment/scanning/random/plants/wild = 500)
+	discount_experiments = list(/datum/experiment/scanning/random/plants/wild = TECHWEB_TIER_1_POINTS)
+	announce_channels = list(RADIO_CHANNEL_SERVICE, RADIO_CHANNEL_SECURITY)
 
 /datum/techweb_node/scythe_t2
-	id = TECHWEB_NODE_SCYTHE_2
 	display_name = "Scythe (Tier 2)"
-	description = "Culling tools"
-	prereq_ids = list(TECHWEB_NODE_SCYTHE_1)
-	design_ids = list(
-		"scythet2",
+	description = "Further improved scythe for efficient culling."
+	prerequisite_nodes = list(/datum/techweb_node/scythe_t1)
+	unlocked_designs = list(
+		/datum/design/scythe/tier2,
 	)
 	research_costs = list(TECHWEB_POINT_TYPE_GENERIC = TECHWEB_TIER_2_POINTS)
-	discount_experiments = list(/datum/experiment/scanning/random/plants/wild = 1000)
+	discount_experiments = list(/datum/experiment/scanning/random/plants/wild = TECHWEB_TIER_2_POINTS)
+	announce_channels = list(RADIO_CHANNEL_SERVICE, RADIO_CHANNEL_SECURITY)
+
+/datum/techweb_node/scythe_t3
+	display_name = "Scythe (Tier 3)"
+	description = "Even further improved scythe for efficient culling."
+	prerequisite_nodes = list(/datum/techweb_node/scythe_t2)
+	unlocked_designs = list(
+		/datum/design/scythe/tier3,
+	)
+	research_costs = list(TECHWEB_POINT_TYPE_GENERIC = TECHWEB_TIER_3_POINTS)
+	discount_experiments = list(/datum/experiment/scanning/random/plants/wild = TECHWEB_TIER_3_POINTS)
+	announce_channels = list(RADIO_CHANNEL_SERVICE, RADIO_CHANNEL_SECURITY)
+
+/datum/techweb_node/scythe_t4
+	display_name = "Scythe (Tier 4)"
+	description = "The most efficient scythe for culling."
+	prerequisite_nodes = list(/datum/techweb_node/scythe_t3)
+	unlocked_designs = list(
+		/datum/design/scythe/tier4,
+	)
+	research_costs = list(TECHWEB_POINT_TYPE_GENERIC = TECHWEB_TIER_4_POINTS)
+	discount_experiments = list(/datum/experiment/scanning/random/plants/wild = TECHWEB_TIER_4_POINTS)
+	announce_channels = list(RADIO_CHANNEL_SERVICE, RADIO_CHANNEL_SECURITY)
 
 /datum/supply_pack/organic/tier3_scythe
 	name = "Tier 3 Scythe"

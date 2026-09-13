@@ -1,5 +1,4 @@
 // THIS IS A NOVA SECTOR UI FILE
-import { useBackend } from '../backend';
 import {
   BlockQuote,
   Box,
@@ -10,7 +9,9 @@ import {
   LabeledList,
   ProgressBar,
   Section,
-} from '../components';
+} from 'tgui-core/components';
+
+import { useBackend } from '../backend';
 import { Window } from '../layouts';
 
 export const Soulcatcher = (props) => {
@@ -162,9 +163,7 @@ export const Soulcatcher = (props) => {
                         title={soul.name}
                         buttons={
                           <>
-                            {soul.scan_needed ? (
-                              <> </>
-                            ) : (
+                            {soul.scan_needed ? null : (
                               <>
                                 <Button
                                   color="green"
@@ -363,9 +362,7 @@ export const Soulcatcher = (props) => {
                                 </Button>
                               </LabeledList.Item>
                             </>
-                          ) : (
-                            <> </>
-                          )}
+                          ) : null}
                           <LabeledList.Item label="Rename">
                             <Button
                               color={soul.able_to_rename ? 'green' : 'red'}
@@ -401,9 +398,7 @@ export const Soulcatcher = (props) => {
                   ))}
                 </Flex>
               </>
-            ) : (
-              <> </>
-            )}
+            ) : null}
           </Section>
         ))}
         {max_souls ? (
@@ -418,9 +413,7 @@ export const Soulcatcher = (props) => {
               Remaining soul capacity: {max_souls - current_soul_count}
             </ProgressBar>
           </Section>
-        ) : (
-          <> </>
-        )}
+        ) : null}
         <Button
           fluid
           color="green"
@@ -455,9 +448,7 @@ export const Soulcatcher = (props) => {
           >
             Remove soulcatcher from parent object
           </Button>
-        ) : (
-          <> </>
-        )}
+        ) : null}
       </Window.Content>
     </Window>
   );

@@ -1,38 +1,69 @@
 /datum/sprite_accessory/horns
-	key = "horns"
-	generic = "Horns"
-	relevent_layers = list(BODY_BEHIND_LAYER, BODY_FRONT_LAYER, BODY_ADJ_LAYER)
+	key = FEATURE_HORNS
 	icon = 'modular_nova/master_files/icons/mob/sprite_accessory/horns.dmi'
 	default_color = "#555555"
-	genetic = TRUE
-	organ_type = /obj/item/organ/external/horns
+	organ_type = /obj/item/organ/horns
+	flags_custom_mod_icon = MOD_ACCESSORY_HELMET
 
-/datum/sprite_accessory/horns/is_hidden(mob/living/carbon/human/wearer)
-	if(!wearer.head && !wearer.wear_mask)
-		return FALSE
+/datum/sprite_accessory/horns/is_hidden(mob/living/carbon/human/wearer, datum/bodypart_overlay/mutant/bodypart_overlay)
+	. = ..()
+	if(.)
+		return
 
-	// Can hide if wearing hat
-	if(key in wearer.try_hide_mutant_parts)
+	if(wearer.obscured_slots & HIDEHAIR)
+		if(istype(wearer.head, /obj/item/clothing/head/mod))
+			return FALSE // i'm so sorry, this is still required
+		if(wearer.obscured_slots & SHOWSPRITEEARS)
+			return FALSE
 		return TRUE
 
-	// Exception for MODs
-	if(istype(wearer.head, /obj/item/clothing/head/mod))
-		return FALSE
-
-	// Hide accessory if flagged to do so
-	if((wearer.head?.flags_inv & HIDEHAIR || wearer.wear_mask?.flags_inv & HIDEHAIR) \
-		&& !(wearer.wear_mask && wearer.wear_mask.flags_inv & SHOWSPRITEEARS))
-		return TRUE
-
-	return FALSE
-
+/datum/sprite_accessory/horns/none
+	name = SPRITE_ACCESSORY_NONE
+	icon_state = "none"
+	factual = FALSE
+	natural_spawn = FALSE
 
 /datum/sprite_accessory/horns/angler
 	default_color = DEFAULT_SECONDARY
+	recommended_species = list(
+		SPECIES_MAMMAL = 1,
+		SPECIES_LIZARD = 1,
+		SPECIES_UNATHI = 1,
+		SPECIES_LIZARD_ASH = 1,
+		SPECIES_LIZARD_SILVER = 1,
+	)
 
 /datum/sprite_accessory/horns/ram
 	name = "Ram"
 	icon_state = "ram"
+	recommended_species = list(
+		SPECIES_MAMMAL = 1,
+		SPECIES_LIZARD = 1,
+		SPECIES_UNATHI = 1,
+		SPECIES_LIZARD_ASH = 1,
+		SPECIES_LIZARD_SILVER = 1,
+		SPECIES_KOBOLD = 1,
+	)
+
+/datum/sprite_accessory/horns/short
+	recommended_species = list(
+		SPECIES_MAMMAL = 1,
+		SPECIES_LIZARD = 1,
+		SPECIES_UNATHI = 1,
+		SPECIES_LIZARD_ASH = 1,
+		SPECIES_LIZARD_SILVER = 1,
+		SPECIES_KOBOLD = 1,
+	)
+
+/datum/sprite_accessory/horns/simple
+	recommended_species = list(
+		SPECIES_MAMMAL = 1,
+		SPECIES_LIZARD = 1,
+		SPECIES_UNATHI = 1,
+		SPECIES_LIZARD_ASH = 1,
+		SPECIES_LIZARD_SILVER = 1,
+		SPECIES_KOBOLD = 1,
+	)
 
 /datum/sprite_accessory/horns/guilmon
 	name = "Guilmon"
@@ -137,31 +168,26 @@
 	name = "Broad Curls"
 	icon_state = "broadcurls"
 
-/datum/sprite_accessory/horns/moogle_pom
-	icon = 'modular_nova/master_files/icons/mob/sprite_accessory/moogle_pom.dmi'
+/datum/sprite_accessory/horns/antenna_fuzzball_v2
+	recommended_species = list(SPECIES_INSECT = 1)
+	name = "Fuzzball Antenna"
+	icon_state = "antenna_fuzzballv2"
 	color_src = USE_MATRIXED_COLORS
 
-/datum/sprite_accessory/horns/moogle_pom/small_front
-	name = "Moogle Pom (Small, Front)"
-	icon_state = "mpom1"
+/datum/sprite_accessory/horns/setaceous
+	recommended_species = list(SPECIES_INSECT = 1)
+	name = "Setaceous Antenna"
+	icon_state = "setaceous"
+	color_src = USE_ONE_COLOR
 
-/datum/sprite_accessory/horns/moogle_pom/small_back
-	name = "Moogle Pom (Small, Back)"
-	icon_state = "mpom1alt"
+/datum/sprite_accessory/horns/setaceousm
+	recommended_species = list(SPECIES_INSECT = 1)
+	name = "Medium Setaceous Antenna"
+	icon_state = "setaceousm"
+	color_src = USE_ONE_COLOR
 
-/datum/sprite_accessory/horns/moogle_pom/medium_front
-	name = "Moogle Pom (Medium, Front)"
-	icon_state = "mpom2"
-
-/datum/sprite_accessory/horns/moogle_pom/medium_back
-	name = "Moogle Pom (Medium, Back)"
-	icon_state = "mpom2alt"
-
-/datum/sprite_accessory/horns/moogle_pom/large_front
-	name = "Moogle Pom (Large, Front)"
-	icon_state = "mpom3"
-
-/datum/sprite_accessory/horns/moogle_pom/large_back
-	name = "Moogle Pom (Large, Back)"
-	icon_state = "mpom3alt"
-
+/datum/sprite_accessory/horns/geniculate
+	recommended_species = list(SPECIES_INSECT = 1)
+	name = "Geniculate Antenna"
+	icon_state = "geniculate"
+	color_src = USE_ONE_COLOR

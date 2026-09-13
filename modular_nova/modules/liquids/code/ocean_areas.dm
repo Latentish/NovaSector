@@ -1,41 +1,77 @@
 /area/ocean
 	name = "Ocean"
 	icon_state = "space"
+	icon = 'icons/area/areas_misc.dmi'
 	requires_power = TRUE
 	always_unpowered = TRUE
+	static_lighting = FALSE
+	base_lighting_alpha = 255
 	power_light = FALSE
 	power_equip = FALSE
 	power_environ = FALSE
 	outdoors = TRUE
-	ambience_index = AMBIENCE_SPACE
-	flags_1 = CAN_BE_DIRTY_1
-	sound_environment = SOUND_AREA_SPACE
+	sound_environment = SOUND_AREA_STANDARD_STATION
+	flags_1 = NONE
+	default_gravity = STANDARD_GRAVITY
 
 /area/ocean/generated
-	map_generator = /datum/map_generator/ocean_generator
+	icon_state = "cordon"
+	map_generator = /datum/map_generator/cave_generator/ocean
+	area_flags_mapping = parent_type::area_flags_mapping|FLORA_ALLOWED|CAVES_ALLOWED
 
-/area/ocean/trench
-	area_flags = CAVES_ALLOWED | FLORA_ALLOWED | MOB_SPAWN_ALLOWED
-	name = "The Trench"
+/area/ocean/generated/deep
+	map_generator = /datum/map_generator/cave_generator/ocean/deep
 
-/area/ocean/trench/generated
-	map_generator = /datum/map_generator/cave_generator/trench
+/area/ocean/generated/shallow
+	map_generator = /datum/map_generator/cave_generator/ocean/shallow
 
-/area/ruin/ocean
-	has_gravity = TRUE
-	area_flags = UNIQUE_AREA
+/area/ocean/generated/shallow/nofishy
+	map_generator = /datum/map_generator/cave_generator/ocean/shallow/nofishy
 
-/area/ruin/ocean/listening_outpost
-	name = "Listening Station"
+/area/ocean/generated/rocky
+	map_generator = /datum/map_generator/cave_generator/ocean/rocky
 
-/area/ruin/ocean/bunker
-	name = "Bunker"
+/area/ocean/generated/friendly_mobs
+	map_generator = /datum/map_generator/cave_generator/ocean/shallow/lagoon/friendly_mobs
+	area_flags_mapping = parent_type::area_flags_mapping|MOB_SPAWN_ALLOWED
 
-/area/ruin/ocean/bioweapon_research
-	name = "Syndicate Ocean Base"
+/area/ocean/generated/hostile_mobs
+	map_generator = /datum/map_generator/cave_generator/ocean/shallow/lagoon/hostile_mobs
+	area_flags_mapping = parent_type::area_flags_mapping|MOB_SPAWN_ALLOWED
 
-/area/ruin/ocean/mining_site
-	name = "Mining Site"
+/area/ocean/generated/friendly_mobs/wilderness
+	map_generator = /datum/map_generator/cave_generator/ocean/shallow/lagoon/friendly_mobs/wilderness
 
-/area/ruin/ocean/saddam_hole
-	name = "Cave Hideout"
+/area/ocean/generated/hostile_mobs/wilderness
+	map_generator = /datum/map_generator/cave_generator/ocean/shallow/lagoon/hostile_mobs/wilderness
+
+/area/ocean/monestary
+	name = "\improper Monastery Isle"
+
+/area/ocean/landingpad
+	name = "\improper Landing Pad"
+
+/area/station/solars/ocean
+	icon_state = "panels"
+	requires_power = FALSE
+	area_flags = NONE // Override NO_GRAVITY from parent
+	flags_1 = NONE
+	static_lighting = FALSE
+	base_lighting_alpha = 255
+	outdoors = TRUE
+	ambience_index = AMBIENCE_ENGI
+	airlock_wires = /datum/wires/airlock/engineering
+	sound_environment = SOUND_AREA_STANDARD_STATION
+	default_gravity = STANDARD_GRAVITY
+
+/area/station/solars/ocean/aisat
+	name = "\improper AI Satellite Solars"
+	icon_state = "panelsAI"
+
+/area/station/solars/ocean/starboard
+	name = "\improper Starboard Solar Array"
+	icon_state = "panelsS"
+
+/area/station/solars/ocean/port
+	name = "\improper Port Solar Array"
+	icon_state = "panelsP"

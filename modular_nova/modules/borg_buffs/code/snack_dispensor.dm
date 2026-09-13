@@ -1,6 +1,5 @@
 /datum/design/borg_snack_dispenser
 	name = "Snack Dispenser Module"
-	id = "borg_upgrade_snacks"
 	build_type = MECHFAB
 	build_path = /obj/item/borg/upgrade/snack_dispenser
 	materials = list(
@@ -15,6 +14,7 @@
 /obj/item/borg/upgrade/snack_dispenser
 	name = "Snack Dispenser Module"
 	desc = "Gives any borg the ability to dispense speciality snacks."
+	custom_materials = list(/datum/material/iron = SHEET_MATERIAL_AMOUNT * 0.7, /datum/material/glass = HALF_SHEET_MATERIAL_AMOUNT)
 	/// For storing modules that we remove, since the upgraded snack dispensor automatically removes inferior versions
 	var/list/removed_modules = list()
 
@@ -113,7 +113,7 @@
 	borg.do_item_attack_animation(patron, null, snack)
 	playsound(loc, 'sound/machines/click.ogg', 10, TRUE)
 	to_chat(patron, span_notice("[borg] dispenses [snack] into your empty hand and you reflexively grasp it."))
-	to_chat(borg, span_notice("You dispense [snack] into the hand of [borg]."))
+	to_chat(borg, span_notice("You dispense [snack] into the hand of [patron]."))
 	return ITEM_INTERACT_SUCCESS
 
 /obj/item/borg_snack_dispenser/click_alt(mob/user)
@@ -147,6 +147,7 @@
 	desc = "BACON!!!"
 	icon = 'modular_nova/master_files/icons/obj/food/snacks.dmi'
 	icon_state = "bacon_strip"
+	tastes = list("hint of hint of bacon" = 1)
 	foodtypes = MEAT
 
 /obj/item/food/cookie/cloth
@@ -154,4 +155,5 @@
 	desc = "A cookie that appears to be made out of... some form of cloth?"
 	icon = 'modular_nova/master_files/icons/obj/food/snacks.dmi'
 	icon_state = "cookie_cloth"
+	tastes = list("doughy cloth" = 1)
 	foodtypes = CLOTH

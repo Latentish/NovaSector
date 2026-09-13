@@ -7,8 +7,10 @@
 	inhand_icon_state = null
 	body_parts_covered = NECK
 	slot_flags = ITEM_SLOT_NECK
+	obj_flags_nova = ERP_ITEM
 	w_class = WEIGHT_CLASS_SMALL
 	strip_delay = 60
+	obj_flags = parent_type::obj_flags | UNIQUE_RENAME
 	// equip_delay_other = 60
 	custom_materials = list(
 		/datum/material/iron = SHEET_MATERIAL_AMOUNT * 3,
@@ -16,11 +18,9 @@
 	)
 	var/random = TRUE
 	var/freq_in_name = TRUE
-	var/tagname = null
 
 /datum/design/electropack/shockcollar
 	name = "Shockcollar"
-	id = "shockcollar"
 	build_type = AUTOLATHE
 	build_path = /obj/item/electropack/shockcollar
 	materials = list(
@@ -32,10 +32,10 @@
 		RND_CATEGORY_EQUIPMENT + RND_SUBCATEGORY_EQUIPMENT_MISC,
 	)
 
-/obj/item/electropack/shockcollar/attack_hand(mob/user)
-	if(loc == user && user.get_item_by_slot(ITEM_SLOT_NECK))
+/obj/item/electropack/shockcollar/can_mob_unequip(mob/user)
+	if(user.get_item_by_slot(slot_flags) == src)
 		to_chat(user, span_warning("The collar is fastened tight! You'll need help if you want to take it off!"))
-		return
+		return FALSE
 	return ..()
 
 /obj/item/electropack/shockcollar/receive_signal(datum/signal/signal)
@@ -53,9 +53,7 @@
 		step(affected_mob, pick(GLOB.cardinals))
 
 		to_chat(affected_mob, span_danger("You feel a sharp shock from the collar!"))
-		var/datum/effect_system/spark_spread/created_sparks = new /datum/effect_system/spark_spread
-		created_sparks.set_up(3, 1, affected_mob)
-		created_sparks.start()
+		do_sparks(3, TRUE, affected_mob)
 
 		affected_mob.Paralyze(30)
 		affected_mob.adjust_pain(10)
@@ -68,18 +66,6 @@
 		master.receive_signal()
 	return
 
-/obj/item/electropack/shockcollar/attackby(obj/item/used_item, mob/user, params) // Moves it here because on_click is being bad
-	if(istype(used_item, /obj/item/pen))
-		var/tag_input = stripped_input(user, "Would you like to change the name on the tag?", "Name your new pet", tagname ? tagname : "Spot", MAX_NAME_LEN)
-		if(tag_input)
-			tagname = tag_input
-			name = "[initial(name)] - [tag_input]"
-		return
-	if(istype(used_item, /obj/item/clothing/head/helmet))
-		return
-	else
-		return ..()
-
 /obj/item/electropack/shockcollar/Initialize(mapload)
 	if(random)
 		code = rand(1, 100)
@@ -88,7 +74,11 @@
 			frequency++
 	if(freq_in_name)
 		name = initial(name) + " - freq: [frequency/10] code: [code]"
+	return ..()
+
+/obj/item/electropack/shockcollar/ui_act(action, params)
 	. = ..()
+	icon_state = src::icon_state
 
 /obj/item/electropack/shockcollar/pacify
 	name = "pacifying collar"

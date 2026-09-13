@@ -6,7 +6,7 @@
 	worn_icon = 'icons/mob/clothing/modsuit/mod_clothing.dmi'
 
 /obj/item/mod/control
-	name = "MOD control unit"
+	name = "\improper MOD control unit"
 	desc = "The control unit of a Modular Outerwear Device, a powered suit that protects against various environments."
 	icon_state = "standard-control"
 	inhand_icon_state = "mod_control"
@@ -19,7 +19,7 @@
 	actions_types = list(
 		/datum/action/item_action/mod/deploy,
 		/datum/action/item_action/mod/activate,
-		/datum/action/item_action/mod/sprite_accessories, // NOVA EDIT - Hide mutant parts action
+		/datum/action/item_action/mod/sprite_accessories, // NOVA EDIT ADDITION - Hide mutant parts action
 		/datum/action/item_action/mod/panel,
 		/datum/action/item_action/mod/module,
 		/datum/action/item_action/mod/deploy/ai,
@@ -59,10 +59,8 @@
 	var/complexity = 0
 	/// Power usage of the MOD.
 	var/charge_drain = DEFAULT_CHARGE_DRAIN
-	/// Slowdown of the MOD when not active.
-	var/slowdown_inactive = 1.25
-	/// Slowdown of the MOD when active.
-	var/slowdown_active = 0.75
+	/// Slowdown of the MOD when all of its pieces are deployed.
+	var/slowdown_deployed = 0.75
 	/// How long this MOD takes each part to seal.
 	var/activation_step_time = MOD_ACTIVATION_STEP_TIME
 	/// Extended description of the theme.
@@ -98,18 +96,22 @@
 	theme.set_up_parts(src, new_skin)
 	for(var/obj/item/part as anything in get_parts())
 		RegisterSignal(part, COMSIG_ATOM_DESTRUCTION, PROC_REF(on_part_destruction))
-		RegisterSignal(part, COMSIG_QDELETING, PROC_REF(on_part_deletion))
 	set_wires(new /datum/wires/mod(src))
 	if(length(req_access))
 		locked = TRUE
 	new_core?.install(src)
 	update_speed()
+
 	RegisterSignal(src, COMSIG_ATOM_EXITED, PROC_REF(on_exit))
 	RegisterSignal(src, COMSIG_SPEED_POTION_APPLIED, PROC_REF(on_potion))
+	RegisterSignal(src, COMSIG_ITEM_GET_STRIPPABLE_ALT_ACTIONS, PROC_REF(get_strippable_alternate_actions))
+	RegisterSignal(src, COMSIG_ITEM_STRIPPABLE_ALT_ACTION, PROC_REF(do_strippable_action))
+
 	for(var/obj/item/mod/module/module as anything in theme.inbuilt_modules)
 		module = new module(src)
 		install(module)
 	START_PROCESSING(SSobj, src)
+	AddElement(/datum/element/drag_pickup)
 
 /obj/item/mod/control/Destroy()
 	STOP_PROCESSING(SSobj, src)
@@ -117,20 +119,19 @@
 		uninstall(module, deleting = TRUE)
 	if(core)
 		QDEL_NULL(core)
-	QDEL_NULL(wires)
 	QDEL_NULL(mod_link)
-	for(var/datum/mod_part/part_datum as anything in get_part_datums(all = TRUE))
-		part_datum.part_item = null
-		part_datum.overslotting = null
+	for(var/part_key in mod_parts)
+		var/datum/mod_part/part_datum = mod_parts[part_key]
+		mod_parts -= part_key
+		qdel(part_datum)
 	return ..()
 
 /obj/item/mod/control/atom_destruction(damage_flag)
+	var/atom/visible_atom = wearer || src
 	if(wearer)
-		wearer.visible_message(span_danger("[src] fall[p_s()] apart, completely destroyed!"), vision_distance = COMBAT_MESSAGE_RANGE)
 		clean_up()
+	visible_atom.visible_message(span_bolddanger("[src] fall[p_s()] apart, completely destroyed!"), vision_distance = COMBAT_MESSAGE_RANGE)
 	for(var/obj/item/mod/module/module as anything in modules)
-		for(var/obj/item/item in module)
-			item.forceMove(drop_location())
 		uninstall(module)
 	if(ai_assistant)
 		if(ispAI(ai_assistant))
@@ -147,9 +148,6 @@
 	if(active)
 		. += span_notice("Charge: [core ? "[get_charge_percent()]%" : "No core"].")
 		. += span_notice("Selected module: [selected_module || "None"].")
-	if(atom_storage)
-		. += span_notice("<i>While the suit's panel is open, \
-			being on <b>combat mode</b> will prevent you from inserting items into it when clicking on it.</i>")
 	if(!open && !active)
 		if(!wearer)
 			. += span_notice("You could equip it to turn it on.")
@@ -199,16 +197,13 @@
 		set_wearer(user)
 	else if(wearer)
 		unset_wearer()
+	return ..()
 
 /obj/item/mod/control/dropped(mob/user)
 	. = ..()
 	if(!wearer)
 		return
 	clean_up()
-
-/obj/item/mod/control/item_action_slot_check(slot)
-	if(slot & slot_flags)
-		return TRUE
 
 // Grant pinned actions to pin owners, gives AI pinned actions to the AI and not the wearer
 /obj/item/mod/control/grant_action_to_bearer(datum/action/action)
@@ -223,40 +218,25 @@
 		return
 	clean_up()
 
-/obj/item/mod/control/allow_attack_hand_drop(mob/user)
+/obj/item/mod/control/can_mob_unequip(mob/user)
 	if(user != wearer)
 		return ..()
+
+	if(active)
+		balloon_alert(wearer, "unit active!")
+		playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, FALSE, SILENCED_SOUND_EXTRARANGE)
+		return FALSE
+
 	for(var/obj/item/part as anything in get_parts())
 		if(part.loc != src)
-			balloon_alert(user, "retract parts first!")
-			playsound(src, 'sound/machines/scanbuzz.ogg', 25, FALSE, SILENCED_SOUND_EXTRARANGE)
+			balloon_alert(user, "parts extended!")
+			playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, FALSE, SILENCED_SOUND_EXTRARANGE)
 			return FALSE
 
-/obj/item/mod/control/mouse_drop_dragged(atom/over_object, mob/user)
-	if(user != wearer || !istype(over_object, /atom/movable/screen/inventory/hand))
-		return
-	for(var/obj/item/part as anything in get_parts())
-		if(part.loc != src)
-			balloon_alert(wearer, "retract parts first!")
-			playsound(src, 'sound/machines/scanbuzz.ogg', 25, FALSE, SILENCED_SOUND_EXTRARANGE)
-			return
-
-	// NOVA EDIT ADDITION START - Can't remove your MODsuit from your back when it's still active (as it can cause runtimes and even the MODsuit control unit to delete itself)
-	if(active)
-		if(!wearer.incapacitated())
-			balloon_alert(wearer, "deactivate first!")
-			playsound(src, 'sound/machines/scanbuzz.ogg', 25, FALSE, SILENCED_SOUND_EXTRARANGE)
-
-		return
-	// NOVA EDIT ADDITION END
-
-	if(!wearer.incapacitated())
-		var/atom/movable/screen/inventory/hand/ui_hand = over_object
-		if(wearer.putItemFromInventoryInHandIfPossible(src, ui_hand.held_index))
-			add_fingerprint(user)
+	return ..()
 
 /obj/item/mod/control/wrench_act(mob/living/user, obj/item/wrench)
-	if(seconds_electrified && get_charge() && shock(user))
+	if(seconds_electrified && get_charge() && shock(user, 100))
 		return ITEM_INTERACT_BLOCKING
 	if(open)
 		if(!core)
@@ -275,14 +255,15 @@
 
 /obj/item/mod/control/screwdriver_act(mob/living/user, obj/item/screwdriver)
 	if(active || activating || ai_controller)
-		balloon_alert(user, "deactivate suit first!")
-		playsound(src, 'sound/machines/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+		balloon_alert(user, "unit active!")
+		playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
 		return ITEM_INTERACT_BLOCKING
 	balloon_alert(user, "[open ? "closing" : "opening"] cover...")
 	screwdriver.play_tool_sound(src, 100)
 	if(screwdriver.use_tool(src, user, 1 SECONDS))
 		if(active || activating)
-			balloon_alert(user, "deactivate suit first!")
+			balloon_alert(user, "unit active!")
+			return ITEM_INTERACT_SUCCESS
 		screwdriver.play_tool_sound(src, 100)
 		balloon_alert(user, "cover [open ? "closed" : "opened"]")
 		open = !open
@@ -291,17 +272,16 @@
 	return ITEM_INTERACT_SUCCESS
 
 /obj/item/mod/control/crowbar_act(mob/living/user, obj/item/crowbar)
-	. = ..()
 	if(!open)
-		balloon_alert(user, "open the cover first!")
-		playsound(src, 'sound/machines/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+		balloon_alert(user, "cover closed!")
+		playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
 		return ITEM_INTERACT_BLOCKING
 	if(!allowed(user))
 		balloon_alert(user, "insufficient access!")
-		playsound(src, 'sound/machines/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+		playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
 		return ITEM_INTERACT_BLOCKING
 	if(SEND_SIGNAL(src, COMSIG_MOD_MODULE_REMOVAL, user) & MOD_CANCEL_REMOVAL)
-		playsound(src, 'sound/machines/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+		playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
 		return ITEM_INTERACT_BLOCKING
 	if(length(modules))
 		var/list/removable_modules = list()
@@ -318,57 +298,67 @@
 		SEND_SIGNAL(src, COMSIG_MOD_MODULE_REMOVED, user)
 		return ITEM_INTERACT_SUCCESS
 	balloon_alert(user, "no modules!")
-	playsound(src, 'sound/machines/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+	playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
 	return ITEM_INTERACT_BLOCKING
 
-/obj/item/mod/control/storage_insert_on_interacted_with(datum/storage, obj/item/inserted, mob/living/user)
-	if(user.combat_mode)
-		// Block all item-click-inserts when we're open
-		// Other form of insertion will still function (mousedrop, hotkey)
-		if(open)
-			return FALSE
-		// ...You have to open it up somehow though
-		if(inserted.tool_behaviour == TOOL_SCREWDRIVER)
-			return FALSE
-	return TRUE
-
-/obj/item/mod/control/item_interaction(mob/living/user, obj/item/attacking_item, list/modifiers)
-	if(istype(attacking_item, /obj/item/pai_card))
+// Makes use of tool act to prevent shoving stuff into our internal storage
+/obj/item/mod/control/tool_act(mob/living/user, obj/item/tool, list/modifiers)
+	if(istype(tool, /obj/item/pai_card))
 		if(!open)
-			balloon_alert(user, "open the cover first!")
-			return ITEM_INTERACT_BLOCKING
-		insert_pai(user, attacking_item)
+			balloon_alert(user, "cover closed!")
+			return NONE // shoves the card in the storage anyways
+		insert_pai(user, tool)
 		return ITEM_INTERACT_SUCCESS
-	if(istype(attacking_item, /obj/item/mod/module))
-		if(!open)
-			balloon_alert(user, "open the cover first!")
-			playsound(src, 'sound/machines/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+	if(istype(tool, /obj/item/mod/paint))
+		var/obj/item/mod/paint/paint_kit = tool
+		if(active || activating)
+			balloon_alert(user, "unit active!")
 			return ITEM_INTERACT_BLOCKING
-		install(attacking_item, user)
+		if(LAZYACCESS(modifiers, RIGHT_CLICK)) // Right click
+			if(paint_kit.editing_mod == src)
+				return ITEM_INTERACT_BLOCKING
+			paint_kit.editing_mod = src
+			paint_kit.proxy_view = new()
+			paint_kit.proxy_view.generate_view("color_matrix_proxy_[REF(user.client)]")
+
+			paint_kit.proxy_view.appearance = paint_kit.editing_mod.appearance
+			paint_kit.proxy_view.color = null
+			paint_kit.ui_interact(user)
+			return ITEM_INTERACT_SUCCESS
+		else // Left click
+			paint_kit.paint_skin(src, user)
+			return ITEM_INTERACT_SUCCESS
+	if(istype(tool, /obj/item/mod/module))
+		if(!open)
+			balloon_alert(user, "cover closed!")
+			playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+			return ITEM_INTERACT_BLOCKING
+		install(tool, user)
 		SEND_SIGNAL(src, COMSIG_MOD_MODULE_ADDED, user)
 		return ITEM_INTERACT_SUCCESS
-	if(istype(attacking_item, /obj/item/mod/core))
+	if(istype(tool, /obj/item/mod/core))
 		if(!open)
-			balloon_alert(user, "open the cover first!")
-			playsound(src, 'sound/machines/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+			balloon_alert(user, "cover closed!")
+			playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
 			return ITEM_INTERACT_BLOCKING
 		if(core)
-			balloon_alert(user, "core already installed!")
-			playsound(src, 'sound/machines/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+			balloon_alert(user, "already has core!")
+			playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
 			return ITEM_INTERACT_BLOCKING
-		var/obj/item/mod/core/attacking_core = attacking_item
+		var/obj/item/mod/core/attacking_core = tool
 		attacking_core.install(src)
 		balloon_alert(user, "core installed")
 		playsound(src, 'sound/machines/click.ogg', 50, TRUE, SILENCED_SOUND_EXTRARANGE)
 		return ITEM_INTERACT_SUCCESS
 	if(open)
-		if(is_wire_tool(attacking_item))
+		if(is_wire_tool(tool))
 			wires.interact(user)
 			return ITEM_INTERACT_SUCCESS
-		if(attacking_item.GetID())
-			update_access(user, attacking_item.GetID())
+		var/obj/item/id = tool.GetID()
+		if(id)
+			update_access(user, id)
 			return ITEM_INTERACT_SUCCESS
-	return NONE
+	return ..()
 
 /obj/item/mod/control/get_cell()
 	var/obj/item/stock_parts/power_store/cell = get_charge_source()
@@ -377,14 +367,14 @@
 	return cell
 
 /obj/item/mod/control/GetAccess()
-	if(ai_controller)
+	if(ai_controller && req_access)
 		return req_access.Copy()
 	else
 		return ..()
 
 /obj/item/mod/control/emag_act(mob/user, obj/item/card/emag/emag_card)
 	locked = !locked
-	balloon_alert(user, "suit access [locked ? "locked" : "unlocked"]")
+	balloon_alert(user, "access [locked ? "locked" : "unlocked"]")
 	return TRUE
 
 /obj/item/mod/control/emp_act(severity)
@@ -397,7 +387,7 @@
 	selected_module?.deactivate(display_message = TRUE)
 	wearer.apply_damage(5 / severity, BURN, spread_damage=TRUE)
 	to_chat(wearer, span_danger("You feel [src] heat up from the EMP, burning you slightly."))
-	if(wearer.stat < UNCONSCIOUS && prob(10))
+	if(!IS_UNCONSCIOUS(wearer) && prob(10))
 		wearer.emote("scream")
 
 /obj/item/mod/control/on_outfit_equip(mob/living/carbon/human/outfit_wearer, visuals_only, item_slot)
@@ -416,6 +406,68 @@
 /obj/item/mod/control/update_icon_state()
 	icon_state = "[skin]-[base_icon_state][active ? "-sealed" : ""]"
 	return ..()
+
+/obj/item/mod/control/proc/get_strippable_alternate_actions(obj/item/source, atom/owner, mob/user, list/alt_actions)
+	SIGNAL_HANDLER
+	if(active)
+		alt_actions += "deactivate_mod"
+	else
+		alt_actions += "activate_mod"
+	if(check_retracted())
+		alt_actions += "deploy"
+	else
+		alt_actions += "undeploy"
+
+
+/obj/item/mod/control/proc/do_strippable_action(obj/item/source, atom/owner, mob/user, action_key)
+	SIGNAL_HANDLER
+	if(!isliving(user))
+		return NONE
+	switch(action_key)
+
+		if("deploy", "undeploy")
+			owner.visible_message(
+				span_warning("[user] tries to [action_key] [owner]'s [src]..."),
+				span_userdanger("[user] is trying to [action_key] your [src]!"),
+				blind_message = span_hear("You hear rustling."),
+				ignored_mobs = user,
+			)
+			INVOKE_ASYNC(src, PROC_REF(attempt_strip_deploy), owner, user, action_key)
+			return COMPONENT_ALT_ACTION_DONE
+
+		if("activate_mod", "deactivate_mod")
+			owner.visible_message(
+				span_warning("[user] tries to press [owner]'s [src]'s power button..."),
+				span_userdanger("[user] is trying to press your [src]'s power button!"),
+				blind_message = span_hear("You hear rustling."),
+				ignored_mobs = user,
+			)
+			INVOKE_ASYNC(src, PROC_REF(attempt_strip_activate), owner, user)
+			return COMPONENT_ALT_ACTION_DONE
+
+		else
+			return NONE
+
+/obj/item/mod/control/proc/attempt_strip_deploy(atom/owner, mob/user, message)
+	if(!do_after(user, strip_delay, owner))
+		return
+	owner.visible_message(
+		span_warning("[user] [message]s [owner]'s [src]."),
+		span_userdanger("[user] [message]s your [src]!"),
+		ignored_mobs = user,
+	)
+	quick_deploy(user)
+
+/obj/item/mod/control/proc/attempt_strip_activate(atom/owner, mob/user)
+	if(!do_after(user, strip_delay, owner))
+		return
+	owner.visible_message(
+		span_warning("[user] presses [owner]'s [src]'s power button."),
+		span_userdanger("[user] presses your [src]'s power button!"),
+		ignored_mobs = user,
+	)
+	toggle_activate(user)
+
 
 /obj/item/mod/control/proc/get_parts(all = FALSE)
 	. = list()
@@ -444,12 +496,14 @@
 	CRASH("get_part_datum called with incorrect item [part] passed.")
 
 /obj/item/mod/control/proc/get_part_from_slot(slot)
-	slot = "[slot]"
-	for(var/part_slot in mod_parts)
-		if(slot != part_slot)
-			continue
-		var/datum/mod_part/part = mod_parts[part_slot]
-		return part.part_item
+	RETURN_TYPE(/obj/item)
+	return get_part_datum_from_slot(slot)?.part_item
+
+/obj/item/mod/control/proc/get_part_datum_from_slot(slot)
+	RETURN_TYPE(/datum/mod_part)
+	for (var/part_key in mod_parts)
+		if (text2num(part_key) & slot)
+			return mod_parts[part_key]
 
 /obj/item/mod/control/proc/set_wearer(mob/living/carbon/human/user)
 	if(wearer == user)
@@ -461,6 +515,7 @@
 	SEND_SIGNAL(src, COMSIG_MOD_WEARER_SET, wearer)
 	RegisterSignal(wearer, COMSIG_ATOM_EXITED, PROC_REF(on_exit))
 	RegisterSignal(wearer, COMSIG_SPECIES_GAIN, PROC_REF(on_species_gain))
+	RegisterSignal(wearer, COMSIG_MOB_CLICKON, PROC_REF(click_on))
 	update_charge_alert()
 	for(var/obj/item/mod/module/module as anything in modules)
 		module.on_equip()
@@ -468,10 +523,21 @@
 /obj/item/mod/control/proc/unset_wearer()
 	for(var/obj/item/mod/module/module as anything in modules)
 		module.on_unequip()
-	UnregisterSignal(wearer, list(COMSIG_ATOM_EXITED, COMSIG_SPECIES_GAIN))
+	UnregisterSignal(wearer, list(COMSIG_ATOM_EXITED, COMSIG_SPECIES_GAIN, COMSIG_MOB_CLICKON))
 	SEND_SIGNAL(src, COMSIG_MOD_WEARER_UNSET, wearer)
-	wearer.update_spacesuit_hud_icon("0")
+	var/atom/movable/screen/spacesuit/spacesuit_hud = wearer.hud_used?.screen_objects[HUD_MOB_SPACESUIT]
+	if (spacesuit_hud)
+		spacesuit_hud.update_spacesuit_hud_icon()
 	wearer = null
+
+/obj/item/mod/control/proc/get_sealed_slots(list/parts)
+	var/covered_slots = NONE
+	for(var/obj/item/part as anything in parts)
+		if(!get_part_datum(part).sealed)
+			parts -= part
+			continue
+		covered_slots |= part.slot_flags
+	return covered_slots
 
 /obj/item/mod/control/proc/clean_up()
 	if(QDELING(src))
@@ -485,15 +551,17 @@
 		for(var/obj/item/part as anything in get_parts())
 			seal_part(part, is_sealed = FALSE)
 	for(var/obj/item/part as anything in get_parts())
-		retract(null, part)
+		if(part.loc == src)
+			continue
+		INVOKE_ASYNC(src, PROC_REF(retract), wearer, part, /* instant = */ TRUE) // async to appease spaceman DMM because the branch we don't run has a do_after
 	if(active)
-		finish_activation(is_on = FALSE)
+		control_activation(is_on = FALSE)
 		mod_link?.end_call()
 	var/mob/old_wearer = wearer
 	unset_wearer()
 	old_wearer.temporarilyRemoveItemFromInventory(src)
 
-/obj/item/mod/control/proc/on_species_gain(datum/source, datum/species/new_species, datum/species/old_species)
+/obj/item/mod/control/proc/on_species_gain(datum/source, datum/species/new_species, datum/species/old_species, pref_load, regenerate_icons)
 	SIGNAL_HANDLER
 
 	for(var/obj/item/part in get_parts(all = TRUE))
@@ -502,7 +570,14 @@
 		forceMove(drop_location())
 		return
 
-/obj/item/mod/control/proc/quick_module(mob/user)
+/obj/item/mod/control/proc/click_on(mob/source, atom/A, list/modifiers)
+	SIGNAL_HANDLER
+
+	if (LAZYACCESS(modifiers, CTRL_CLICK) && LAZYACCESS(modifiers, source.client?.prefs.read_preference(/datum/preference/choiced/mod_select) || MIDDLE_CLICK))
+		INVOKE_ASYNC(src, PROC_REF(quick_module), source, get_turf(A))
+		return COMSIG_MOB_CANCEL_CLICKON
+
+/obj/item/mod/control/proc/quick_module(mob/user, anchor_override = null)
 	if(!length(modules))
 		return
 	var/list/display_names = list()
@@ -524,51 +599,65 @@
 	var/radial_anchor = src
 	if(istype(user.loc, /obj/effect/dummy/phased_mob))
 		radial_anchor = get_turf(user.loc) //they're phased out via some module, anchor the radial on the turf so it may still display
-	var/pick = show_radial_menu(user, radial_anchor, items, custom_check = FALSE, require_near = TRUE, tooltips = TRUE)
+	if (!isnull(anchor_override))
+		radial_anchor = anchor_override
+	var/pick = show_radial_menu(user, radial_anchor, items, custom_check = FALSE, require_near = isnull(anchor_override), tooltips = TRUE, user_space = !isnull(anchor_override))
 	if(!pick)
 		return
 	var/module_reference = display_names[pick]
 	var/obj/item/mod/module/picked_module = locate(module_reference) in modules
 	if(!istype(picked_module))
 		return
-	picked_module.on_select()
+	picked_module.on_select(user)
 
-/obj/item/mod/control/proc/shock(mob/living/user)
-	if(!istype(user) || get_charge() < 1)
+/obj/item/mod/control/shock(mob/living/shocking, chance, shock_source, siemens_coeff)
+	if(get_charge() < 1)
 		return FALSE
-	do_sparks(5, TRUE, src)
-	var/check_range = TRUE
-	return electrocute_mob(user, get_charge_source(), src, 0.7, check_range)
+	if(isnull(siemens_coeff))
+		siemens_coeff = 0.7
+	return ..()
 
 /obj/item/mod/control/proc/install(obj/item/mod/module/new_module, mob/user)
 	for(var/obj/item/mod/module/old_module as anything in modules)
 		if(is_type_in_list(new_module, old_module.incompatible_modules) || is_type_in_list(old_module, new_module.incompatible_modules))
 			if(user)
-				balloon_alert(user, "[new_module] incompatible with [old_module]!")
-				playsound(src, 'sound/machines/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+				balloon_alert(user, "incompatible with [old_module]!")
+				playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
 			return
 	var/complexity_with_module = complexity
 	complexity_with_module += new_module.complexity
 	if(complexity_with_module > complexity_max)
 		if(user)
-			balloon_alert(user, "[new_module] would make [src] too complex!")
-			playsound(src, 'sound/machines/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+			balloon_alert(user, "above complexity max!")
+			playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
 		return
 	if(!new_module.has_required_parts(mod_parts))
 		if(user)
-			balloon_alert(user, "[new_module] incompatible with [src]'s parts!")
-			playsound(src, 'sound/machines/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+			balloon_alert(user, "lacking required parts!")
+			playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
 		return
+	if(!new_module.can_install(src))
+		if(user)
+			balloon_alert(user, "can't install!")
+			playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+		return
+	if(SEND_SIGNAL(src, COMSIG_MOD_TRY_INSTALL_MODULE, new_module, user) & MOD_ABORT_INSTALL)
+		return
+	if(SEND_SIGNAL(new_module, COMSIG_MODULE_TRY_INSTALL, src, user) & MOD_ABORT_INSTALL)
+		return
+	finish_install(new_module, user)
+
+/obj/item/mod/control/proc/finish_install(obj/item/mod/module/new_module, mob/user)
 	new_module.forceMove(src)
 	modules += new_module
 	complexity += new_module.complexity
 	new_module.mod = src
-	new_module.RegisterSignal(src, COMSIG_ITEM_GET_WORN_OVERLAYS, TYPE_PROC_REF(/obj/item/mod/module, add_module_overlay))
 	new_module.on_install()
 	if(wearer)
 		new_module.on_equip()
-	if(active)
-		new_module.on_suit_activation()
+	if(active && new_module.has_required_parts(mod_parts, need_active = TRUE))
+		new_module.on_part_activation()
+		new_module.part_activated = TRUE
 	if(user)
 		balloon_alert(user, "[new_module] added")
 		playsound(src, 'sound/machines/click.ogg', 50, TRUE, SILENCED_SOUND_EXTRARANGE)
@@ -579,10 +668,9 @@
 	if(wearer)
 		old_module.on_unequip()
 	if(active)
-		old_module.on_suit_deactivation(deleting = deleting)
+		old_module.on_part_deactivation(deleting = deleting)
 		if(old_module.active)
 			old_module.deactivate(display_message = !deleting, deleting = deleting)
-	old_module.UnregisterSignal(src, COMSIG_ITEM_GET_WORN_OVERLAYS)
 	old_module.on_uninstall(deleting = deleting)
 	QDEL_LIST_ASSOC_VAL(old_module.pinned_to)
 	old_module.mod = null
@@ -594,7 +682,7 @@
 /obj/item/mod/control/proc/update_access(mob/user, obj/item/card/id/card)
 	if(!allowed(user))
 		balloon_alert(user, "insufficient access!")
-		playsound(src, 'sound/machines/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
+		playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 25, TRUE, SILENCED_SOUND_EXTRARANGE)
 		return
 	req_access = card.access.Copy()
 	balloon_alert(user, "access updated")
@@ -620,25 +708,49 @@
 /obj/item/mod/control/proc/check_charge(amount)
 	return core?.check_charge(amount) || FALSE
 
+/obj/item/mod/control/proc/get_chargebar_color()
+	return core?.get_chargebar_color() || "transparent"
+
+/obj/item/mod/control/proc/get_chargebar_string()
+	return core?.get_chargebar_string() || "No Core Detected"
+
 /**
  * Updates the wearer's hud according to the current state of the MODsuit
  */
 /obj/item/mod/control/proc/update_charge_alert()
-	if(isnull(wearer))
+	if(isnull(wearer) || isnull(wearer.client))
 		return
 	var/state_to_use
 	if(!active)
-		state_to_use = "0"
+		state_to_use = SPACESUIT_NO_ICON
 	else if(isnull(core))
 		state_to_use = "coreless"
 	else
 		state_to_use = core.get_charge_icon_state()
 
-	wearer.update_spacesuit_hud_icon(state_to_use || "0")
+	var/atom/movable/screen/spacesuit/spacesuit_hud = wearer.hud_used?.screen_objects[HUD_MOB_SPACESUIT]
+	if (spacesuit_hud)
+		spacesuit_hud.update_spacesuit_hud_icon(state_to_use || SPACESUIT_NO_ICON)
 
 /obj/item/mod/control/proc/update_speed()
-	for(var/obj/item/part as anything in get_parts(all = TRUE))
-		part.slowdown = (active ? slowdown_active : slowdown_inactive) / length(mod_parts)
+	var/total_slowdown = 0
+	var/prevent_slowdown = HAS_TRAIT(src, TRAIT_SPEED_POTIONED)
+	if (!prevent_slowdown)
+		total_slowdown += slowdown_deployed
+
+	var/list/module_slowdowns = list()
+	SEND_SIGNAL(src, COMSIG_MOD_UPDATE_SPEED, module_slowdowns, prevent_slowdown)
+	for (var/module_slow in module_slowdowns)
+		total_slowdown += module_slow
+
+	for(var/datum/mod_part/part_datum as anything in get_part_datums(all = TRUE))
+		var/obj/item/part = part_datum.part_item
+		part.slowdown = total_slowdown / length(mod_parts)
+		if (!part_datum.sealed)
+			part.slowdown = max(part.slowdown, 0)
+		if(istype(part, /obj/item/clothing/shoes/mod))
+			var/obj/item/clothing/shoes/mod/shoe_part = part
+			shoe_part.update_footstep_sounds()
 	wearer?.update_equipment_speed_mods()
 
 /obj/item/mod/control/proc/power_off()
@@ -665,14 +777,18 @@
 		uninstall(part)
 		return
 	if(part in get_parts())
+		if(QDELING(part) && !QDELING(src))
+			qdel(src)
+			return
+		var/datum/mod_part/part_datum = get_part_datum(part)
+		if(part_datum.sealed)
+			seal_part(part, is_sealed = FALSE)
 		if(isnull(part.loc))
 			return
 		if(!wearer)
 			part.forceMove(src)
 			return
-		retract(wearer, part)
-		if(active)
-			INVOKE_ASYNC(src, PROC_REF(toggle_activate), wearer, TRUE)
+		INVOKE_ASYNC(src, PROC_REF(retract), wearer, part, /* instant = */ TRUE) // async to appease spaceman DMM because the branch we don't run has a do_after
 
 /obj/item/mod/control/proc/on_part_destruction(obj/item/part, damage_flag)
 	SIGNAL_HANDLER
@@ -681,35 +797,29 @@
 		return
 	atom_destruction(damage_flag)
 
-/obj/item/mod/control/proc/on_part_deletion(obj/item/part)
-	SIGNAL_HANDLER
-
-	if(QDELING(src))
-		return
-	part.moveToNullspace()
-	qdel(src)
-
 /obj/item/mod/control/proc/on_overslot_exit(obj/item/part, atom/movable/overslot, direction)
 	SIGNAL_HANDLER
 
 	var/datum/mod_part/part_datum = get_part_datum(part)
 	if(overslot != part_datum.overslotting)
 		return
+	UnregisterSignal(part, COMSIG_ATOM_EXITED)
 	part_datum.overslotting = null
 
 /obj/item/mod/control/proc/on_potion(atom/movable/source, obj/item/slimepotion/speed/speed_potion, mob/living/user)
 	SIGNAL_HANDLER
 
-	if(slowdown_inactive <= 0)
+	if(HAS_TRAIT(src, TRAIT_SPEED_POTIONED))
 		to_chat(user, span_warning("[src] has already been coated with red, that's as fast as it'll go!"))
 		return SPEED_POTION_STOP
+
 	if(active)
 		to_chat(user, span_warning("It's too dangerous to smear [speed_potion] on [src] while it's active!"))
 		return SPEED_POTION_STOP
+
 	to_chat(user, span_notice("You slather the red gunk over [src], making it faster."))
-	set_mod_color(COLOR_RED)
-	slowdown_inactive = 0
-	slowdown_active = 0
+	set_mod_color(color_transition_filter(COLOR_RED))
+	ADD_TRAIT(src, TRAIT_SPEED_POTIONED, SLIME_POTION_TRAIT)
 	update_speed()
 	qdel(speed_potion)
 	return SPEED_POTION_STOP
@@ -721,3 +831,10 @@
 
 	mod_link.end_call()
 	mod_link.frequency = null
+
+/obj/item/mod/control/proc/get_visor_overlay(mutable_appearance/standing)
+	var/list/overrides = list()
+	SEND_SIGNAL(src, COMSIG_MOD_GET_VISOR_OVERLAY, standing, overrides)
+	if (length(overrides))
+		return overrides[1]
+	return mutable_appearance(worn_icon, "[skin]-helmet-visor", layer = standing.layer + 0.1)

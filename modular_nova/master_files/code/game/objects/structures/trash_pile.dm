@@ -18,7 +18,6 @@
 
 /obj/structure/trash_pile/Initialize(mapload)
 	. = ..()
-	AddElement(/datum/element/climbable)
 	icon_state = pick(
 		"pile1",
 		"pile2",
@@ -111,19 +110,19 @@
 		return FALSE
 	return TRUE
 
-/obj/structure/trash_pile/attackby(obj/item/hidden_item, mob/living/user, params)
+/obj/structure/trash_pile/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
 	if(!user.combat_mode)
-		if(can_hide_item(hidden_item))
+		if(can_hide_item(tool))
 			balloon_alert(user, "hiding item...")
 			if(do_after(user, hide_item_time, user))
 				if(src.loc)
-					if(user.transferItemToLoc(hidden_item, src))
+					if(user.transferItemToLoc(tool, src))
 						balloon_alert(user, "item hidden")
 					else
 						balloon_alert(user, "it's stuck to your hand!")
 		else
 			balloon_alert(user, "it's full!")
-		return
+		return ITEM_INTERACT_SUCCESS
 
 	. = ..()
 

@@ -9,7 +9,7 @@
 		if(!isnull(alternate_worn_layer) && alternate_worn_layer < BODY_FRONT_LAYER) // if the alternate worn layer was already lower than snouts then leave it be
 			return
 
-		alternate_worn_layer = ABOVE_BODY_FRONT_GLASSES_LAYER
+		alternate_worn_layer = ABOVE_BODY_FRONT_LAYER
 		user.update_worn_glasses()
 
 /obj/item/clothing/glasses/dropped(mob/living/carbon/human/user)
@@ -19,9 +19,10 @@
 /obj/item/clothing/glasses/blindfold/color
 	name = "blind personnel blindfold"
 	desc = "Indicates that the wearer suffers from blindness."
-	icon = 'modular_nova/modules/GAGS/icons/eyes.dmi'
 	worn_icon = 'modular_nova/modules/GAGS/icons/eyes_worn.dmi'
-	icon_state = "blindfoldcolor"
+	icon = 'icons/map_icons/clothing/_clothing.dmi'
+	icon_state = "/obj/item/clothing/glasses/blindfold/color"
+	post_init_icon_state = "blindfoldcolor"
 	greyscale_config = /datum/greyscale_config/blindfold
 	greyscale_config_worn = /datum/greyscale_config/blindfold/worn
 	greyscale_colors = "#ffffff"

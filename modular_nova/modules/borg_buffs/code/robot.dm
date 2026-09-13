@@ -118,8 +118,8 @@
 	desc = "A cyborg fitted module resembling the rolling pins and Knifes"
 	icon = 'modular_nova/modules/borg_buffs/icons/items_cyborg.dmi'
 	icon_state = "knife_screw_cyborg"
-	hitsound = 'sound/items/drill_hit.ogg'
-	usesound = 'sound/items/drill_use.ogg'
+	hitsound = 'sound/items/tools/drill_hit.ogg'
+	usesound = 'sound/items/tools/drill_use.ogg'
 	toolspeed = 0.5
 	tool_behaviour = TOOL_KNIFE
 
@@ -128,7 +128,7 @@
 	. += " It's fitted with a [tool_behaviour == TOOL_KNIFE ? "knife" : "rolling pin"] head."
 
 /obj/item/cooking/cyborg/power/attack_self(mob/user)
-	playsound(get_turf(user), 'sound/items/change_drill.ogg', 50, TRUE)
+	playsound(get_turf(user), 'sound/items/tools/change_drill.ogg', 50, TRUE)
 	if(tool_behaviour != TOOL_ROLLINGPIN)
 		tool_behaviour = TOOL_ROLLINGPIN
 		to_chat(user, span_notice("You attach the rolling pin bit to [src]."))
@@ -141,7 +141,6 @@
 // Wirebrush for janiborg
 /datum/design/borg_wirebrush
 	name = "Wire-brush Module"
-	id = "borg_upgrade_brush"
 	build_type = MECHFAB
 	build_path = /obj/item/borg/upgrade/wirebrush
 	materials = list(
@@ -155,10 +154,11 @@
 /obj/item/borg/upgrade/wirebrush
 	name = "janitor cyborg wire-brush"
 	desc = "A tool to remove rust from walls."
-	icon_state = "cyborg_upgrade3"
+	icon_state = "module_janitor"
 	require_model = TRUE
 	model_type = list(/obj/item/robot_model/janitor)
 	model_flags = BORG_MODEL_JANITOR
+	custom_materials = list(/datum/material/iron = SHEET_MATERIAL_AMOUNT * 2)
 
 /obj/item/borg/upgrade/wirebrush/action(mob/living/silicon/robot/cyborg)
 	. = ..()
@@ -179,3 +179,26 @@
 		var/obj/item/wirebrush/brush = new (cyborg.model)
 		cyborg.model.basic_modules += brush
 		cyborg.model.add_module(brush, FALSE, TRUE)
+
+// Kinetic Crusher for Mining Borg
+/obj/item/kinetic_crusher/robot
+	name = "mining cyborg kinetic-crusher"
+	desc = "A tool fixed to a sillicon's actuators that hold a proto-kinetic crusher."
+	acts_as_if_wielded = TRUE
+	force = 20
+
+/obj/item/robot_model/miner/Initialize(mapload)
+	basic_modules += /obj/item/kinetic_crusher/robot
+	return ..()
+
+/obj/item/kinetic_crusher/robot/Initialize(mapload)
+	. = ..()
+	force = force_wielded
+
+/obj/item/kinetic_crusher/robot/update_wielding()
+	return
+
+#undef BASE_SHAKER_JUICE_REAGENTS
+#undef BASE_SHAKER_ALCOHOL_REAGENTS
+#undef BASE_SHAKER_SODA_REAGENTS
+#undef BASE_SHAKER_MISC_REAGENTS

@@ -29,20 +29,21 @@
 	var/reagent_transfer_per_use = 0
 	///How far does the smoke reach per use?
 	var/smoke_range = 2
+	custom_materials = list(/datum/material/glass = SHEET_MATERIAL_AMOUNT * 10, /datum/material/iron = SHEET_MATERIAL_AMOUNT * 5)
 
 /obj/item/bong/Initialize(mapload)
 	. = ..()
 	create_reagents(chem_volume, INJECTABLE | NO_REACT)
 
-/obj/item/bong/attackby(obj/item/used_item, mob/user, params)
-	if(istype(used_item, /obj/item/food/grown))
-		var/obj/item/food/grown/grown_item = used_item
+/obj/item/bong/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(istype(tool, /obj/item/food/grown))
+		var/obj/item/food/grown/grown_item = tool
 		if(packed_item)
 			balloon_alert(user, "already packed!")
-			return
+			return ITEM_INTERACT_BLOCKING
 		if(!HAS_TRAIT(grown_item, TRAIT_DRIED))
 			balloon_alert(user, "needs to be dried!")
-			return
+			return ITEM_INTERACT_BLOCKING
 		to_chat(user, span_notice("You stuff [grown_item] into [src]."))
 		bong_hits = max_hits
 		packed_item = TRUE
@@ -50,20 +51,22 @@
 			grown_item.reagents.trans_to(src, grown_item.reagents.total_volume, transferred_by = user)
 			reagent_transfer_per_use = reagents.total_volume / max_hits
 		qdel(grown_item)
+		return ITEM_INTERACT_SUCCESS
 
-	else if(istype(used_item, /obj/item/reagent_containers/hash)) //for hash/dabs
+	else if(istype(tool, /obj/item/reagent_containers/hash)) //for hash/dabs
 		if(packed_item)
 			balloon_alert(user, "already packed!")
-			return
-		to_chat(user, span_notice("You stuff [used_item] into [src]."))
+			return ITEM_INTERACT_BLOCKING
+		to_chat(user, span_notice("You stuff [tool] into [src]."))
 		bong_hits = max_hits
 		packed_item = TRUE
-		if(used_item.reagents)
-			used_item.reagents.trans_to(src, used_item.reagents.total_volume, transferred_by = user)
+		if(tool.reagents)
+			tool.reagents.trans_to(src, tool.reagents.total_volume, transferred_by = user)
 			reagent_transfer_per_use = reagents.total_volume / max_hits
-		qdel(used_item)
+		qdel(tool)
+		return ITEM_INTERACT_SUCCESS
 	else
-		var/lighting_text = used_item.ignition_effect(src, user)
+		var/lighting_text = tool.ignition_effect(src, user)
 		if(!lighting_text)
 			return ..()
 		if(bong_hits <= 0)
@@ -71,6 +74,7 @@
 			return ..()
 		light(lighting_text)
 		name = "lit [initial(name)]"
+		return ITEM_INTERACT_SUCCESS
 
 /obj/item/bong/attack_self(mob/user)
 	var/turf/location = get_turf(user)
@@ -91,7 +95,7 @@
 	if(!packed_item || !lit)
 		return
 	hit_mob.visible_message(span_notice("[user] starts [hit_mob == user ? "taking a hit from [src]." : "forcing [hit_mob] to take a hit from [src]!"]"), hit_mob == user ? span_notice("You start taking a hit from [src].") : span_userdanger("[user] starts forcing you to take a hit from [src]!"))
-	playsound(src, 'sound/chemistry/heatdam.ogg', 50, TRUE)
+	playsound(src, 'sound/effects/chemistry/heatdam.ogg', 50, TRUE)
 	if(!do_after(user, 40))
 		return
 	to_chat(hit_mob, span_notice("You finish taking a hit from the [src]."))
@@ -129,14 +133,12 @@
 	name = "lit [name]"
 
 	if(reagents.get_reagent_amount(/datum/reagent/toxin/plasma)) // the plasma explodes when exposed to fire
-		var/datum/effect_system/reagents_explosion/explosion = new()
-		explosion.set_up(round(reagents.get_reagent_amount(/datum/reagent/toxin/plasma) * 0.4, 1), get_turf(src), 0, 0)
+		var/datum/effect_system/reagents_explosion/explosion = new(get_turf(src), round(reagents.get_reagent_amount(/datum/reagent/toxin/plasma) * 0.4, 1))
 		explosion.start()
 		qdel(src)
 		return
 	if(reagents.get_reagent_amount(/datum/reagent/fuel)) // the fuel explodes, too, but much less violently
-		var/datum/effect_system/reagents_explosion/explosion = new()
-		explosion.set_up(round(reagents.get_reagent_amount(/datum/reagent/fuel) * 0.2, 1), get_turf(src), 0, 0)
+		var/datum/effect_system/reagents_explosion/explosion = new(get_turf(src), round(reagents.get_reagent_amount(/datum/reagent/fuel) * 0.2, 1))
 		explosion.start()
 		qdel(src)
 		return
@@ -188,6 +190,7 @@
 	chem_volume = 50
 	smoke_range = 7
 	moan_chance = 50
+	custom_materials = list(/datum/material/glass = SHEET_MATERIAL_AMOUNT * 20, /datum/material/iron = SHEET_MATERIAL_AMOUNT * 10)
 
 #define MAX_FAKE_STEAM_STAGES 5
 #define STAGE_DOWN_TIME (10 SECONDS)
@@ -237,6 +240,7 @@
 	update_alpha()
 
 #undef MAX_FAKE_STEAM_STAGES
+#undef STAGE_DOWN_TIME
 
 /datum/crafting_recipe/bong
 	name = "Bong"

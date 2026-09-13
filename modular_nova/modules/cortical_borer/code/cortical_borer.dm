@@ -32,40 +32,42 @@ GLOBAL_LIST_EMPTY(cortical_borers)
 	return FALSE
 
 //so if a person is debrained, the borer is removed
-/obj/item/organ/internal/brain/Remove(mob/living/carbon/target, special = FALSE, movement_flags)
+/obj/item/organ/brain/Remove(mob/living/carbon/target, special = FALSE, movement_flags)
 	. = ..()
 	var/mob/living/basic/cortical_borer/cb_inside = target.has_borer()
 	if(cb_inside)
 		cb_inside.leave_host()
 
 //borers also create an organ, so you dont need to debrain someone
-/obj/item/organ/internal/borer_body
+/obj/item/organ/borer_body
 	name = "engorged cortical borer"
 	desc = "the body of a cortical borer, full of human viscera, blood, and more."
 	zone = BODY_ZONE_HEAD
 	/// Ref to the borer who this organ belongs to
 	var/mob/living/basic/cortical_borer/borer
 
-/obj/item/organ/internal/borer_body/Destroy()
+/obj/item/organ/borer_body/Destroy()
 	borer = null
 	if(owner && HAS_TRAIT_FROM(owner, TRAIT_WEATHER_IMMUNE, "borer_in_host"))
 		REMOVE_TRAIT(owner, TRAIT_WEATHER_IMMUNE, "borer_in_host")
 	return ..()
 
-/obj/item/organ/internal/borer_body/Insert(mob/living/carbon/carbon_target, special, movement_flags)
+/obj/item/organ/borer_body/on_mob_insert(mob/living/carbon/carbon_target, special, movement_flags)
 	. = ..()
-	for(var/datum/borer_focus/body_focus as anything in borer.body_focuses)
-		body_focus.on_add()
 	carbon_target.apply_status_effect(/datum/status_effect/grouped/screwy_hud/fake_healthy, type)
 	ADD_TRAIT(carbon_target, TRAIT_WEATHER_IMMUNE, "borer_in_host")
+	if(isnull(borer))
+		return
+	for(var/datum/borer_focus/body_focus as anything in borer.body_focuses)
+		body_focus.on_add()
 
 //on removal, force the borer out
-/obj/item/organ/internal/borer_body/Remove(mob/living/carbon/carbon_target, special)
+/obj/item/organ/borer_body/on_mob_remove(mob/living/carbon/carbon_target, special)
 	. = ..()
 	var/mob/living/basic/cortical_borer/cb_inside = carbon_target.has_borer()
-	for(var/datum/borer_focus/body_focus as anything in cb_inside.body_focuses)
-		body_focus.on_remove()
 	if(cb_inside)
+		for(var/datum/borer_focus/body_focus as anything in cb_inside.body_focuses)
+			body_focus.on_remove()
 		cb_inside.leave_host()
 	carbon_target.remove_status_effect(/datum/status_effect/grouped/screwy_hud/fake_healthy, type)
 	REMOVE_TRAIT(carbon_target, TRAIT_WEATHER_IMMUNE, "borer_in_host")
@@ -92,7 +94,6 @@ GLOBAL_LIST_EMPTY(cortical_borers)
 	mob_size = MOB_SIZE_TINY
 	mob_biotypes = MOB_ORGANIC|MOB_BUG
 	//because they are small, why can't they be held?
-	can_be_held = TRUE
 	///what chemicals borers know, starting with none
 	var/list/known_chemicals = list()
 	///what chemicals the borer can learn
@@ -216,6 +217,7 @@ GLOBAL_LIST_EMPTY(cortical_borers)
 		squash_damage = 25, \
 		squash_flags = SQUASHED_DONT_SQUASH_IN_CONTENTS, \
 	)
+	AddElement(/datum/element/can_be_held)
 	ADD_TRAIT(src, TRAIT_VENTCRAWLER_ALWAYS, INNATE_TRAIT) //they need to be able to move around
 
 	var/matrix/borer_matrix = matrix(transform)
@@ -251,7 +253,7 @@ GLOBAL_LIST_EMPTY(cortical_borers)
 /mob/living/basic/cortical_borer/Destroy()
 	if(human_host)
 		if(human_host.organs)
-			var/obj/item/organ/internal/borer_body/borer_organ = locate() in human_host.organs
+			var/obj/item/organ/borer_body/borer_organ = locate() in human_host.organs
 			borer_organ.Remove(human_host)
 		if(HAS_TRAIT_FROM(human_host, TRAIT_WEATHER_IMMUNE, "borer_in_host"))
 			REMOVE_TRAIT(human_host, TRAIT_WEATHER_IMMUNE, "borer_in_host")
@@ -289,15 +291,15 @@ GLOBAL_LIST_EMPTY(cortical_borers)
 	. += "2) [GLOB.objective_willing_hosts] willing hosts: [length(GLOB.willing_hosts)]/[GLOB.objective_willing_hosts]"
 	. += "3) [GLOB.objective_blood_borer] borers learning [GLOB.objective_blood_chem] chemicals from the blood: [GLOB.successful_blood_chem]/[GLOB.objective_blood_borer]"
 
-/mob/living/basic/cortical_borer/Life(seconds_per_tick, times_fired)
+/mob/living/basic/cortical_borer/Life(seconds_per_tick)
 	. = ..()
 	//can only do stuff when we are inside a LIVING human
 	if(!inside_human() || human_host?.stat == DEAD)
 		return
 
 	//there needs to be a negative to having a borer
-	if(prob(5 * host_harm_multiplier * ((upgrade_flags & BORER_STEALTH_MODE) ? 0.1 : 1)) && human_host.getToxLoss() <= (80 * host_harm_multiplier))
-		human_host.adjustToxLoss(5 * host_harm_multiplier, TRUE, TRUE)
+	if(prob(5 * host_harm_multiplier * ((upgrade_flags & BORER_STEALTH_MODE) ? 0.1 : 1)) && human_host.get_tox_loss() <= (80 * host_harm_multiplier))
+		human_host.adjust_tox_loss(5 * host_harm_multiplier, forced = TRUE)
 
 	human_host.apply_status_effect(/datum/status_effect/grouped/screwy_hud/fake_healthy, type)
 
@@ -356,7 +358,7 @@ GLOBAL_LIST_EMPTY(cortical_borers)
 	return FALSE
 
 /// Base mob environment handler for body temperature, overridden to take into consideration being inside a host
-/mob/living/basic/cortical_borer/handle_environment(datum/gas_mixture/environment, seconds_per_tick, times_fired)
+/mob/living/basic/cortical_borer/handle_environment(datum/gas_mixture/environment, seconds_per_tick)
 	var/loc_temp
 	if(human_host)
 		loc_temp = human_host.coretemperature // set the local temp to that of the host's core temp
@@ -378,7 +380,7 @@ GLOBAL_LIST_EMPTY(cortical_borers)
 /mob/living/basic/cortical_borer/proc/leave_host()
 	if(!human_host)
 		return
-	var/obj/item/organ/internal/borer_body/borer_organ = locate() in human_host.organs
+	var/obj/item/organ/borer_body/borer_organ = locate() in human_host.organs
 	if(borer_organ)
 		borer_organ.Remove(human_host)
 	var/turf/human_turf = get_turf(human_host)

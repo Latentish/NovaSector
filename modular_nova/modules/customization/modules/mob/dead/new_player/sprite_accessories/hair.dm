@@ -3,9 +3,11 @@
 /datum/sprite_accessory/hair/nova
 	icon = 'modular_nova/master_files/icons/mob/sprite_accessory/hair.dmi'
 
-/datum/sprite_accessory/hair/nova/pigtails4
-	name = "Pigtails 4"
-	icon_state = "hair_pigtailss"
+/datum/sprite_accessory/hair/nova/pigtails_girly
+	name = "Pigtails (Girly)"
+	icon_state = "hair_pigtails_girly"
+	hair_appendages_inner = list("hair_pigtails_girly_a1" = HAIR_APPENDAGE_HANGING_FRONT)
+	hair_appendages_outer = list("hair_pigtails_girly_a1o" = HAIR_APPENDAGE_HANGING_FRONT)
 
 /datum/sprite_accessory/hair/nova/bedhead_long
 	name = "Longer Bedhead"
@@ -95,10 +97,6 @@
 	name = "Halfbang ALT"
 	icon_state = "hair_halfbangalt"
 
-/datum/sprite_accessory/hair/nova/emolong
-	name = "Emo Long"
-	icon_state = "hair_emolong"
-
 /datum/sprite_accessory/hair/nova/sleaze
 	name = "Sleaze"
 	icon_state = "hair_sleaze"
@@ -131,6 +129,10 @@
 	name = "Bun Head 4"
 	icon_state = "hair_bunhead4"
 
+/datum/sprite_accessory/hair/nova/elegantbun
+	name = "Elegant Bun"
+	icon_state = "hair_elegantbun"
+
 /datum/sprite_accessory/hair/nova/rows1
 	name = "Rows 1"
 	icon_state = "hair_rows1"
@@ -138,6 +140,10 @@
 /datum/sprite_accessory/hair/nova/rows2
 	name = "Rows 2"
 	icon_state = "hair_rows2"
+
+/datum/sprite_accessory/hair/nova/royalcurls
+	name = "Royal Curls"
+	icon_state = "hair_royalcurls"
 
 /datum/sprite_accessory/hair/nova/toriyama
 	name = "Toriyama"
@@ -163,6 +169,10 @@
 	name = "Wife"
 	icon_state = "hair_wife"
 
+/datum/sprite_accessory/hair/nova/mermaid
+	name = "Mermaid"
+	icon_state = "hair_mermaid"
+
 /datum/sprite_accessory/hair/nova/nia
 	name = "Nia"
 	icon_state = "hair_nia"
@@ -175,6 +185,10 @@
 	name = "Short Over Eye ALT"
 	icon_state = "hair_shortovereyealt"
 
+/datum/sprite_accessory/hair/nova/thickponytail
+	name = "Thick Ponytail"
+	icon_state = "hair_thickponytail"
+
 /datum/sprite_accessory/hair/nova/twintail_floor
 	name = "Twintail Floor"
 	icon_state = "hair_twintail_floor"
@@ -186,6 +200,10 @@
 /datum/sprite_accessory/hair/nova/long4
 	name = "Long 4"
 	icon_state = "hair_long4"
+
+/datum/sprite_accessory/hair/nova/fluffball
+	name = "Fluffball"
+	icon_state = "hair_fluffball"
 
 /datum/sprite_accessory/hair/nova/fluffy_short
 	name = "Fluffy Short"
@@ -206,6 +224,10 @@
 /datum/sprite_accessory/hair/nova/diagonal_bangs
 	name = "Diagonal Bangs"
 	icon_state = "hair_diagonal_bangs"
+
+/datum/sprite_accessory/hair/nova/diagonal_bangs_alt
+	name = "Diagonal Bangs Alt"
+	icon_state = "hair_diagonal_bangs_alt"
 
 /datum/sprite_accessory/hair/nova/gloomy_medium
 	name = "Medium Gloomy Bangs"
@@ -535,6 +557,10 @@
 	name = "Fluffy"
 	icon_state = "hair_fluffy"
 
+/datum/sprite_accessory/hair/nova/fluffy_bangs
+	name = "Fluffy Bangs"
+	icon_state = "hair_fluffy_bangs"
+
 /datum/sprite_accessory/hair/nova/fluffy_long
 	name = "Fluffy long"
 	icon_state = "hair_fluffy_long"
@@ -647,6 +673,123 @@
 	name = "Long Dreadlocks"
 	icon_state = "hair_dreadlocks_long"
 
+/datum/sprite_accessory/hair/nova/twinbun_chunky
+	name = "Chunky Twin Buns"
+	icon_state = "hair_twinbun_chunky"
+
+/datum/sprite_accessory/hair/nova/quadbun_chunky
+	name = "Chunky Quad Buns"
+	icon_state = "hair_quadbun_chunky"
+	y_offset = 1
+
+/datum/sprite_accessory/hair/nova/ponytail_chunky
+	name = "Chunky Ponytail"
+	icon_state = "hair_ponytail_chunky"
+	hair_appendages_inner = list("hair_ponytail_chunky" = HAIR_APPENDAGE_REAR)
+
+/datum/sprite_accessory/hair/nova/ponytail_kzero
+	name = "'Zero' Ponytail"
+	icon_state = "hair_ponytail_kzero"
+	hair_appendages_inner = list("hair_ponytail_kzero" = HAIR_APPENDAGE_REAR)
+
+/datum/sprite_accessory/hair/nova/misshapen
+	name = "Misshapen"
+	icon_state = "hair_misshapen"
+
+/datum/sprite_accessory/hair/nova/halfbob
+	name = "Half Bob"
+	icon_state = "hair_bob_half"
+
+/datum/sprite_accessory/hair/nova/halfbob_mirrored
+	name = "Mirrored Half Bob"
+	icon_state = "hair_bob_half_mirrored"
+
+/datum/sprite_accessory/hair/nova/flowerchild
+	name = "Flowerchild"
+	icon_state = "hair_flowerchild"
+
+/datum/sprite_accessory/hair/nova/flowerchild_ponyless
+	name = "Flowerchild (No Ponytail)"
+	icon_state = "hair_flowerchild_ponyless"
+
+/datum/sprite_accessory/hair/nova/flowerchild_ponyful
+	name = "Flowerchild (Ponytail Only)"
+	icon_state = "hair_flowerchild_ponyful"
+
+/datum/sprite_accessory/hair/nova/clown
+	name = "Clown"
+	icon_state = "hair_clown"
+
+/datum/sprite_accessory/hair/nova/tesharimohawk
+	name = "Teshari Mohawk"
+	icon_state = "hair_teshmohawk"
+
+/datum/sprite_accessory/hair/nova/tesharimohawkalt
+	name = "Teshari Mohawk Alt"
+	icon_state = "hair_teshmohawkalt"
+
+/datum/sprite_accessory/hair/nova/dreadtail
+	name = "Dreadtail"
+	icon_state = "hair_dreadtail"
+
+/datum/sprite_accessory/hair/nova/slimetails
+	name = "Slime Tails"
+	icon_state = "hair_slime_tails"
+
+/datum/sprite_accessory/hair/nova/slimefringelong
+	name = "Slime Fringe Long"
+	icon_state = "hair_slime_fringe_long"
+
+/datum/sprite_accessory/hair/nova/slimetails2
+	name = "Slime Tails 2"
+	icon_state = "hair_slime_tails_2"
+	hair_appendages_inner = list("hair_slime_tails_2_a1" = HAIR_APPENDAGE_HANGING_FRONT)
+	hair_appendages_outer = list("hair_slime_tails_2_a1o" = HAIR_APPENDAGE_HANGING_FRONT)
+
+/datum/sprite_accessory/hair/nova/slimeponytaillow
+	name = "Slime Ponytail Low"
+	icon_state = "hair_slime_ponytail_low"
+	hair_appendages_outer = list("hair_slime_ponytail_low_a1o" = HAIR_APPENDAGE_HANGING_FRONT)
+
+/datum/sprite_accessory/hair/nova/slimeblobby
+	name = "Slime Blobby"
+	icon_state = "hair_slime_blobby"
+
+/datum/sprite_accessory/hair/nova/slimeponytailhigh
+	name = "Slime Ponytail High"
+	icon_state = "hair_slime_ponytail_high"
+	hair_appendages_inner = list("hair_slime_ponytail_high_a1" = HAIR_APPENDAGE_HANGING_FRONT)
+	hair_appendages_outer = list("hair_slime_ponytail_high_a1o" = HAIR_APPENDAGE_HANGING_FRONT)
+
+/datum/sprite_accessory/hair/nova/slimejelly
+	name = "Slime Jelly"
+	icon_state = "hair_slime_jelly"
+
+/datum/sprite_accessory/hair/nova/biggertails
+	name = "Bigger Tails"
+	icon_state = "hair_bigger_tails"
+	hair_appendages_inner = list("hair_bigger_tails_a1" = HAIR_APPENDAGE_HANGING_FRONT)
+	hair_appendages_outer = list("hair_bigger_tails_a1o" = HAIR_APPENDAGE_HANGING_FRONT)
+
+/datum/sprite_accessory/hair/nova/ponytailscythe
+	name = "Ponytail Scythe"
+	icon_state = "hair_ponytail_scythe"
+	hair_appendages_inner = list("hair_ponytail_scythe_a1" = HAIR_APPENDAGE_HANGING_FRONT)
+	hair_appendages_outer = list("hair_ponytail_scythe_a1o" = HAIR_APPENDAGE_HANGING_FRONT)
+	y_offset = 4
+
+/datum/sprite_accessory/hair/nova/gorgon
+	name = "Gorgon"
+	icon_state = "hair_gorgon"
+	hair_appendages_inner = list("hair_gorgon_a1" = HAIR_APPENDAGE_HANGING_FRONT)
+	hair_appendages_outer = list("hair_gorgon_a1o" = HAIR_APPENDAGE_HANGING_FRONT)
+
+/datum/sprite_accessory/hair/nova/tetodrills
+	name = "Teto Drills"
+	icon_state = "hair_teto_drills"
+	hair_appendages_inner = list("hair_teto_drills_a1" = HAIR_APPENDAGE_HANGING_FRONT)
+	hair_appendages_outer = list("hair_teto_drills_a1o" = HAIR_APPENDAGE_HANGING_FRONT)
+
 // Facial hair
 
 /datum/sprite_accessory/facial_hair/nova
@@ -684,3 +827,22 @@
 	name = "Tentacle Beard"
 	icon_state = "facial_squid"
 
+/datum/sprite_accessory/facial_hair/nova/selleckreceeded
+	name = "Moustache (Selleck - Alt)"
+	icon_state = "facial_selleckreceeded"
+
+/datum/sprite_accessory/facial_hair/nova/faciallizardlick
+	name = "Lizard Tongue Flick"
+	icon_state = "facial_lizardlick_s"
+
+/datum/sprite_accessory/facial_hair/nova/faciallizardlickslow
+	name = "Lizard Tongue Flick Slow"
+	icon_state = "facial_lizardlickslow_s"
+
+/datum/sprite_accessory/facial_hair/nova/faciallizardlickfast
+	name = "Lizard Tongue Flick Fast"
+	icon_state = "facial_lizardlickfast_s"
+
+/datum/sprite_accessory/facial_hair/nova/noselick
+	name = "Nose Lick"
+	icon_state = "noselick"

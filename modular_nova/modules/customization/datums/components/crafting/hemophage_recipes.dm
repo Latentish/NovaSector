@@ -8,10 +8,8 @@
 	for(var/i in 1 to created_volume)
 		new /obj/item/food/hemophage/blood_rice_pearl/raw(location)
 
-
 /datum/crafting_recipe/food/hemophage
-	category = CAT_HEMOPHAGE
-
+	cuisine_category = CUISINE_HEMOPHAGE
 
 /datum/crafting_recipe/food/hemophage/blood_curd
 	name = "Blood Curd"
@@ -19,7 +17,7 @@
 		/datum/reagent/blood = 20,
 	)
 	result = /obj/item/food/hemophage/blood_curd
-
+	meal_category = MEAL_COMPONENT
 
 /datum/crafting_recipe/food/hemophage/blood_noodles
 	name = "Raw Blood Noodles"
@@ -28,7 +26,9 @@
 		/datum/reagent/blood = 20,
 	)
 	result = /obj/item/food/hemophage/blood_noodles/raw
-
+	added_foodtypes = RAW|GORE|BLOODY
+	dish_category = DISH_NOODLES
+	meal_category = MEAL_COMPONENT
 
 /datum/crafting_recipe/food/hemophage/boat_noodles
 	name = "Boat Noodles"
@@ -37,7 +37,9 @@
 		/obj/item/food/hemophage/blood_curd = 1,
 	)
 	result = /obj/item/food/hemophage/blood_noodles/boat_noodles
-
+	removed_foodtypes = RAW
+	dish_category = DISH_NOODLES
+	meal_category = MEAL_MAIN_COURSE
 
 /datum/crafting_recipe/food/hemophage/blood_cake
 	name = "Ti Hoeh Koe"
@@ -47,7 +49,8 @@
 		/datum/reagent/consumable/peanut_butter = 5,
 	)
 	result = /obj/item/food/hemophage/blood_cake
-
+	added_foodtypes = SUGAR|NUTS|GORE|BLOODY
+	meal_category = MEAL_SNACK
 
 /datum/crafting_recipe/food/hemophage/blood_soup
 	name = "Dinuguan"
@@ -60,3 +63,6 @@
 		/obj/item/reagent_containers/cup/bowl = 1,
 	)
 	result = /obj/item/food/soup/hemophage/blood_soup
+	removed_foodtypes = RAW
+	dish_category = DISH_SOUP
+	meal_category = MEAL_MAIN_COURSE

@@ -2,8 +2,11 @@
 
 SUBSYSTEM_DEF(autotransfer)
 	name = "Autotransfer Vote"
-	flags = SS_KEEP_TIMING | SS_BACKGROUND
+	ss_flags = SS_KEEP_TIMING | SS_BACKGROUND
 	wait = 1 MINUTES
+	dependencies = list(
+		/datum/controller/subsystem/shuttle,
+	)
 
 	var/starttime
 	var/targettime

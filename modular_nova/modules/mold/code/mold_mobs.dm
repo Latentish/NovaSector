@@ -33,7 +33,7 @@
 
 	maxHealth = 150
 	health = 150
-	damage_coeff = list(BRUTE = 1, BURN = 0, TOX = 1, STAMINA = 0, OXY = 0)
+	physiology = list(BURN = 0, STAMINA = 0, OXY = 0)
 	unsuitable_atmos_damage = 0
 	minimum_survivable_temperature = 0
 	maximum_survivable_temperature = INFINITY
@@ -42,7 +42,7 @@
 	melee_damage_lower = 10
 	melee_damage_upper = 15
 	obj_damage = 40
-	attack_sound = 'sound/effects/attackblob.ogg'
+	attack_sound = 'sound/effects/blob/attackblob.ogg'
 
 	basic_mob_flags = DEL_ON_DEATH
 	gold_core_spawnable = HOSTILE_SPAWN
@@ -62,7 +62,7 @@
 
 /mob/living/basic/mold/oil_shambler/Initialize(mapload)
 	. = ..()
-	update_overlays()
+	update_appearance(UPDATE_OVERLAYS)
 
 /mob/living/basic/mold/oil_shambler/update_overlays()
 	. = ..()
@@ -82,20 +82,14 @@
 	ignite_target.ignite_mob()
 
 /datum/ai_controller/basic_controller/oil_shambler
+	behavior_tree_json = "modular_nova/modules/mold/code/oil_shambler.bt.json"
 	blackboard = list(
 		BB_TARGETING_STRATEGY = /datum/targeting_strategy/basic,
 	)
 
 	ai_movement = /datum/ai_movement/basic_avoidance
-	idle_behavior = /datum/idle_behavior/idle_random_walk
-	planning_subtrees = list(
-		/datum/ai_planning_subtree/simple_find_target,
-		/datum/ai_planning_subtree/attack_obstacle_in_path,
-		/datum/ai_planning_subtree/basic_melee_attack_subtree,
-		/datum/ai_planning_subtree/random_speech/oil_shambler,
-	)
 
-/datum/ai_planning_subtree/random_speech/oil_shambler
+/datum/bt_node/ai_behavior/random_speech/oil_shambler
 	speech_chance = 3
 	emote_hear = list("bubbles.", "crackles.", "groans.")
 	emote_see = list("bubbles.")
@@ -121,7 +115,7 @@
 	melee_damage_lower = 7
 	melee_damage_upper = 13
 	obj_damage = 30
-	attack_sound = 'sound/weapons/bite.ogg'
+	attack_sound = 'sound/items/weapons/bite.ogg'
 	attack_verb_continuous = "bites"
 	attack_verb_simple = "bite"
 
@@ -147,20 +141,14 @@
 		disease_target.ForceContractDisease(new given_disease(), FALSE, TRUE)
 
 /datum/ai_controller/basic_controller/diseased_rat
+	behavior_tree_json = "modular_nova/modules/mold/code/diseased_rat.bt.json"
 	blackboard = list(
 		BB_TARGETING_STRATEGY = /datum/targeting_strategy/basic,
 	)
 
 	ai_movement = /datum/ai_movement/basic_avoidance
-	idle_behavior = /datum/idle_behavior/idle_random_walk
-	planning_subtrees = list(
-		/datum/ai_planning_subtree/simple_find_target,
-		/datum/ai_planning_subtree/attack_obstacle_in_path,
-		/datum/ai_planning_subtree/basic_melee_attack_subtree,
-		/datum/ai_planning_subtree/random_speech/diseased_rat,
-	)
 
-/datum/ai_planning_subtree/random_speech/diseased_rat
+/datum/bt_node/ai_behavior/random_speech/diseased_rat
 	speech_chance = 3
 	emote_hear = list("squeaks.", "gnashes.", "hisses.")
 	emote_see = list("drools.")
@@ -188,8 +176,9 @@
 	obj_damage = 20
 	attack_verb_continuous = "stings"
 	attack_verb_simple = "sting"
-	attack_sound = 'sound/effects/attackblob.ogg'
+	attack_sound = 'sound/effects/blob/attackblob.ogg'
 	basic_mob_flags = DEL_ON_DEATH
+	gold_core_spawnable = HOSTILE_SPAWN
 
 	ai_controller = /datum/ai_controller/basic_controller/electric_mosquito
 
@@ -205,20 +194,14 @@
 	AddElement(/datum/element/venomous, inject_reagent, inject_amount)
 
 /datum/ai_controller/basic_controller/electric_mosquito
+	behavior_tree_json = "modular_nova/modules/mold/code/electric_mosquito.bt.json"
 	blackboard = list(
 		BB_TARGETING_STRATEGY = /datum/targeting_strategy/basic,
 	)
 
 	ai_movement = /datum/ai_movement/basic_avoidance
-	idle_behavior = /datum/idle_behavior/idle_random_walk
-	planning_subtrees = list(
-		/datum/ai_planning_subtree/simple_find_target,
-		/datum/ai_planning_subtree/attack_obstacle_in_path,
-		/datum/ai_planning_subtree/basic_melee_attack_subtree,
-		/datum/ai_planning_subtree/random_speech/electric_mosquito,
-	)
 
-/datum/ai_planning_subtree/random_speech/electric_mosquito
+/datum/bt_node/ai_behavior/random_speech/electric_mosquito
 	speech_chance = 3
 	emote_hear = list("zaps.", "buzzes.", "crackles.")
 	emote_see = list("arcs.")
@@ -256,6 +239,7 @@
 	light_range = 2
 	light_power = 1
 	light_color = LIGHT_COLOR_GREEN
+	gold_core_spawnable = HOSTILE_SPAWN
 
 	ai_controller = /datum/ai_controller/basic_controller/centaur
 
@@ -264,7 +248,7 @@
 
 /mob/living/basic/mold/centaur/Initialize(mapload)
 	. = ..()
-	update_overlays()
+	update_appearance(UPDATE_OVERLAYS)
 
 /mob/living/basic/mold/centaur/melee_attack(atom/target, list/modifiers, ignore_cooldown)
 	. = ..()
@@ -278,20 +262,14 @@
 		playsound(src, 'modular_nova/modules/horrorform/sound/horror_scream.ogg', CENTAUR_ATTACK_SCREAM_VOLUME, TRUE)
 
 /datum/ai_controller/basic_controller/centaur
+	behavior_tree_json = "modular_nova/modules/mold/code/centaur.bt.json"
 	blackboard = list(
 		BB_TARGETING_STRATEGY = /datum/targeting_strategy/basic,
 	)
 
 	ai_movement = /datum/ai_movement/basic_avoidance
-	idle_behavior = /datum/idle_behavior/idle_random_walk
-	planning_subtrees = list(
-		/datum/ai_planning_subtree/simple_find_target,
-		/datum/ai_planning_subtree/attack_obstacle_in_path,
-		/datum/ai_planning_subtree/basic_melee_attack_subtree,
-		/datum/ai_planning_subtree/random_speech/centaur,
-	)
 
-/datum/ai_planning_subtree/random_speech/centaur
+/datum/bt_node/ai_behavior/random_speech/centaur
 	speech_chance = 3
 	emote_hear = list("chitters.", "groans.", "wails.")
 	emote_see = list("writhes.")

@@ -1,7 +1,6 @@
 /datum/job/roboticist
 	title = JOB_ROBOTICIST
 	description = "Build and repair the AI and cyborgs, create mechs."
-	department_head = list(JOB_RESEARCH_DIRECTOR)
 	faction = FACTION_STATION
 	total_positions = 2
 	spawn_positions = 2
@@ -33,6 +32,7 @@
 	family_heirlooms = list(/obj/item/toy/plush/pkplush)
 	rpg_title = "Necromancer"
 	job_flags = STATION_JOB_FLAGS
+	tgui_icon = FA_ICON_BATTERY_HALF
 
 
 /datum/job/roboticist/New()
@@ -47,11 +47,13 @@
 	uniform = /obj/item/clothing/under/rank/rnd/roboticist
 	suit = /obj/item/clothing/suit/toggle/labcoat/roboticist
 	belt = /obj/item/storage/belt/utility/full
-	ears = /obj/item/radio/headset/headset_sci
-	l_pocket = /obj/item/modular_computer/pda/roboticist
+	ears = /obj/item/radio/headset/headset_medsci // NOVA EDIT CHANGE - ORIGINAL: ears = /obj/item/radio/headset/headset_sci
+	l_pocket = /obj/item/modular_computer/pda/crew/roboticist
 
 	pda_slot = ITEM_SLOT_LPOCKET
 	skillchips = list(/obj/item/skillchip/job/roboticist)
+
+	wintercoat = /obj/item/clothing/suit/hooded/wintercoat/science/robotics
 
 /datum/outfit/job/roboticist/mod
 	name = "Roboticist (MODsuit)"

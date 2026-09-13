@@ -1,12 +1,7 @@
-import { BooleanLike } from 'common/react';
-import { classes } from 'common/react';
 import { useState } from 'react';
-
-import { useBackend } from '../backend';
 import {
   Box,
   Button,
-  Icon,
   LabeledList,
   NoticeBox,
   NumberInput,
@@ -15,7 +10,10 @@ import {
   Stack,
   Table,
   Tabs,
-} from '../components';
+} from 'tgui-core/components';
+import { type BooleanLike, classes } from 'tgui-core/react';
+
+import { useBackend } from '../backend';
 import { Window } from '../layouts';
 
 type Data = {
@@ -41,9 +39,10 @@ type Design = {
   amount: number;
   cost: number;
   disable: BooleanLike;
-  id: string;
+  path: string;
   is_reagent: BooleanLike;
   name: string;
+  icon: string;
 };
 
 export function Biogenerator(props) {
@@ -81,11 +80,11 @@ export function Biogenerator(props) {
               ))}
             </Tabs>
           </Stack.Item>
-          <Stack.Item grow mt="2px">
+          <Stack.Item grow>
             <Section fill scrollable>
               <Table>
                 {items.map((item) => (
-                  <Item key={item.id} item={item} space={space} />
+                  <Item key={item.path} item={item} space={space} />
                 ))}
               </Table>
             </Section>
@@ -118,9 +117,8 @@ function Controls() {
             <Button
               width={7}
               lineHeight={2}
-              align="center"
               icon="cog"
-              iconSpin={processing ? 1 : 0}
+              iconSpin={processing}
               disabled={!can_process || processing}
               onClick={() => act('activate')}
             >
@@ -196,7 +194,7 @@ type Props = {
 
 function Item(props: Props) {
   const { item, space } = props;
-  const { cost, id, is_reagent, name } = item;
+  const { cost, path, is_reagent, name, icon } = item;
 
   const { act, data } = useBackend<Data>();
   const { biomass, beaker, efficiency, max_output, processing } = data;
@@ -220,7 +218,7 @@ function Item(props: Props) {
     <Table.Row>
       <Table.Cell>
         <span
-          className={classes(['design32x32', id])}
+          className={classes(['design32x32', icon])}
           style={{
             verticalAlign: 'middle',
           }}
@@ -239,18 +237,19 @@ function Item(props: Props) {
       </Table.Cell>
       <Table.Cell collapsing>
         <Button
-          align="right"
           width={5}
-          pr={0}
+          icon="leaf"
+          iconPosition="right"
+          textAlign="right"
           disabled={disabled}
           onClick={() =>
             act('create', {
-              id,
-              amount,
+              design_path: path,
+              amount: amount,
             })
           }
         >
-          {parseFloat((cost * amount).toFixed(2))} <Icon name="leaf" />
+          {parseFloat((cost * amount).toFixed(2))}
         </Button>
       </Table.Cell>
     </Table.Row>

@@ -22,7 +22,7 @@
 	loom_type = /obj/structure/loom,
 	process_completion_verb = "spun",
 	target_needs_anchoring = TRUE,
-	loom_time = 1 SECONDS
+	loom_time = 1 SECONDS,
 )
 	. = ..()
 	//currently this element only works for items as we need to call /obj/item/attack_atom()
@@ -73,31 +73,40 @@
 /datum/element/loomable/proc/loom_me(obj/item/source, mob/living/user, atom/target)
 	//this allows us to count the amount of times it has successfully used the stack's required amount
 	var/spawning_amount = 0
+	var/skill_modifier = user.mind?.get_skill_modifier(/datum/skill/production, SKILL_SPEED_MODIFIER) //NOVA EDIT ADDITION: Production Skill (Three Skills)
 	if(isstack(source))
 		var/obj/item/stack/stack_we_use = source
 		while(stack_we_use.amount >= required_amount)
-			if(!do_after(user, loom_time, target))
+			if(!do_after(user, loom_time * skill_modifier, target)) //NOVA EDIT ADDITION: Production Skill (Three Skills)
 				break
 
 			if(!stack_we_use.use(required_amount))
-				user.balloon_alert(user, "need [required_amount] of [source]!")
+				if (!spawning_amount)
+					user.balloon_alert(user, "need [required_amount] of [source]!")
 				break
 
 			spawning_amount++
+			user.mind?.adjust_experience(/datum/skill/production, 2) //NOVA EDIT ADDITION: Production Skill (Three Skills)
 
 	else
-		if(!do_after(user, loom_time, target))
+		if(!do_after(user, loom_time * skill_modifier, target)) //NOVA EDIT ADDITION: Production Skill (Three Skills)
 			user.balloon_alert(user, "interrupted!")
 			return
 
 		qdel(source)
 		spawning_amount++
+		user.mind?.adjust_experience(/datum/skill/production, 2) //NOVA EDIT ADDITION: Production Skill (Three Skills)
 
 	if(spawning_amount == 0)
 		return
 
-	var/new_thing
-	for(var/repeated in 1 to spawning_amount)
-		new_thing = new resulting_atom(target.drop_location())
-
+	var/atom/new_thing = null
+	if (ispath(resulting_atom, /obj/item/stack))
+		var/obj/item/stack/stack_type = resulting_atom
+		while (spawning_amount > 0)
+			new_thing = new resulting_atom(target.drop_location(), min(spawning_amount, stack_type::max_amount))
+			spawning_amount -= stack_type::max_amount
+	else
+		for(var/repeated in 1 to spawning_amount)
+			new_thing = new resulting_atom(target.drop_location())
 	user.balloon_alert_to_viewers("[process_completion_verb] [new_thing]")

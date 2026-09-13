@@ -88,7 +88,7 @@
 	mix_message = "The mixture cools down."
 	reaction_flags = REACTION_INSTANT
 
-/obj/item/reagent_containers/pill/convermol
+/obj/item/reagent_containers/applicator/pill/convermol
 	name = "convermol pill"
 	desc = "Used to treat oxygen deprivation. Intoxicates the body."
 	icon_state = "pill16"
@@ -104,7 +104,7 @@
 	chemical_flags = REAGENT_CAN_BE_SYNTHESIZED
 	var/delayed_satiety_drain = 30
 
-/datum/reagent/consumable/nutriment/glucose/on_mob_life(mob/living/carbon/affected_mob, seconds_per_tick, times_fired)
+/datum/reagent/consumable/nutriment/glucose/on_mob_life(mob/living/carbon/affected_mob, seconds_per_tick, metabolization_ratio)
 	if(affected_mob.satiety < MAX_SATIETY)
 		affected_mob.adjust_nutrition(15)
 		delayed_satiety_drain += 15

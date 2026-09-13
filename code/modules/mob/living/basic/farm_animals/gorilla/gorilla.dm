@@ -1,6 +1,12 @@
 /// Where do we draw gorilla held overlays?
 #define GORILLA_HANDS_LAYER 1
 
+
+
+GLOBAL_LIST_INIT(strippable_gorilla_items, create_strippable_list(list(
+	/datum/strippable_item/hand/left,
+	/datum/strippable_item/hand/right)))
+
 /**
  * Like a bigger monkey
  * They make a lot of noise and punch limbs off unconscious folks
@@ -27,11 +33,11 @@
 	melee_attack_cooldown = CLICK_CD_MELEE
 	melee_damage_lower = 25
 	melee_damage_upper = 30
-	damage_coeff = list(BRUTE = 1, BURN = 1.5, TOX = 1.5, STAMINA = 0, OXY = 1.5)
+	physiology = list(BURN = 1.5, OXY = 1.5, TOX = 1.5)
 	obj_damage = 40
 	attack_verb_continuous = "pummels"
 	attack_verb_simple = "pummel"
-	attack_sound = 'sound/weapons/punch1.ogg'
+	attack_sound = 'sound/items/weapons/punch1.ogg'
 	unique_name = TRUE
 	ai_controller = /datum/ai_controller/basic_controller/gorilla
 	faction = list(FACTION_MONKEY, FACTION_JUNGLE)
@@ -55,18 +61,20 @@
 
 /mob/living/basic/gorilla/Initialize(mapload)
 	. = ..()
-	add_traits(list(TRAIT_ADVANCEDTOOLUSER, TRAIT_CAN_STRIP, TRAIT_CHUNKYFINGERS), ROUNDSTART_TRAIT)
+	add_traits(list(TRAIT_SIMIAN, TRAIT_ADVANCEDTOOLUSER, TRAIT_CAN_STRIP, TRAIT_CHUNKYFINGERS), INNATE_TRAIT)
 	AddElement(/datum/element/wall_tearer, allow_reinforced = FALSE)
-	AddElement(/datum/element/dextrous)
+	AddElement(/datum/element/dextrous, can_throw = TRUE)
 	AddElement(/datum/element/footstep, FOOTSTEP_MOB_BAREFOOT)
 	AddElement(/datum/element/basic_eating, heal_amt = 10, food_types = gorilla_food)
-	AddElement(
-		/datum/element/amputating_limbs, \
+	AddComponent(
+		/datum/component/amputating_limbs, \
 		surgery_time = 0 SECONDS, \
 		surgery_verb = "punches",\
 	)
 	AddComponent(/datum/component/personal_crafting)
 	AddComponent(/datum/component/basic_inhands, y_offset = -1)
+	AddElement(/datum/element/strippable, GLOB.strippable_gorilla_items)
+
 	ai_controller?.set_blackboard_key(BB_BASIC_FOODS, typecacheof(gorilla_food))
 
 /mob/living/basic/gorilla/examine(mob/user)
@@ -101,7 +109,7 @@
 		return
 	ooga_ooga()
 	if (prob(paralyze_chance))
-		target.Paralyze(2 SECONDS)
+		target.Knockdown(1 SECONDS) // NOVA EDIT CHANGE - ORIGINAL:  target.Paralyze(2 SECONDS)
 		visible_message(span_danger("[src] knocks [target] down!"))
 	else
 		target.throw_at(get_edge_target_turf(target, dir), range = rand(1, 2), speed = 7, thrower = src)
@@ -146,10 +154,7 @@
 	obj_damage = 15
 	ai_controller = /datum/ai_controller/basic_controller/gorilla/lesser
 	butcher_results = list(/obj/item/food/meat/slab/gorilla = 2)
-
-/mob/living/basic/gorilla/lesser/Initialize(mapload)
-	. = ..()
-	transform *= 0.75
+	initial_size = 0.75
 
 /// Cargo's wonderful mascot, the tranquil box-carrying ape
 /mob/living/basic/gorilla/cargorilla
@@ -166,5 +171,72 @@
 	. = ..()
 	ADD_TRAIT(src, TRAIT_PACIFISM, INNATE_TRAIT)
 	AddComponent(/datum/component/crate_carrier)
+
+/// big fucking gorilla version of pun pun. be afraid.
+/mob/living/basic/gorilla/bar
+	name = "Pun Pun" //C A N O N, allegedly
+	desc = "The bar's monkey. Something has gone horribly right."
+	icon = 'icons/mob/simple/bargorilla.dmi'
+	faction = list(FACTION_NEUTRAL, FACTION_MONKEY, FACTION_JUNGLE)
+	unique_name = FALSE
+	ai_controller = /datum/ai_controller/monkey/pun_pun
+	pass_flags = parent_type::pass_flags | PASSTABLE //he cant serve the GUESTS otherwise okay?
+
+
+/mob/living/basic/gorilla/bar/Initialize(mapload)
+	. = ..()
+	RegisterSignal(src, COMSIG_PAWN_POSSESSED_BY_AI_CONTROLLER, PROC_REF(on_possessed_by_ai_controller))
+	gorrilify_punpun_ai()
+
+	if(!GLOB.the_one_and_only_punpun)
+		GLOB.the_one_and_only_punpun = src
+
+/// Signal handler for when an ai controller possesses us, reapplies our gorilla-specific ai tweaks if it's a monkey controller
+/mob/living/basic/gorilla/bar/proc/on_possessed_by_ai_controller(datum/source, datum/ai_controller/source_controller)
+	SIGNAL_HANDLER
+	if(!istype(source_controller, /datum/ai_controller/monkey))
+		return
+	gorrilify_punpun_ai()
+
+/mob/living/basic/gorilla/bar/proc/gorrilify_punpun_ai()
+	ai_controller?.override_blackboard_key(BB_SONG_LINES, GORILLA_SONG)
+	ai_controller?.override_blackboard_key(BB_EMOTE_KEY, "ooga")
+	ai_controller?.override_blackboard_key(BB_EMOTE_CHANCE, 50)
+	ai_controller?.set_behavior_tree_override(SUBPLAN_ID_MONKEY_COMBAT, /datum/bt_node/subtree/bar_gorilla_combat)
+
+/mob/living/basic/gorilla/bar/Destroy()
+	if(GLOB.the_one_and_only_punpun == src)
+		GLOB.the_one_and_only_punpun = null
+	return ..()
+
+/// A version of the gorilla achieved by reaching enough genetic damage as a monkey
+/mob/living/basic/gorilla/genetics
+	name = "Lab Gorilla"
+	maxHealth = 180
+	health = 180
+	desc = "A gorilla created via \"advanced genetic science\". While not quite as strong as their wildborne brethren, this simian still packs a punch."
+	melee_damage_lower = 15
+	melee_damage_upper = 18
+	obj_damage = 25
+	speed = 0.1
+	paralyze_chance = 0
+	initial_size = 0.9
+
+/mob/living/basic/gorilla/hostile
+	name = "Feral Gorilla"
+	maxHealth = 180
+	health = 180
+	desc = "A gorilla created via \"advanced genetic science\". While not quite as strong as their wildborne brethren, this simian still packs a punch."
+	melee_damage_lower = 15
+	melee_damage_upper = 18
+	obj_damage = 25
+	speed = 0.1
+	paralyze_chance = 0
+	initial_size = 0.9
+	faction = list(FACTION_HOSTILE)
+
+/mob/living/basic/gorilla/genetics/Initialize(mapload)
+	. = ..()
+	qdel(GetComponent(/datum/component/amputating_limbs))
 
 #undef GORILLA_HANDS_LAYER

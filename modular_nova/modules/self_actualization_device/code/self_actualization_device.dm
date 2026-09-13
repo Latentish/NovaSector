@@ -10,15 +10,14 @@
 #define LASER_POWER_USAGE 7.2 MEGA WATTS
 
 /datum/design/board/self_actualization_device
-	name = "Machine Design (Self-Actualization Device)"
-	desc = "The circuit board for a Self-Actualization Device by Veymed."
-	id = "self_actualization_device"
+	name = "Self-Actualization Device Board"
+	desc = "The circuit board for a Self-Actualization Device by Vey-Medical."
 	build_path = /obj/item/circuitboard/machine/self_actualization_device
 	category = list(RND_CATEGORY_MACHINE + RND_SUBCATEGORY_MACHINE_MEDICAL)
 	departmental_flags = DEPARTMENT_BITFLAG_MEDICAL
 
 /obj/item/circuitboard/machine/self_actualization_device
-	name = "Self-Actualization Device (Machine Board)"
+	name = "Self-Actualization Device"
 	greyscale_colors = CIRCUIT_COLOR_MEDICAL
 	build_path = /obj/machinery/self_actualization_device
 	req_components = list(/datum/stock_part/micro_laser = 1)
@@ -41,12 +40,12 @@
 	var/player_consent = NO_CONSENT
 	/// A list containing advertisements that the machine says while working.
 	var/static/list/advertisements = list(\
-	"Thank you for using the Self-Actualization Device, brought to you by Veymed, because you asked for it.", \
-	"The Self-Actualization device is not to be used by the elderly without direct adult supervision. Veymed is not liable for any and all injuries sustained under unsupervised usage of the Self-Actualization Device.", \
+	"Thank you for using the Self-Actualization Device, brought to you by the Vey-Medical Corporation, because you asked for it.", \
+	"The Self-Actualization device is not to be used by the elderly without direct adult supervision. Vey-Medical is not liable for any and all injuries sustained under unsupervised usage of the Self-Actualization Device.", \
 	"The Self-Actualization Device is not to be used un-cleaned. Thanks to its non-stick coating, cleaning up after a failed rejuvenation is easy as cleaning a microwave. Blood just doesn't stick!", \
 	"Before using the Self-Actualization Device, remove any and all metal devices, or you might make the term 'ironman' a bit too literal!" , \
-	"Remember, this is not cloning! Self-Actualization is a legally distinct, Veymed patent pending procedure. Still have questions? Call your nearest Veymed Representative to requisition more information about the Self-Actualization Device!" , \
-	"Coming soon... Self-Actualization Device: Colony Fabricator Edition! Flat-packed and better in every way, with no medical expertise required! It's so easy, it's like cheating! Contact your nearest Veymed Representative to find out more!" \
+	"Remember, this is not cloning! Self-Actualization is a legally distinct, Vey-Medical patent pending procedure. Still have questions? Call your nearest Vey-Medical Representative to requisition more information about the Self-Actualization Device!" , \
+	"Coming soon... Self-Actualization Device: Colony Fabricator Edition! Flat-packed and better in every way, with no medical expertise required! It's so easy, it's like cheating! Contact your nearest Vey-Medical Representative to find out more!" \
 	)
 	COOLDOWN_DECLARE(advert_time)
 	COOLDOWN_DECLARE(sad_processing_time)
@@ -54,7 +53,7 @@
 /obj/machinery/self_actualization_device/examine_more(mob/user)
 	. = ..()
 
-	. += "With the power of modern neurological scanning and synthflesh cosmetic surgery, the Veymed Corporation \
+	. += "With the power of modern neurological scanning and synthflesh cosmetic surgery, the Vey-Medical Corporation \
 		has teamed up with Nanotrasen Human Resources (and elsewise)  to bring you the Self-Actualization Device! \
 		Ever revived a patient and had them file a malpractice lawsuit because their head got attached to the wrong body? \
 		Just slap 'em in the SAD and turn it on! Their frown will turn upside down as they're reconstituted as their ideal self \
@@ -177,7 +176,7 @@
 	say("Procedure validation in progress...")
 	var/mob/living/carbon/human/human_occupant = occupant
 	if(!isnull(human_occupant.ckey) && isnull(human_occupant.client)) // player mob, currently disconnected
-		playsound(src, 'sound/machines/buzz-sigh.ogg', 50, FALSE)
+		playsound(src, 'sound/machines/buzz/buzz-sigh.ogg', 50, FALSE)
 		say("ERROR: Validation failed: No elicited response from occupant genes. Subject may be suffering from Sudden Sleep Disorder.")
 		return
 
@@ -197,7 +196,7 @@
 		update_appearance()
 	else
 		player_consent = NO_CONSENT
-		playsound(src, 'sound/machines/buzz-sigh.ogg', 50, FALSE)
+		playsound(src, 'sound/machines/buzz/buzz-sigh.ogg', 50, FALSE)
 		say("ERROR: Validation failed: Occupant genes have willfully rejected the procedure. You may try again if you think this was an error.")
 		update_appearance()
 
@@ -213,8 +212,35 @@
 	var/mob/living/carbon/human/patient = occupant
 	var/original_name = patient.dna.real_name
 
-	patient.client?.prefs?.safe_transfer_prefs_to_with_damage(patient)
+	// Check for AI-brain upload. If it was the brain before, then we should replace "new me"s brain with cybernetic one.
+	var/obj/item/organ/brain/cybernetic/ai/old_ai_brain = patient.get_organ_by_type(/obj/item/organ/brain/cybernetic/ai)
+	var/mob/living/silicon/ai/real_ai_player
+	if(istype(old_ai_brain) && old_ai_brain.mainframe)
+		real_ai_player = old_ai_brain.mainframe
+		var/datum/preferences/check_prefs = patient.client?.prefs
+		if(!istype(check_prefs))
+			say("Uh-oh! We tried to contact user manufacturer, but they blocked our requests. Aborting operation.")
+			playsound(src, 'sound/machines/microwave/microwave-end.ogg', 100, FALSE)
+			open_machine()
+			return
+		if(!is_augmented_enough(check_prefs))
+			say("Uh-oh! It seems like your manufacturer has provided blueprints with organic components to actualize your body! Aborting operation.")
+			playsound(src, 'sound/machines/microwave/microwave-end.ogg', 100, FALSE)
+			open_machine()
+			return
+		old_ai_brain.undeploy()
+		real_ai_player.client?.prefs?.safe_transfer_prefs_to_with_damage(patient)
+		attempt_appendix_removal(patient, check_prefs)
+	else
+		patient.client?.prefs?.safe_transfer_prefs_to_with_damage(patient)
+
 	patient.dna.update_dna_identity()
+
+	if(istype(old_ai_brain))
+		var/obj/item/organ/brain/cybernetic/ai/new_ai_brain = new
+		if(!new_ai_brain.Insert(patient, movement_flags = DELETE_IF_REPLACED))
+			qdel(new_ai_brain) // You get no brain, whoops. Something really bad happened here
+
 	log_game("[key_name(patient)] used a Self-Actualization Device at [loc_name(src)].")
 
 	if(patient.dna.real_name != original_name)
@@ -265,34 +291,25 @@
 	user.emote("scream")
 
 	if(do_after(user, BREAKOUT_TIME, target = src))
-		if(!user || user.stat != CONSCIOUS || user.loc != src || state_open)
+		if(!user || IS_UNCONSCIOUS_OR_CRIT(user) || user.loc != src || state_open)
 			return
 		user.visible_message(span_warning("[user] successfully broke out of [src]!"), \
 			span_notice("You successfully break out of [src]!"))
 		eject_old_you(damaged_goods = TRUE)
 
-/obj/machinery/self_actualization_device/screwdriver_act(mob/living/user, obj/item/used_item)
-	. = TRUE
-	if(..())
-		return
-
+/obj/machinery/self_actualization_device/screwdriver_act(mob/living/user, obj/item/tool)
 	if(occupant)
 		to_chat(user, span_warning("[src] is currently occupied!"))
-		return
+		return NONE
 
-	if(default_deconstruction_screwdriver(user, icon_state, icon_state, used_item))
-		update_appearance()
-		return
+	return default_deconstruction_screwdriver(user, tool)
 
-	return FALSE
-
-/obj/machinery/self_actualization_device/crowbar_act(mob/living/user, obj/item/used_item)
+/obj/machinery/self_actualization_device/crowbar_act(mob/living/user, obj/item/tool)
 	if(occupant)
 		to_chat(user, span_warning("[src] is currently occupied!"))
-		return
+		return NONE
 
-	if(default_deconstruction_crowbar(used_item))
-		return TRUE
+	return default_deconstruction_crowbar(user, tool)
 
 /obj/machinery/self_actualization_device/RefreshParts()
 	. = ..()
@@ -301,6 +318,39 @@
 		processing_time -= laser.tier * 10 SECONDS
 		active_power_usage = LASER_POWER_USAGE / processing_time
 		idle_power_usage = active_power_usage / 4
+
+/// Creates new dummy in the nullspace, applies prefs, inserts ai-brain and checks if it's compatible.
+/obj/machinery/self_actualization_device/proc/is_augmented_enough(datum/preferences/player_prefs)
+	var/mob/living/carbon/human/nullspace_dummy = new(null)
+	player_prefs?.apply_prefs_to(nullspace_dummy, icon_updates = FALSE)
+	attempt_appendix_removal(nullspace_dummy, player_prefs)
+	var/obj/item/organ/brain/cybernetic/ai/dummy_ai_brain = new
+	if(!dummy_ai_brain.Insert(nullspace_dummy, movement_flags = DELETE_IF_REPLACED))
+		QDEL_NULL(dummy_ai_brain)
+		QDEL_NULL(nullspace_dummy)
+		return FALSE
+
+	var/result = dummy_ai_brain.is_sufficiently_augmented()
+	QDEL_NULL(dummy_ai_brain)
+	QDEL_NULL(nullspace_dummy)
+	return result
+
+/*
+ * Helper function for the removal of appendices from a mob.
+ * Shamelessly stolen from /datum/quirk/no_appendix/post_add().
+ * If you have a better idea on how to handle this, i'd like to hear it,
+ * because add_quirk() isn't working.
+ */
+/obj/machinery/self_actualization_device/proc/attempt_appendix_removal(mob/living/carbon/human/shell, datum/preferences/player_prefs)
+	if (!(/datum/quirk/no_appendix::name in player_prefs?.all_quirks))
+		return FALSE // don't bother
+
+	var/obj/item/organ/appendix/old_appendix = shell.get_organ_slot(ORGAN_SLOT_APPENDIX)
+	if(isnull(old_appendix))
+		return FALSE // no appendix, no worries
+
+	old_appendix.Remove(shell, special = TRUE)
+	QDEL_NULL(old_appendix)
 
 #undef NO_CONSENT
 #undef CONSENT_GRANTED

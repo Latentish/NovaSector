@@ -1,14 +1,3 @@
-GLOBAL_VAR_INIT(DNR_trait_overlay, generate_DNR_trait_overlay())
-
-/// Instantiates GLOB.DNR_trait_overlay by creating a new mutable_appearance instance of the overlay.
-/proc/generate_DNR_trait_overlay()
-	RETURN_TYPE(/mutable_appearance)
-
-	var/mutable_appearance/DNR_trait_overlay = mutable_appearance('modular_nova/modules/indicators/icons/DNR_trait_overlay.dmi', "DNR", FLY_LAYER)
-	DNR_trait_overlay.appearance_flags = APPEARANCE_UI_IGNORE_ALPHA | KEEP_APART
-	return DNR_trait_overlay
-
-
 // NOVA NEUTRAL TRAITS
 /datum/quirk/excitable
 	name = "Excitable!"
@@ -69,21 +58,15 @@ GLOBAL_VAR_INIT(DNR_trait_overlay, generate_DNR_trait_overlay())
 
 /// Adds the DNR HUD element if src has TRAIT_DNR. Removes it otherwise.
 /mob/living/proc/update_dnr_hud()
-	var/image/dnr_holder = hud_list?[DNR_HUD]
-	if(isnull(dnr_holder))
-		return
-
-	var/icon/temporary_icon = icon(icon, icon_state, dir)
-	dnr_holder.pixel_y = temporary_icon.Height() - world.icon_size
-
+	set_hud_image_state(DNR_HUD, hud_state = "hud_dnr")
 	if(HAS_TRAIT(src, TRAIT_DNR))
 		set_hud_image_active(DNR_HUD)
-		dnr_holder.icon_state = "hud_dnr"
 	else
 		set_hud_image_inactive(DNR_HUD)
 
-/mob/living/carbon/human/examine(mob/user)
-	. = ..()
+/// Examine lines warning HUD users that we're not to be revived. Called by /mob/living/carbon/human/examine().
+/mob/living/carbon/human/proc/get_dnr_examine(mob/user)
+	. = list()
 
 	if(stat != DEAD && HAS_TRAIT(src, TRAIT_DNR) && (HAS_TRAIT(user, TRAIT_SECURITY_HUD) || HAS_TRAIT(user, TRAIT_MEDICAL_HUD)))
 		. += "\n[span_boldwarning("This individual is unable to be revived, and may be permanently dead if allowed to die!")]"
@@ -103,7 +86,7 @@ GLOBAL_VAR_INIT(DNR_trait_overlay, generate_DNR_trait_overlay())
 	icon = FA_ICON_GRIN_TEARS
 
 /datum/quirk/item_quirk/joker/add_unique(client/client_source)
-	give_item_to_holder(/obj/item/paper/joker, list(LOCATION_BACKPACK = ITEM_SLOT_BACKPACK, LOCATION_HANDS = ITEM_SLOT_HANDS))
+	give_item_to_holder(/obj/item/paper/joker, list(LOCATION_BACKPACK, LOCATION_HANDS))
 
 /datum/quirk/item_quirk/joker/process()
 	if(pcooldown > world.time)
@@ -111,11 +94,11 @@ GLOBAL_VAR_INIT(DNR_trait_overlay, generate_DNR_trait_overlay())
 	pcooldown = world.time + pcooldown_time
 	var/mob/living/carbon/human/user = quirk_holder
 	if(user && istype(user))
-		if(user.stat == CONSCIOUS)
+		if(!IS_UNCONSCIOUS_OR_CRIT(user))
 			if(prob(20))
 				user.emote("laugh")
-				addtimer(CALLBACK(user, /mob/proc/emote, "laugh"), 5 SECONDS)
-				addtimer(CALLBACK(user, /mob/proc/emote, "laugh"), 10 SECONDS)
+				addtimer(CALLBACK(user, TYPE_PROC_REF(/mob, emote), "laugh"), 5 SECONDS)
+				addtimer(CALLBACK(user, TYPE_PROC_REF(/mob, emote), "laugh"), 10 SECONDS)
 
 /obj/item/paper/joker
 	name = "disability card"
@@ -238,16 +221,20 @@ GLOBAL_VAR_INIT(DNR_trait_overlay, generate_DNR_trait_overlay())
 
 /datum/quirk/feline_aspect/add_unique(client/client_source)
 	var/mob/living/carbon/human/human_holder = quirk_holder
-	var/obj/item/organ/internal/tongue/cat/new_tongue = new(get_turf(human_holder))
+	var/obj/item/organ/tongue/cat/new_tongue = new(get_turf(human_holder))
 
-	new_tongue.copy_traits_from(human_holder.get_organ_slot(ORGAN_SLOT_TONGUE))
+	ADD_TRAIT(human_holder, TRAIT_WATER_HATER, QUIRK_TRAIT)
+
+	new_tongue.copy_traits_from(human_holder.get_organ_slot(ORGAN_SLOT_TONGUE), human_holder)
 	new_tongue.Insert(human_holder, special = TRUE, movement_flags = DELETE_IF_REPLACED)
 
 /datum/quirk/feline_aspect/remove()
 	var/mob/living/carbon/human/human_holder = quirk_holder
-	var/obj/item/organ/internal/tongue/new_tongue = new human_holder.dna.species.mutanttongue
+	var/obj/item/organ/tongue/new_tongue = new human_holder.dna.species.mutanttongue
 
-	new_tongue.copy_traits_from(human_holder.get_organ_slot(ORGAN_SLOT_TONGUE))
+	REMOVE_TRAIT(human_holder, TRAIT_WATER_HATER, QUIRK_TRAIT)
+
+	new_tongue.copy_traits_from(human_holder.get_organ_slot(ORGAN_SLOT_TONGUE), human_holder)
 	new_tongue.Insert(human_holder, special = TRUE, movement_flags = DELETE_IF_REPLACED)
 
 /datum/quirk/canine_aspect
@@ -262,16 +249,16 @@ GLOBAL_VAR_INIT(DNR_trait_overlay, generate_DNR_trait_overlay())
 
 /datum/quirk/canine_aspect/add_unique(client/client_source)
 	var/mob/living/carbon/human/human_holder = quirk_holder
-	var/obj/item/organ/internal/tongue/dog/new_tongue = new(get_turf(human_holder))
+	var/obj/item/organ/tongue/dog/new_tongue = new(get_turf(human_holder))
 
-	new_tongue.copy_traits_from(human_holder.get_organ_slot(ORGAN_SLOT_TONGUE))
+	new_tongue.copy_traits_from(human_holder.get_organ_slot(ORGAN_SLOT_TONGUE), human_holder)
 	new_tongue.Insert(human_holder, special = TRUE, movement_flags = DELETE_IF_REPLACED)
 
 /datum/quirk/canine_aspect/remove()
 	var/mob/living/carbon/human/human_holder = quirk_holder
-	var/obj/item/organ/internal/tongue/new_tongue = new human_holder.dna.species.mutanttongue
+	var/obj/item/organ/tongue/new_tongue = new human_holder.dna.species.mutanttongue
 
-	new_tongue.copy_traits_from(human_holder.get_organ_slot(ORGAN_SLOT_TONGUE))
+	new_tongue.copy_traits_from(human_holder.get_organ_slot(ORGAN_SLOT_TONGUE), human_holder)
 	new_tongue.Insert(human_holder, special = TRUE, movement_flags = DELETE_IF_REPLACED)
 
 /datum/quirk/avian_aspect
@@ -286,16 +273,16 @@ GLOBAL_VAR_INIT(DNR_trait_overlay, generate_DNR_trait_overlay())
 
 /datum/quirk/avian_aspect/add_unique(client/client_source)
 	var/mob/living/carbon/human/human_holder = quirk_holder
-	var/obj/item/organ/internal/tongue/avian/new_tongue = new(get_turf(human_holder))
+	var/obj/item/organ/tongue/avian/new_tongue = new(get_turf(human_holder))
 
-	new_tongue.copy_traits_from(human_holder.get_organ_slot(ORGAN_SLOT_TONGUE))
+	new_tongue.copy_traits_from(human_holder.get_organ_slot(ORGAN_SLOT_TONGUE), human_holder)
 	new_tongue.Insert(human_holder, special = TRUE, movement_flags = DELETE_IF_REPLACED)
 
 /datum/quirk/avian_aspect/remove()
 	var/mob/living/carbon/human/human_holder = quirk_holder
-	var/obj/item/organ/internal/tongue/new_tongue = new human_holder.dna.species.mutanttongue
+	var/obj/item/organ/tongue/new_tongue = new human_holder.dna.species.mutanttongue
 
-	new_tongue.copy_traits_from(human_holder.get_organ_slot(ORGAN_SLOT_TONGUE))
+	new_tongue.copy_traits_from(human_holder.get_organ_slot(ORGAN_SLOT_TONGUE), human_holder)
 	new_tongue.Insert(human_holder, special = TRUE, movement_flags = DELETE_IF_REPLACED)
 
 #define SEVERITY_STUN 1
@@ -380,8 +367,8 @@ GLOBAL_LIST_INIT(possible_snout_sensitivities, list(
 /datum/movespeed_modifier/overweight
 	multiplicative_slowdown = 0.5 //Around that of a dufflebag, enough to be impactful but not debilitating.
 
-/datum/mood_event/fat/New(mob/parent_mob, ...)
+/datum/mood_event/fat/add_effects(...)
 	. = ..()
-	if(HAS_TRAIT_FROM(parent_mob, TRAIT_OFF_BALANCE_TACKLER, QUIRK_TRAIT))
+	if(HAS_TRAIT_FROM(owner, TRAIT_OFF_BALANCE_TACKLER, QUIRK_TRAIT))
 		mood_change = 0 // They are probably used to it, no reason to be viscerally upset about it.
 		description = "<b>I'm fat.</b>"

@@ -9,13 +9,13 @@
 	inhand_icon_state = null
 	icon = 'modular_nova/modules/modular_items/lewd_items/icons/obj/lewd_items/lewd_items.dmi'
 	worn_icon = 'modular_nova/modules/modular_items/lewd_items/icons/mob/lewd_clothing/lewd_masks.dmi'
-	worn_icon_muzzled = 'modular_nova/master_files/icons/mob/clothing/mask_muzzled.dmi'
+	worn_icon_muzzled = 'modular_nova/modules/modular_items/lewd_items/icons/mob/lewd_clothing/lewd_masks_muzzled.dmi'
 	w_class = WEIGHT_CLASS_NORMAL
-	hitsound = 'sound/weapons/whip.ogg'
-	clothing_flags = INEDIBLE_CLOTHING
+	hitsound = 'sound/items/weapons/whip.ogg'
+	obj_flags_nova = ERP_ITEM
 	//When taking that thing in mouth
-	modifies_speech = TRUE
 	flags_cover = MASKCOVERSMOUTH
+	var/modifies_speech = TRUE
 	/// If the color of the toy has been changed before
 	var/color_changed = FALSE
 	/// If the form (or size) of the toy has been changed before
@@ -44,16 +44,33 @@
 	/// Probabilty that `moans_alt` is used instead of `moans`
 	var/moans_alt_probability = 5
 
+/// The funny things we write when certain clothg flags are removed.
+/obj/item/clothing/mask/leatherwhip/create_moth_snack()
+	return null
+
 /obj/item/clothing/mask/leatherwhip/worn_overlays(isinhands = FALSE)
 	. = ..()
 	. = list()
 	if(!isinhands)
 		. += whip_overlay
 
+/obj/item/clothing/mask/leatherwhip/equipped(mob/equipper, slot)
+	. = ..()
+	if ((slot & ITEM_SLOT_MASK) && modifies_speech)
+		RegisterSignal(equipper, COMSIG_MOB_SAY, PROC_REF(handle_speech))
+	else
+		UnregisterSignal(equipper, COMSIG_MOB_SAY)
+
+/obj/item/clothing/mask/leatherwhip/dropped(mob/dropper)
+	. = ..()
+	UnregisterSignal(dropper, COMSIG_MOB_SAY)
+
 // Speech handler for moansing when talking
-/obj/item/clothing/mask/leatherwhip/handle_speech(datum/source, list/speech_args)
+/obj/item/clothing/mask/leatherwhip/proc/handle_speech(datum/source, list/speech_args)
+	SIGNAL_HANDLER
+
 	speech_args[SPEECH_MESSAGE] = pick((prob(moans_alt_probability) && LAZYLEN(moans_alt)) ? moans_alt : moans)
-	play_lewd_sound(loc, pick('modular_nova/modules/modular_items/lewd_items/sounds/under_moan_f1.ogg',
+	playsound_if_pref(loc, pick('modular_nova/modules/modular_items/lewd_items/sounds/under_moan_f1.ogg',
 						'modular_nova/modules/modular_items/lewd_items/sounds/under_moan_f2.ogg',
 						'modular_nova/modules/modular_items/lewd_items/sounds/under_moan_f3.ogg',
 						'modular_nova/modules/modular_items/lewd_items/sounds/under_moan_f4.ogg'), 70, 1, -1)
@@ -85,7 +102,7 @@
 
 	update_icon()
 	update_appearance()
-	update_overlays()
+	update_appearance(UPDATE_OVERLAYS)
 
 //to change color
 /obj/item/clothing/mask/leatherwhip/click_alt(mob/user)
@@ -114,7 +131,7 @@
 /obj/item/clothing/mask/leatherwhip/proc/check_menu(mob/living/user)
 	if(!istype(user))
 		return FALSE
-	if(user.incapacitated())
+	if(user.incapacitated)
 		return FALSE
 	return TRUE
 
@@ -136,7 +153,7 @@
 
 	update_icon()
 	update_appearance()
-	update_overlays()
+	update_appearance(UPDATE_OVERLAYS)
 
 /obj/item/clothing/mask/leatherwhip/update_icon_state()
 	. = ..()
@@ -171,7 +188,7 @@
 						target.apply_status_effect(/datum/status_effect/subspace)
 				target.Paralyze(1)//don't touch it. It's domination tool, it should have ability to put someone on kneels. I already inserted check for PREF YOU CAN'T ABUSE THIS ITEM
 				target.adjust_pain(5)
-				play_lewd_sound(loc, 'sound/weapons/whip.ogg', 100)
+				playsound_if_pref(loc, 'sound/items/weapons/whip.ogg', 100)
 			else
 				message = (user == target) ? pick("knocks [target.p_them()]self down with [src]", "gently uses [src] to knock [target.p_them()]self on the ground") : pick("drops [target] to the ground with [src]", "uses [src] to put [target] on [target.p_their()] knees")
 				if(target.stat != DEAD)
@@ -181,7 +198,7 @@
 						target.apply_status_effect(/datum/status_effect/subspace)
 				target.Paralyze(1)
 				target.adjust_pain(3)
-				play_lewd_sound(loc, 'sound/weapons/whip.ogg', 60)
+				playsound_if_pref(loc, 'sound/items/weapons/whip.ogg', 60)
 
 		if(BODY_ZONE_R_LEG)
 			targetedsomewhere = TRUE
@@ -197,7 +214,7 @@
 						target.apply_status_effect(/datum/status_effect/subspace)
 				target.Paralyze(1)//don't touch it. It's domination tool, it should have ability to put someone on kneels. I already inserted check for PREF YOU CAN'T ABUSE THIS ITEM
 				target.adjust_pain(5)
-				play_lewd_sound(loc, 'sound/weapons/whip.ogg', 100)
+				playsound_if_pref(loc, 'sound/items/weapons/whip.ogg', 100)
 			else
 				message = (user == target) ? pick("Knocks [target.p_them()]self down with [src]", "gently uses [src] to knock [target.p_them()]self on the ground") : pick("drops [target] to the ground with [src]", "uses [src] to put [target] on [target.p_their()] knees")
 				if(target.stat != DEAD)
@@ -207,7 +224,7 @@
 						target.apply_status_effect(/datum/status_effect/subspace)
 				target.Paralyze(1)
 				target.adjust_pain(3)
-				play_lewd_sound(loc, 'sound/weapons/whip.ogg', 60)
+				playsound_if_pref(loc, 'sound/items/weapons/whip.ogg', 60)
 
 		if(BODY_ZONE_HEAD)
 			targetedsomewhere = TRUE
@@ -216,7 +233,7 @@
 				target.try_lewd_autoemote(pick("gasp", "choke", "moan"))
 			target.adjust_arousal(3)
 			target.adjust_pain(5)
-			play_lewd_sound(loc, 'modular_nova/modules/modular_items/lewd_items/sounds/latex.ogg', 80)
+			playsound_if_pref(loc, 'modular_nova/modules/modular_items/lewd_items/sounds/latex.ogg', 80)
 
 		if(BODY_ZONE_PRECISE_GROIN)
 			targetedsomewhere = TRUE
@@ -235,7 +252,7 @@
 				target.apply_status_effect(/datum/status_effect/spanked)
 				if(HAS_TRAIT(target, TRAIT_MASOCHISM || TRAIT_BIMBO))
 					target.add_mood_event("pervert spanked", /datum/mood_event/perv_spanked)
-				play_lewd_sound(loc, 'sound/weapons/whip.ogg', 60)
+				playsound_if_pref(loc, 'sound/items/weapons/whip.ogg', 60)
 
 			if(current_whip_type == "hard")
 				message = (user == target) ? pick("roughly flogs [target.p_them()]self with [src]", "flogs [target.p_them()]self with [src]") : pick("playfully flogs [target]'s thighs with [src]", "flogs [target] with [src]", "mercilessly flogs [target] with [src]")
@@ -249,7 +266,7 @@
 				target.apply_status_effect(/datum/status_effect/spanked)
 				if(HAS_TRAIT(target, TRAIT_MASOCHISM || TRAIT_BIMBO))
 					target.add_mood_event("pervert spanked", /datum/mood_event/perv_spanked)
-				play_lewd_sound(loc, 'sound/weapons/whip.ogg', 100)
+				playsound_if_pref(loc, 'sound/items/weapons/whip.ogg', 100)
 		else
 			if(current_whip_type == "hard")
 				message = (user == target) ? pick("disciplines [target.p_them()]self with [src]", "lashes [target.p_them()]self with [src]") : pick("lashes [target] with [src]", "Uses [src] to discipline [target]", "disciplines [target] with [src]")
@@ -260,7 +277,7 @@
 						target.apply_status_effect(/datum/status_effect/subspace)
 					target.do_jitter_animation()
 				target.adjust_pain(7)
-				play_lewd_sound(loc, 'sound/weapons/whip.ogg', 100)
+				playsound_if_pref(loc, 'sound/items/weapons/whip.ogg', 100)
 
 			else
 				message = (user == target) ? pick("whips [target.p_them()]self with [src]", "lashes [target.p_them()]self with [src]") : pick("playfully lashes [target] with [src]", "disciplines [target] with [src]", "gently lashes [target] with [src]")
@@ -272,7 +289,7 @@
 					target.do_jitter_animation()
 				target.adjust_pain(4)
 				target.adjust_arousal(5)
-				play_lewd_sound(loc, 'sound/weapons/whip.ogg', 60)
+				playsound_if_pref(loc, 'sound/items/weapons/whip.ogg', 60)
 	if(!targetedsomewhere)
 		return
 	user.visible_message(span_purple("[user] [message]!"))

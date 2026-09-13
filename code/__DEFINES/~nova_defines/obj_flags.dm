@@ -1,7 +1,6 @@
-#define GENITAL_SKIP_VISIBILITY 0
-#define GENITAL_NEVER_SHOW 1
-#define GENITAL_HIDDEN_BY_CLOTHES 2
-#define GENITAL_ALWAYS_SHOW 3
-
 /// Whether something is repairable by the anvil
 #define ANVIL_REPAIR (1<<0)
+/// Whether obj is used for ERP
+#define ERP_ITEM (1<<1)
+/// If toggled, the obj cannot be stored by cryopods
+#define NO_CRYO_FREEZE (1<<2)

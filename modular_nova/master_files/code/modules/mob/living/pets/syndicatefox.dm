@@ -12,11 +12,10 @@
 	icon_living = "syndifox"
 	icon_dead = "syndifox_dead"
 	speak_emote = list("geckers", "barks")
-	can_be_held = FALSE
 	butcher_results = list(/obj/item/food/meat/slab = 3)
 	attack_verb_continuous = "bites"
 	attack_verb_simple = "bite"
-	attack_sound = 'sound/weapons/bite.ogg'
+	attack_sound = 'sound/items/weapons/bite.ogg'
 	attack_vis_effect = ATTACK_EFFECT_BITE
 	melee_damage_lower = 20 //same damage as a carp would make - reference to Paradise Station's Syndifox
 	melee_damage_upper = 20

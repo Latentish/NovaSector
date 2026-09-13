@@ -20,7 +20,7 @@ GLOBAL_LIST_EMPTY(clockwork_marauders)
 	melee_damage_upper = 24
 	attack_verb_continuous = "slices"
 	attack_verb_simple = "slice"
-	attack_sound = 'sound/weapons/bladeslice.ogg'
+	attack_sound = 'sound/items/weapons/bladeslice.ogg'
 	combat_mode = TRUE
 	pass_flags = PASSTABLE
 	mob_size = MOB_SIZE_LARGE
@@ -29,7 +29,7 @@ GLOBAL_LIST_EMPTY(clockwork_marauders)
 	minimum_survivable_temperature = 0
 	obj_damage = 80
 	faction = list(FACTION_CLOCK)
-	damage_coeff = list(BRUTE = 1, BURN = 1, TOX = 0, STAMINA = 0, OXY = 0)
+	physiology = list(TOX = 0, STAMINA = 0, OXY = 0)
 	ai_controller = /datum/ai_controller/basic_controller/clockwork_marauder
 	initial_language_holder = /datum/language_holder/clockmob
 
@@ -71,7 +71,7 @@ GLOBAL_LIST_EMPTY(clockwork_marauders)
 	if(shield_health)
 		damage_shield()
 
-		playsound(src, 'sound/hallucinations/veryfar_noise.ogg', 40, 1)
+		playsound(src, 'sound/effects/hallucinations/veryfar_noise.ogg', 40, 1)
 
 	if(attacking_item == TOOL_WELDER)
 		welder_act(user, attacking_item)
@@ -106,7 +106,7 @@ GLOBAL_LIST_EMPTY(clockwork_marauders)
 	to_chat(user, span_notice("You repair some of [src]'s damage."))
 	if(shield_health < MARAUDER_SHIELD_MAX)
 		shield_health++
-		playsound(src, 'sound/magic/charge.ogg', 60, TRUE)
+		playsound(src, 'sound/effects/magic/charge.ogg', 60, TRUE)
 	return TRUE
 
 
@@ -118,28 +118,14 @@ GLOBAL_LIST_EMPTY(clockwork_marauders)
 
 
 /datum/ai_controller/basic_controller/clockwork_marauder
+	behavior_tree_json = "modular_nova/modules/clock_cult/code/mobs/clockwork_marauder.bt.json"
 	blackboard = list(
 		BB_TARGETING_STRATEGY = /datum/targeting_strategy/basic,
 		BB_TARGET_MINIMUM_STAT = HARD_CRIT,
+		BB_BASIC_MOB_MELEE_DELAY = 1.2 SECONDS,
 	)
 
 	ai_movement = /datum/ai_movement/basic_avoidance
-	planning_subtrees = list(
-		/datum/ai_planning_subtree/simple_find_target,
-		/datum/ai_planning_subtree/basic_melee_attack_subtree/clockwork_marauder,
-	)
-
-
-/datum/ai_planning_subtree/basic_melee_attack_subtree/clockwork_marauder
-	melee_attack_behavior = /datum/ai_behavior/basic_melee_attack/clockwork_marauder
-
-
-/datum/ai_behavior/basic_melee_attack/clockwork_marauder
-	action_cooldown = 1.2 SECONDS
-
-/obj/item/nullrod/Initialize(mapload)
-	. = ..()
-	AddElement(/datum/element/bane, /mob/living/basic/clockwork_marauder, 1, 15, FALSE)
 
 #undef MARAUDER_SHIELD_MAX
 #undef WELDER_REPAIR_AMOUNT

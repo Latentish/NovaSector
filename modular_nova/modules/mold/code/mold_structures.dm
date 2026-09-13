@@ -20,14 +20,24 @@
 /obj/structure/mold/play_attack_sound(damage_amount, damage_type = BRUTE, damage_flag = 0)
 	switch(damage_type)
 		if(BRUTE)
-			playsound(loc, 'sound/effects/attackblob.ogg', 100, TRUE)
+			playsound(loc, 'sound/effects/blob/attackblob.ogg', 100, TRUE)
 		if(BURN)
-			playsound(loc, 'sound/items/welder.ogg', 100, TRUE)
+			playsound(loc, 'sound/items/tools/welder.ogg', 100, TRUE)
 
 /obj/structure/mold/Initialize(mapload, passed_type)
 	. = ..()
 	if(!mold_type)
 		mold_type = mold_controller?.mold_type || passed_type
+
+	return INITIALIZE_HINT_LATELOAD
+
+/obj/structure/mold/LateInitialize()
+	if(isnull(mold_type))
+		mold_type = mold_controller?.mold_type
+
+	if(isnull(mold_type)) // still no mold type? pick a random one (mold code is in dire need of a total refactor it's baaad)
+		mold_type = pick(subtypesof(/datum/mold_type))
+		mold_type = new mold_type
 
 	color = mold_type.mold_color
 	resistance_flags = mold_type.resistance_flags
@@ -39,13 +49,24 @@
 	/// Does the structure emit light?
 	var/emits_light = FALSE
 
-/obj/structure/mold/structure/Initialize(mapload, passed_type)
-	. = ..()
+/obj/structure/mold/structure/LateInitialize()
+	if(isnull(mold_type))
+		mold_type = mold_controller?.mold_type
+
+	if(isnull(mold_type)) // still no mold type? pick a random one (mold code is in dire need of a total refactor it's baaad)
+		mold_type = pick(subtypesof(/datum/mold_type))
+		mold_type = new mold_type
+
+	color = mold_type.mold_color
+	resistance_flags = mold_type.resistance_flags
+	name = "[mold_type.name] [name]"
+
 	if(emits_light)
 		light_range = 2
 		light_power = 1
 		if(mold_type.structure_light_color)
 			light_color = mold_type.structure_light_color
+	update_appearance()
 
 /datum/looping_sound/core_heartbeat
 	mid_length = 3 SECONDS
@@ -60,7 +81,7 @@
 	icon = 'modular_nova/modules/mold/icons/blob_core.dmi'
 	icon_state = "blob_core"
 	layer = TABLE_LAYER
-	max_integrity = 1200
+	max_integrity = 450
 
 	/// The soundloop played by the core
 	var/datum/looping_sound/core_heartbeat/soundloop
@@ -70,10 +91,11 @@
 /obj/structure/mold/structure/core/Initialize(mapload, passed_type)
 	if(mold_type)
 		passed_type = new mold_type
+
 	new /datum/mold_controller(src, passed_type)
 	. = ..()
 	soundloop = new(src, TRUE)
-	update_overlays()
+	update_appearance(UPDATE_OVERLAYS)
 
 /obj/structure/mold/structure/core/Destroy()
 	if(mold_controller)
@@ -131,7 +153,7 @@
 	icon = 'modular_nova/modules/mold/icons/blob_resin.dmi'
 	icon_state = "blob_floor"
 	density = FALSE
-	plane = FLOOR_PLANE
+	plane = GAME_PLANE
 	layer = PROJECTILE_HIT_THRESHHOLD_LAYER + 0.001
 	max_integrity = 50
 	var/blooming = FALSE
@@ -199,7 +221,7 @@
 	if(prob(7))
 		blooming = TRUE
 		set_light(2, 1, LIGHT_COLOR_LAVA)
-		update_overlays()
+		update_appearance(UPDATE_OVERLAYS)
 
 /obj/structure/mold/resin/Destroy()
 	if(mold_controller)
@@ -239,7 +261,7 @@
 	if(!isliving(nearby_atom))
 		return
 	var/mob/living/nearby_mob = nearby_atom
-	if(!(FACTION_MOLD in nearby_mob.faction))
+	if(!nearby_mob.has_faction(FACTION_MOLD))
 		INVOKE_ASYNC(src, PROC_REF(discharge))
 
 /obj/structure/mold/structure/bulb/proc/make_full()
@@ -250,8 +272,7 @@
 	icon_state = "blob_bulb_full"
 	set_light(2, 1, LIGHT_COLOR_LAVA)
 	density = TRUE
-	update_overlays()
-
+	update_appearance(UPDATE_OVERLAYS)
 
 /obj/structure/mold/structure/bulb/proc/discharge()
 	if(!is_full)
@@ -263,12 +284,12 @@
 	icon_state = "blob_bulb_empty"
 	playsound(src, 'sound/effects/bamf.ogg', 100, TRUE)
 	set_light(0)
-	update_overlays()
+	update_appearance(UPDATE_OVERLAYS)
 	density = FALSE
 	addtimer(CALLBACK(src, PROC_REF(make_full)), 1 MINUTES, TIMER_UNIQUE|TIMER_NO_HASH_WAIT)
 
 /obj/structure/mold/structure/bulb/attack_generic(mob/user, damage_amount, damage_type, damage_flag, sound_effect, armor_penetration)
-	if(FACTION_MOLD in user.faction)
+	if(user.has_faction(FACTION_MOLD))
 		return ..()
 	discharge()
 	. = ..()

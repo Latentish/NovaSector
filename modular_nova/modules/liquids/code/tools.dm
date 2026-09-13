@@ -2,7 +2,7 @@ ADMIN_VERB(spawn_liquid, R_ADMIN, "Spawn Liquid", "Spawns an amount of chosen li
 	var/choice
 	var/valid_id
 	while(!valid_id)
-		choice = tgui_input_text(user, "Enter the ID of the reagent you want to add.", "Search reagents")
+		choice = tgui_input_text(user, "Enter the ID of the reagent you want to add.", "Search reagents", max_length = MAX_NAME_LEN)
 		if(isnull(choice)) //Get me out of here!
 			break
 		if (!ispath(text2path(choice)))
@@ -23,7 +23,8 @@ ADMIN_VERB(spawn_liquid, R_ADMIN, "Spawn Liquid", "Spawns an amount of chosen li
 	message_admins("[ADMIN_LOOKUPFLW(user)] spawned liquid at [epicenter.loc] ([choice] - [volume]).")
 	log_admin("[key_name(user)] spawned liquid at [epicenter.loc] ([choice] - [volume]).")
 
-ADMIN_VERB_AND_CONTEXT_MENU(remove_liquid, R_ADMIN, "Remove liquids", "Removes all liquids in specified radius.", ADMIN_CATEGORY_GAME, turf/epicenter in world)
+ADMIN_VERB_AND_CONTEXT_MENU(remove_liquid, R_ADMIN, "Remove liquids", "Removes all liquids in specified radius.", ADMIN_CATEGORY_GAME, /turf)
+	VERB_ARG_TYPED(epicenter, VERB_ARG_TYPE_TURF, VERB_ARG_SOURCE_WORLD, /turf)
 	var/range = tgui_input_number(user, "Enter range:", "Range selection", 2)
 
 	for(var/obj/effect/abstract/liquid_turf/liquid in range(range, epicenter))

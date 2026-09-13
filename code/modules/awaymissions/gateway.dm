@@ -22,7 +22,7 @@ GLOBAL_LIST_EMPTY(gateway_destinations)
 /datum/gateway_destination/proc/get_available_reason()
 	. = "Unreachable"
 	if(world.time - SSticker.round_start_time < wait)
-		playsound(src, 'sound/effects/gateway_calibrating.ogg', 80, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
+		playsound(src, 'sound/machines/gateway/gateway_calibrating.ogg', 80, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 		. = "Connection desynchronized. Recalibration in progress."
 
 /* Check if the movable is allowed to arrive at this destination (exile implants mostly) */
@@ -154,9 +154,9 @@ GLOBAL_LIST_EMPTY(gateway_destinations)
 				continue
 			to_chat(AM, span_warning("[content_item] seems to be blocking you from entering the gateway!"))
 			return
-	//NOVA EDIT END
-	if(get_dir(src,AM) == SOUTH)
-		playsound(src, 'sound/effects/gateway_travel.ogg', 70, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
+	//NOVA EDIT ADDITION END
+	if(get_dir(src,AM) == gateway?.dir)
+		playsound(src, 'sound/machines/gateway/gateway_travel.ogg', 70, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 		gateway.Transfer(AM)
 
 /obj/effect/gateway_portal_bumper/Destroy(force)
@@ -175,7 +175,7 @@ GLOBAL_LIST_EMPTY(gateway_destinations)
 	pixel_y = -32
 	bound_height = 64
 	bound_width = 96
-	bound_x = -32
+	bound_x = 0
 	bound_y = 0
 	density = TRUE
 
@@ -234,7 +234,7 @@ GLOBAL_LIST_EMPTY(gateway_destinations)
 /obj/machinery/gateway/proc/deactivate()
 	var/datum/gateway_destination/dest = target
 	target = null
-	playsound(src, 'sound/effects/gateway_close.ogg', 140, TRUE, TRUE, SOUND_RANGE)
+	playsound(src, 'sound/machines/gateway/gateway_close.ogg', 140, TRUE, TRUE, SOUND_RANGE)
 	dest.deactivate(src)
 	QDEL_NULL(portal)
 	update_use_power(IDLE_POWER_USE)
@@ -301,7 +301,7 @@ GLOBAL_LIST_EMPTY(gateway_destinations)
 	target.activate(destination)
 	portal_visuals.setup_visuals(target)
 	transport_active = TRUE
-	playsound(src, 'sound/effects/gateway_open.ogg', 140, TRUE, TRUE, SOUND_RANGE)
+	playsound(src, 'sound/machines/gateway/gateway_open.ogg', 140, TRUE, TRUE, SOUND_RANGE)
 	generate_bumper()
 	update_use_power(ACTIVE_POWER_USE)
 	update_appearance()
@@ -344,7 +344,7 @@ GLOBAL_LIST_EMPTY(gateway_destinations)
 	if(calibrated)
 		to_chat(user, span_alert("The gate is already calibrated, there is no work for you to do here."))
 	else
-		playsound(src, 'sound/effects/gateway_calibrated.ogg', 80, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
+		playsound(src, 'sound/machines/gateway/gateway_calibrated.ogg', 80, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 		to_chat(user, "[span_boldnotice("Recalibration successful!")]: \black This gate's systems have been fine tuned. Travel to this gate will now be on target.")
 		calibrated = TRUE
 	return TRUE
@@ -384,7 +384,7 @@ GLOBAL_LIST_EMPTY(gateway_destinations)
 /obj/machinery/computer/gateway_control
 	name = "Gateway Control"
 	desc = "Human friendly interface to the mysterious gate next to it."
-	req_access = list(ACCESS_CENT_GENERAL) //NOVA EDIT ADDITION
+	icon_state = MAP_SWITCH("computer", "/obj/machinery/computer/piratepad_control")
 	var/obj/machinery/gateway/G
 
 /obj/machinery/computer/gateway_control/Initialize(mapload, obj/item/circuitboard/C)
@@ -395,8 +395,8 @@ GLOBAL_LIST_EMPTY(gateway_destinations)
 	. = ..()
 	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		G.portal_visuals.display_to(user)
 		ui = new(user, src, "Gateway", name)
+		G.portal_visuals.display_to(user, ui.window)
 		ui.open()
 
 /obj/machinery/computer/gateway_control/ui_data(mob/user)
@@ -413,7 +413,7 @@ GLOBAL_LIST_EMPTY(gateway_destinations)
 			destinations += list(possible_destination.get_ui_data())
 	.["destinations"] = destinations
 
-/obj/machinery/computer/gateway_control/ui_act(action, list/params)
+/obj/machinery/computer/gateway_control/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
 	. = ..()
 	if(.)
 		return
@@ -422,13 +422,6 @@ GLOBAL_LIST_EMPTY(gateway_destinations)
 			try_to_linkup()
 			return TRUE
 		if("activate")
-			//NOVA EDIT ADDITION BEGIN
-			if(ishuman(usr))
-				var/mob/living/carbon/human/interacting_human = usr
-				if(!allowed(interacting_human))
-					to_chat(interacting_human, "<span class='notice'>Error, you do not have the required access to link up the gateway.</span>")
-					return FALSE
-			//NOVA EDIT END
 			var/datum/gateway_destination/D = locate(params["destination"]) in GLOB.gateway_destinations
 			try_to_connect(D)
 			return TRUE
@@ -479,16 +472,18 @@ GLOBAL_LIST_EMPTY(gateway_destinations)
 	QDEL_NULL(cam_background)
 	return ..()
 
-/atom/movable/screen/map_view/gateway_port/display_to(mob/show_to)
+/atom/movable/screen/map_view/gateway_port/display_on_ui_visible(mob/show_to)
 	. = ..()
 	show_to.client.register_map_obj(cam_background)
 
 /atom/movable/screen/map_view/gateway_port/proc/setup_visuals(datum/gateway_destination/D)
 	our_destination = D
+	set_display(our_destination?.get_target_turf())
 	update_portal_filters()
 
 /atom/movable/screen/map_view/gateway_port/proc/reset_visuals()
 	our_destination = null
+	set_display(our_destination?.get_target_turf())
 	update_portal_filters()
 
 /atom/movable/screen/map_view/gateway_port/proc/update_portal_filters()

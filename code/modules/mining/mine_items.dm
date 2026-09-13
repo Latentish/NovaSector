@@ -13,7 +13,7 @@
 	. = ..()
 	set_light(set_luminosity, set_cap)
 
-/obj/effect/light_emitter/singularity_pull()
+/obj/effect/light_emitter/singularity_pull(atom/singularity, current_size)
 	return
 
 /obj/effect/light_emitter/singularity_act()
@@ -80,6 +80,7 @@
 	else
 		new /obj/item/survivalcapsule(src)
 	new /obj/item/assault_pod/mining(src)
+	new /obj/item/ore_box_reinforcement(src) // NOVA EDIT ADDITION
 
 
 /obj/structure/closet/secure_closet/miner/populate_contents_immediate()
@@ -139,6 +140,10 @@
 	roundstart_template = /datum/map_template/shuttle/mining/northstar
 	height = 6
 
+/obj/docking_port/stationary/mining_home/nebula
+	roundstart_template = /datum/map_template/shuttle/mining/nebula
+	height = 10
+
 /obj/docking_port/stationary/mining_home/common
 	name = "SS13: Common Mining Dock"
 	shuttle_id = "commonmining_home"
@@ -160,6 +165,7 @@
 	close_sound = 'sound/machines/trapdoor/trapdoor_shut.ogg'
 	set_dir_on_move = TRUE
 	can_buckle = TRUE
+	can_weld_shut = FALSE
 
 	/// Whether we're on a set of rails or just on the ground
 	var/on_rails = FALSE
@@ -178,6 +184,10 @@
 		. += span_notice("You can give this a bump to send it on its way, or drag it off the rails to drag it around.")
 	else
 		. += span_notice("Drag this onto a mine cart rail to set it on its way.")
+
+// We don't want the locked crate overlay show up.
+/obj/structure/closet/crate/miningcar/closet_update_overlays(list/new_overlays)
+	return
 
 /obj/structure/closet/crate/miningcar/Move(atom/newloc, direct, glide_size_override, update_dir)
 	if(isnull(newloc))
@@ -320,7 +330,7 @@
 		return
 	update_rail_state(FALSE)
 	Move(new_destination)
-	var/sound/thud_sound = sound('sound/weapons/thudswoosh.ogg')
+	var/sound/thud_sound = sound('sound/items/weapons/thudswoosh.ogg')
 	thud_sound.pitch = 0.5
 	playsound(src, thud_sound, 50, TRUE)
 
@@ -402,7 +412,7 @@
 		return
 
 	setDir(movedir)
-	var/datum/move_loop/loop = GLOB.move_manager.move(src, dir, delay = calculate_delay(), subsystem = SSconveyors, flags = MOVEMENT_LOOP_START_FAST|MOVEMENT_LOOP_IGNORE_PRIORITY)
+	var/datum/move_loop/loop = GLOB.move_manager.move(src, dir, delay = calculate_delay(), subsystem = SSconveyors, flags = MOVEMENT_LOOP_START_INSTANT|MOVEMENT_LOOP_IGNORE_PRIORITY)
 	RegisterSignal(loop, COMSIG_MOVELOOP_PREPROCESS_CHECK, PROC_REF(check_rail))
 	RegisterSignal(loop, COMSIG_MOVELOOP_POSTPROCESS, PROC_REF(decay_momentum))
 

@@ -9,6 +9,7 @@
 	flags_1 = ON_BORDER_1
 	/// If we randomize our icon on spawning
 	var/random_icons = TRUE
+	custom_materials = list(/datum/material/wood = SHEET_MATERIAL_AMOUNT * 5)
 
 /obj/structure/railing/wooden_fencing/Initialize(mapload)
 	. = ..()
@@ -20,14 +21,11 @@
 		"fence_3",
 	)
 	update_appearance()
+	AddElement(/datum/element/tool_blocker, TOOL_WIRECUTTER)
 
 /obj/structure/railing/wooden_fencing/atom_deconstruct(disassembled)
 	var/obj/plank = new /obj/item/stack/sheet/mineral/wood(drop_location(), 5)
 	transfer_fingerprints_to(plank)
-
-// formerly NO_DECONSTRUCTION
-/obj/structure/railing/wooden_fencing/wirecutter_act(mob/living/user, obj/item/tool)
-	return NONE
 
 /obj/structure/railing/wooden_fencing/crowbar_act(mob/living/user, obj/item/tool)
 	. = ..()
@@ -45,6 +43,7 @@
 	random_icons = FALSE
 	/// Has the gate been opened or not?
 	var/opened = FALSE
+	custom_materials = list(/datum/material/wood = SHEET_MATERIAL_AMOUNT * 5)
 
 /obj/structure/railing/wooden_fencing/gate/attack_hand(mob/user, list/modifiers)
 	. = ..()
@@ -60,7 +59,7 @@
 	opened = !opened
 	set_density(!opened)
 	icon_state = "[opened ? "gate_open" : "gate"]"
-	playsound(src, (opened ? 'sound/machines/wooden_closet_open.ogg' : 'sound/machines/wooden_closet_close.ogg'), 100, TRUE)
+	playsound(src, (opened ? 'sound/machines/closet/wooden_closet_open.ogg' : 'sound/machines/closet/wooden_closet_close.ogg'), 100, TRUE)
 	update_appearance()
 
 /obj/structure/railing/wooden_fencing/gate/update_icon()
@@ -74,8 +73,8 @@
 	name = "large wooden gate"
 	icon = 'modular_nova/modules/primitive_structures/icons/wooden_gate.dmi'
 	icon_state = "gate"
-	openSound = 'sound/machines/wooden_closet_open.ogg'
-	closeSound = 'sound/machines/wooden_closet_close.ogg'
+	openSound = 'sound/machines/closet/wooden_closet_open.ogg'
+	closeSound = 'sound/machines/closet/wooden_closet_close.ogg'
 
 /obj/structure/mineral_door/wood/large_gate/Open()
 	playsound(src, openSound, 100, TRUE)

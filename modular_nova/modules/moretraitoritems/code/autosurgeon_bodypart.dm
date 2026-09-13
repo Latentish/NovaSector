@@ -42,26 +42,27 @@
 		to_chat(H, span_warning("The [src] fails to attach [storedbodypart]!"))
 		return
 
-	playsound(get_turf(H), 'sound/weapons/circsawhit.ogg', 50, TRUE)
+	playsound(get_turf(H), 'sound/items/weapons/circsawhit.ogg', 50, TRUE)
 	storedbodypart = null
 	name = initial(name)
-	if(uses != INFINITE)
+	if(uses != INFINITY)
 		uses--
 	if(!uses)
 		desc = "[initial(desc)] Looks like it's been used up."
 
-/obj/item/autosurgeon/bodypart/attackby(obj/item/I, mob/user, params)
-	if(istype(I, bodypart_type))
+/obj/item/autosurgeon/bodypart/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(istype(tool, bodypart_type))
 		if(storedbodypart)
 			to_chat(user, span_alert("[src] already has an implant stored."))
-			return
+			return ITEM_INTERACT_BLOCKING
 		else if(!uses)
 			to_chat(user, span_alert("[src] has already been used up."))
-			return
-		if(!user.transferItemToLoc(I, src))
-			return
-		storedbodypart = I
-		to_chat(user, span_notice("You insert the [I] into [src]."))
+			return ITEM_INTERACT_BLOCKING
+		if(!user.transferItemToLoc(tool, src))
+			return ITEM_INTERACT_BLOCKING
+		storedbodypart = tool
+		to_chat(user, span_notice("You insert the [tool] into [src]."))
+		return ITEM_INTERACT_SUCCESS
 	else
 		return ..()
 
@@ -79,7 +80,7 @@
 		to_chat(user, span_notice("You remove the [storedbodypart] from [src]."))
 		I.play_tool_sound(src)
 		storedbodypart = null
-		if(uses != INFINITE)
+		if(uses != INFINITY)
 			uses--
 		if(!uses)
 			desc = "[initial(desc)] Looks like it's been used up."

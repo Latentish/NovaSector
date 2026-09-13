@@ -1,25 +1,6 @@
-/obj/item/organ/internal/eyes/robotic
-	icon = 'modular_nova/modules/implants/icons/internal_HA.dmi' //So I had to fucking include the eye sprites
-	icon_state = "cybernetic_eyeballs"
-
-/obj/item/organ/internal/eyes/robotic/xray
-	eye_color_left = "#00ffe5"
-	eye_color_right = "#00ffe5"
-	icon_state = "xray_eyes"
-
-/obj/item/organ/internal/eyes/robotic/thermals
-	eye_color_left = "#FC0"
-	eye_color_right = "#FC0"
-	icon_state = "thermal_eyes"
-
-/obj/item/organ/internal/eyes/robotic/shield
-	eye_color_left = "#ff2700"
-	eye_color_right = "#ff2700"
-	icon_state = "shielded_eyes"
-
-/obj/item/organ/internal/eyes/night_vision/cyber
+/obj/item/organ/eyes/night_vision/cyber
 	name = "nightvision eyes"
-	icon = 'modular_nova/modules/implants/icons/internal_HA.dmi' //All in the chest implants .dmi
+	icon = 'modular_nova/modules/implants/icons/chest_modular.dmi' //All in the chest implants .dmi
 	icon_state = "eyes_nvcyber"
 	desc = "A pair of eyes with built-in nightvision optics, with the additional bonus of being rad as hell."
 	eye_color_left = "#0ffc03"
@@ -28,3 +9,4 @@
 	low_light_cutoff = list(0, 15, 20)
 	medium_light_cutoff = list(0, 20, 35)
 	high_light_cutoff = list(0, 40, 50)
+	custom_materials = list(/datum/material/iron = SHEET_MATERIAL_AMOUNT * 0.6, /datum/material/glass = SHEET_MATERIAL_AMOUNT * 0.6, /datum/material/silver = SHEET_MATERIAL_AMOUNT * 0.6, /datum/material/gold = SHEET_MATERIAL_AMOUNT * 0.6, /datum/material/uranium = HALF_SHEET_MATERIAL_AMOUNT)

@@ -3,29 +3,26 @@
 	desc = "A tool used to extract the RNA from viruses. Apply to skin."
 	icon = 'modular_nova/modules/mutants/icons/extractor.dmi'
 	icon_state = "extractor"
-	custom_materials = list(
-		/datum/material/iron = SHEET_MATERIAL_AMOUNT * 2,
-		/datum/material/gold = SHEET_MATERIAL_AMOUNT,
-		/datum/material/uranium = HALF_SHEET_MATERIAL_AMOUNT,
-		/datum/material/diamond = HALF_SHEET_MATERIAL_AMOUNT,
-	)
+	custom_materials = list(/datum/material/iron = SHEET_MATERIAL_AMOUNT * 2, /datum/material/gold = SHEET_MATERIAL_AMOUNT * 2, /datum/material/uranium = HALF_SHEET_MATERIAL_AMOUNT, /datum/material/diamond = HALF_SHEET_MATERIAL_AMOUNT)
 	/// Our loaded vial.
 	var/obj/item/rna_vial/loaded_vial
 
-/obj/item/rna_extractor/attackby(obj/item/O, mob/living/user)
-	if((istype(O, /obj/item/rna_vial) && loaded_vial != null))
+/obj/item/rna_extractor/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if((istype(tool, /obj/item/rna_vial) && loaded_vial != null))
 		to_chat(user, span_warning("[src] can not hold more than one vial!"))
-		return FALSE
-	if(istype(O, /obj/item/rna_vial))
-		if(!user.transferItemToLoc(O, src))
-			return FALSE
-		to_chat(user, span_notice("You insert [O] into [src]!"))
-		loaded_vial = O
-		playsound(loc, 'sound/weapons/autoguninsert.ogg', 35, 1)
+		return ITEM_INTERACT_BLOCKING
+	if(istype(tool, /obj/item/rna_vial))
+		if(!user.transferItemToLoc(tool, src))
+			return ITEM_INTERACT_BLOCKING
+		to_chat(user, span_notice("You insert [tool] into [src]!"))
+		loaded_vial = tool
+		playsound(loc, 'sound/items/weapons/autoguninsert.ogg', 35, 1)
 		update_appearance()
+		return ITEM_INTERACT_SUCCESS
+	return ITEM_INTERACT_BLOCKING
 
 /obj/item/rna_extractor/attack_self(mob/living/user)
-	if(user.incapacitated())
+	if(user.incapacitated)
 		return
 	unload_vial(user)
 
@@ -61,7 +58,7 @@
 		to_chat(user, span_notice("You remove [loaded_vial] from [src]."))
 		loaded_vial = null
 		update_appearance()
-		playsound(loc, 'sound/weapons/empty.ogg', 50, 1)
+		playsound(loc, 'sound/items/weapons/empty.ogg', 50, 1)
 	else
 		to_chat(user, span_notice("[src] isn't loaded!"))
 		return
@@ -77,10 +74,10 @@
 		. += "It has an extracted RNA sample in it."
 
 /obj/item/rna_extractor/Destroy()
-	. = ..()
 	if(loaded_vial)
 		loaded_vial.forceMove(loc)
 		loaded_vial = null
+	return ..()
 
 /obj/item/rna_vial
 	name = "raw RNA vial"
@@ -168,22 +165,23 @@
 	if(timer_id)
 		deltimer(timer_id)
 		timer_id = null
-	. = ..()
+	return ..()
 
-/obj/machinery/rnd/rna_recombinator/attackby(obj/item/weapon, mob/living/user, params)
+/obj/machinery/rnd/rna_recombinator/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
 	if(user.combat_mode)
-		return FALSE
+		return ITEM_INTERACT_BLOCKING
 	if(!is_insertion_ready(user))
-		return FALSE
-	if(!istype(weapon, /obj/item/rna_vial))
-		return FALSE
-	if(!user.transferItemToLoc(weapon, src))
-		return FALSE
-	loaded_item = weapon
-	to_chat(user, span_notice("You insert [weapon] to into [src] reciprocal."))
+		return ITEM_INTERACT_BLOCKING
+	if(!istype(tool, /obj/item/rna_vial))
+		return ITEM_INTERACT_BLOCKING
+	if(!user.transferItemToLoc(tool, src))
+		return ITEM_INTERACT_BLOCKING
+	loaded_item = tool
+	to_chat(user, span_notice("You insert [tool] to into [src] reciprocal."))
 	flick("h_lathe_load", src)
 	update_appearance()
-	playsound(loc, 'sound/weapons/autoguninsert.ogg', 35, 1)
+	playsound(loc, 'sound/items/weapons/autoguninsert.ogg', 35, 1)
+	return ITEM_INTERACT_SUCCESS
 
 
 /obj/machinery/rnd/rna_recombinator/ui_interact(mob/user)
@@ -265,7 +263,7 @@
 	vial.contains_rna = FALSE
 	vial.update_appearance()
 	ejectItem()
-	playsound(loc, 'sound/items/rped.ogg', 60, 1)
+	playsound(loc, 'sound/items/tools/rped.ogg', 60, 1)
 	flick("h_lathe_wloop", src)
 	use_energy(active_power_usage)
 	timer_id = addtimer(CALLBACK(src, PROC_REF(recombinate_step)), recombination_step_time, TIMER_STOPPABLE)
@@ -284,7 +282,7 @@
 		return
 	flick("h_lathe_wloop", src)
 	use_energy(active_power_usage)
-	playsound(loc, 'sound/items/rped.ogg', 60, 1)
+	playsound(loc, 'sound/items/tools/rped.ogg', 60, 1)
 	timer_id = addtimer(CALLBACK(src, PROC_REF(recombinate_step)), recombination_step_time, TIMER_STOPPABLE)
 
 /obj/machinery/rnd/rna_recombinator/proc/recombinate_finish()

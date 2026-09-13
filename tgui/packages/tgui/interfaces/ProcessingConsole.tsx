@@ -1,6 +1,3 @@
-import { toTitleCase } from 'common/string';
-
-import { useBackend } from '../backend';
 import {
   Box,
   Button,
@@ -10,10 +7,13 @@ import {
   Section,
   Stack,
   Table,
-} from '../components';
-import { formatSiUnit } from '../format';
+} from 'tgui-core/components';
+import { formatSiUnit } from 'tgui-core/format';
+import { toTitleCase } from 'tgui-core/string';
+
+import { useBackend } from '../backend';
 import { Window } from '../layouts';
-import { Material } from './Fabrication/Types';
+import type { Material } from './Fabrication/Types';
 
 type IconData = {
   id: string;
@@ -22,7 +22,7 @@ type IconData = {
 
 type Alloy = {
   name: string;
-  id: string;
+  path: string;
 };
 
 type Data = {
@@ -110,11 +110,11 @@ const AlloySelection = (props: any) => {
     <Table>
       {alloys.map((alloy) => (
         <DisplayRow
-          key={alloy.id}
+          key={alloy.path}
           name={alloy.name}
-          icon={alloyIcons.find((icon) => icon.id === alloy.id)?.icon}
-          selected={selectedAlloy === alloy.id}
-          onSelect={() => act('setAlloy', { value: alloy.id })}
+          icon={alloyIcons.find((icon) => icon.id === alloy.path)?.icon}
+          selected={selectedAlloy === alloy.path}
+          onSelect={() => act('setAlloy', { new_alloy: alloy.path })}
         />
       ))}
     </Table>

@@ -79,7 +79,7 @@
  *
  * Will not respond if moving and emagged, so once you set it to go it can't be stopped!
  */
-/obj/structure/training_machine/ui_act(action, params)
+/obj/structure/training_machine/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
 	. = ..()
 	if(.)
 		return
@@ -108,17 +108,21 @@
  * Meant for attaching an item to the machine, should only be a training toolbox or target. If emagged, the
  * machine will gain an auto-attached syndicate toolbox, so in that case we shouldn't be able to swap it out
  */
-/obj/structure/training_machine/attackby(obj/item/target, mob/living/user)
+/obj/structure/training_machine/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
 	if (user.combat_mode)
-		return ..()
-	if (!istype(target, /obj/item/training_toolbox) && !istype(target, /obj/item/target))
-		return ..()
+		return NONE
+
+	if (!istype(tool, /obj/item/training_toolbox) && !istype(tool, /obj/item/target))
+		return NONE
+
 	if (obj_flags & EMAGGED)
 		to_chat(user, span_warning("The toolbox is somehow stuck on! It won't budge!"))
-		return
-	attach_item(target)
+		return ITEM_INTERACT_BLOCKING
+
+	attach_item(tool)
 	to_chat(user, span_notice("You attach \the [attached_item] to the training device."))
 	playsound(src, SFX_RUSTLE, 50, TRUE)
+	return ITEM_INTERACT_SUCCESS
 
 /**
  * Attach an item to the machine
@@ -209,7 +213,7 @@
 	moving = FALSE
 	starting_turf = null
 	say(message)
-	playsound(src,'sound/machines/synth_no.ogg',50,FALSE)
+	playsound(src,'sound/machines/synth/synth_no.ogg',50,FALSE)
 	STOP_PROCESSING(SSfastprocess, src)
 
 /**
@@ -221,7 +225,7 @@
 	moving = TRUE
 	starting_turf = get_turf(src)
 	say("Beginning training simulation.")
-	playsound(src,'sound/machines/triple_beep.ogg',50,FALSE)
+	playsound(src,'sound/machines/beep/triple_beep.ogg',50,FALSE)
 	START_PROCESSING(SSfastprocess, src)
 
 /**
@@ -277,7 +281,7 @@
 		return
 	var/list/targets
 	for(var/mob/living/carbon/target in oview(1, get_turf(src))) //Find adjacent target
-		if (target.stat == CONSCIOUS && target.Adjacent(src))
+		if (!IS_UNCONSCIOUS_OR_CRIT(target) && target.Adjacent(src))
 			LAZYADD(targets, target)
 	var/mob/living/carbon/target = pick(targets)
 	if (!target)
@@ -285,7 +289,7 @@
 	do_attack_animation(target, null, attached_item)
 	if (obj_flags & EMAGGED)
 		target.apply_damage(attached_item.force, BRUTE, BODY_ZONE_CHEST, attacking_item = attached_item)
-	playsound(src, 'sound/weapons/smash.ogg', 15, TRUE)
+	playsound(src, 'sound/items/weapons/smash.ogg', 15, TRUE)
 	COOLDOWN_START(src, attack_cooldown, rand(MIN_ATTACK_DELAY, MAX_ATTACK_DELAY))
 
 /**
@@ -360,16 +364,16 @@
 	///Number of hits made since the Lap button (alt-click) was last pushed
 	var/lap_hits = 0
 
-/obj/item/training_toolbox/pre_attack(atom/A, mob/living/user, params)
+/obj/item/training_toolbox/pre_attack(atom/target, mob/living/user, list/modifiers, list/attack_modifiers)
 	. = ..()
 	if(.)
 		return .
-	if(A == user || !user.combat_mode)
+	if(target == user || !user.combat_mode)
 		return .
-	if(!check_hit(A))
+	if(!check_hit(target))
 		return .
 	user.changeNext_move(CLICK_CD_MELEE)
-	user.do_attack_animation(A)
+	user.do_attack_animation(target)
 	return TRUE
 
 /**
@@ -390,9 +394,9 @@
 			return FALSE
 	total_hits++
 	lap_hits++
-	playsound(src,'sound/weapons/smash.ogg',50,FALSE)
+	playsound(src,'sound/items/weapons/smash.ogg',50,FALSE)
 	if (lap_hits % HITS_TO_KILL == 0)
-		playsound(src,'sound/machines/twobeep.ogg',25,FALSE)
+		playsound(src,'sound/machines/beep/twobeep.ogg',25,FALSE)
 	return TRUE
 
 /obj/item/training_toolbox/throw_impact(atom/hit_atom, datum/thrownthing/throwingdatum)

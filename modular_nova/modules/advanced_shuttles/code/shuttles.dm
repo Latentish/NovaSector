@@ -8,9 +8,9 @@
 	dir = WEST
 	port_direction = SOUTH
 
-	callTime = 15 SECONDS
-	ignitionTime = 6 SECONDS
-	rechargeTime = 15 SECONDS
+	callTime = 9 SECONDS
+	ignitionTime = 5 SECONDS
+	rechargeTime = 9 SECONDS
 
 	movement_force = list("KNOCKDOWN" = 3, "THROW" = 0)
 
@@ -96,6 +96,7 @@
 	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | ACID_PROOF
 	connectable = FALSE //connecting_computer change: since icon_state is not a typical console, it cannot be connectable.
 	no_destination_swap = TRUE
+	generate_map_preview = FALSE
 
 	///[world.time] when console last announced departure
 	var/last_depart_announce
@@ -111,7 +112,7 @@
  *	MAP TEMPLATES
  */
 
-/datum/map_template/shuttle/ferry
+/datum/map_template/shuttle/ferry/nova
 	name = "NAV Monarch (Ferry)"
 	prefix = "_maps/shuttles/nova/"
 	port_id = "ferry"

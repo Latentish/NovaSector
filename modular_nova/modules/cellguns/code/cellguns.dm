@@ -18,28 +18,29 @@
 	. = ..()
 	if(maxcells)
 		. += "<b>[installedcells.len]</b> out of <b>[maxcells]</b> cell slots are filled."
-		. += span_info("You can use AltClick with an empty hand to remove the most recently inserted cell from the chamber.")
+		. += span_info("You can use Alt Click with an empty hand to remove the most recently inserted cell from the chamber.")
 
 		for(var/cell in installedcells)
 			. += span_notice("There is \a [cell] loaded in the chamber.") //Shows what cells are currently inside of the gun
 
 /// Handles insertion of weapon cells
-/obj/item/gun/energy/cell_loaded/attackby(obj/item/weaponcell/used_cell, mob/user)
-	if(is_type_in_list(used_cell, allowed_cells)) // Checks allowed_cells to see if the gun is able to load the cells.
-		if(installedcells.len >= maxcells) //Prevents the user from loading any cells past the maximum cell allowance
-			to_chat(user, span_notice("[src] is full, take a cell out to make room."))
-			return
+/obj/item/gun/energy/cell_loaded/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(!is_type_in_list(tool, allowed_cells)) // Checks allowed_cells to see if the gun is able to load the cells.
+		return ..()
 
-		var/obj/item/weaponcell/cell = used_cell
-		if(!user.transferItemToLoc(cell, src))
-			return
+	if(length(installedcells) >= maxcells) //Prevents the user from loading any cells past the maximum cell allowance
+		to_chat(user, span_warning("[src] is full. Take a cell out to make room!"))
+		return ITEM_INTERACT_BLOCKING
 
-		playsound(loc, 'sound/machines/click.ogg', 50, 1)
-		to_chat(user, span_notice("You install the [cell]."))
-		ammo_type += new cell.ammo_type(src)
-		installedcells += cell
-	else
-		..()
+	var/obj/item/weaponcell/cell = tool
+	if(!user.transferItemToLoc(cell, src))
+		return ITEM_INTERACT_BLOCKING
+
+	playsound(loc, 'sound/machines/click.ogg', 50, 1)
+	to_chat(user, span_notice("You install [cell]."))
+	ammo_type += new cell.ammo_type(src)
+	installedcells += cell
+	return ITEM_INTERACT_SUCCESS
 
 /obj/item/gun/energy/cell_loaded/update_overlays()
 	. = ..()
@@ -68,16 +69,16 @@
 	charge_overlay.color = shot.select_color
 
 	for(var/i in 0 to ratio)
-		charge_overlay.pixel_x = ammo_x_offset * (i - 1)
-		charge_overlay.pixel_y = ammo_y_offset * (i - 1)
+		charge_overlay.pixel_w = ammo_x_offset * (i - 1)
+		charge_overlay.pixel_z = ammo_y_offset * (i - 1)
 		. += new /mutable_appearance(charge_overlay)
 
 /obj/item/gun/energy/cell_loaded/click_alt(mob/user, modifiers)
 	if(!installedcells.len) //Checks to see if there is a cell inside of the gun, before removal.
-		to_chat(user, span_notice("The [src] has no cells inside"))
+		to_chat(user, span_warning("The [src] has no cells inside!"))
 		return CLICK_ACTION_BLOCKING
 
-	to_chat(user, span_notice("You remove a cell"))
+	to_chat(user, span_notice("You remove a cell."))
 	var/obj/item/last_cell = installedcells[installedcells.len]
 
 	if(last_cell)

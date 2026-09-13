@@ -49,8 +49,7 @@
 	proximity_datum.parent_nifsoft = WEAKREF(src)
 
 /datum/nifsoft/soul_poem/Destroy()
-	qdel(proximity_datum)
-	proximity_datum = null
+	QDEL_NULL(proximity_datum)
 
 	return ..()
 
@@ -74,10 +73,10 @@
 		if(message["identifier"] == sender_identifier)
 			message["sender_name"] = message_name
 			message["message"] = received_message
-			message["timestamp"] = station_time_timestamp()
+			message["timestamp"] = "[server_timestamp(ic_time = TRUE)] (PT: [round_timestamp()]"
 			return TRUE
 
-	message_list.Insert(1, list(list(identifier = sender_identifier, sender_name = received_name, message = received_message, timestamp = station_time_timestamp())))
+	message_list.Insert(1, list(list(identifier = sender_identifier, sender_name = received_name, message = received_message, timestamp = "[server_timestamp(ic_time = TRUE)] (PT: [round_timestamp()]")))
 	return TRUE
 
 /// Removes the message_to_remove from the message_list, If the message cannot be found the proc will return FALSE, otherwise it will delete the message_to_remove and return TRUE.
@@ -180,7 +179,7 @@
 
 	return data
 
-/datum/nifsoft/soul_poem/ui_act(action, list/params)
+/datum/nifsoft/soul_poem/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
 	. = ..()
 	if(.)
 		return

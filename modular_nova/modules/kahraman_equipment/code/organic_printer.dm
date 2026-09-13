@@ -19,6 +19,7 @@
 /obj/machinery/biogenerator/organic_printer/Initialize(mapload)
 	. = ..()
 	AddElement(/datum/element/manufacturer_examine, COMPANY_KAHRAMAN)
+	AddElement(/datum/element/tool_blocker, TOOL_CROWBAR)
 
 /obj/machinery/biogenerator/organic_printer/RefreshParts()
 	. = ..()
@@ -26,12 +27,10 @@
 	productivity = 2
 	max_items = 35
 
-/obj/machinery/biogenerator/organic_printer/default_deconstruction_crowbar()
-	return
-
 // Deployable item for cargo for the organics printer
 /obj/item/flatpacked_machine/organics_printer
 	name = "organic materials printer parts kit"
+	desc = /obj/machinery/biogenerator/organic_printer::desc
 	icon = 'modular_nova/modules/kahraman_equipment/icons/biogenerator.dmi'
 	icon_state = "biogenerator_parts"
 	type_to_deploy = /obj/machinery/biogenerator/organic_printer

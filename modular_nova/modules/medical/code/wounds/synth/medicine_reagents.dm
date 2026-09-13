@@ -1,4 +1,4 @@
-// a potent coolant that treats synthetic burns at decent efficiency. compared to hercuri its worse, but without
+// a potent coolant that treats synthetic burns at decent efficiency. compared to hercuri it's worse, but without
 // the lethal side effects, opting for a movement speed decrease instead
 /datum/reagent/dinitrogen_plasmide
 	name = "Dinitrogen Plasmide"
@@ -10,7 +10,7 @@
 	taste_description = "dull plasma"
 	chemical_flags = REAGENT_CAN_BE_SYNTHESIZED
 	process_flags = REAGENT_ORGANIC | REAGENT_SYNTHETIC
-	overdose_threshold = 60 // it takes a lot, if youre really messed up you CAN hit this but its unlikely
+	overdose_threshold = 60 // it takes a lot, if youre really messed up you CAN hit this but it's unlikely
 	chemical_flags = REAGENT_CAN_BE_SYNTHESIZED
 
 /datum/reagent/dinitrogen_plasmide/on_mob_metabolize(mob/living/affected_mob)
@@ -26,13 +26,13 @@
 	affected_mob.remove_movespeed_modifier(/datum/movespeed_modifier/dinitrogen_plasmide_overdose)
 	to_chat(affected_mob, span_warning("Your joints no longer feel stiff!"))
 
-/datum/reagent/dinitrogen_plasmide/overdose_start(mob/living/affected_mob)
+/datum/reagent/dinitrogen_plasmide/overdose_start(mob/living/affected_mob, metabolization_ratio)
 	. = ..()
 
 	to_chat(affected_mob, span_danger("You feel like your joints are filling with some viscous fluid!"))
 	affected_mob.add_movespeed_modifier(/datum/movespeed_modifier/dinitrogen_plasmide_overdose)
 
-/datum/reagent/dinitrogen_plasmide/overdose_process(mob/living/affected_mob, seconds_per_tick, times_fired)
+/datum/reagent/dinitrogen_plasmide/overdose_process(mob/living/affected_mob, seconds_per_tick, metabolization_ratio)
 	. = ..()
 
 	holder.remove_reagent(type, 1.2 * seconds_per_tick) // decays

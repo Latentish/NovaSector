@@ -1,14 +1,9 @@
-import { BooleanLike } from 'common/react';
-import { capitalizeAll, capitalizeFirst } from 'common/string';
+import { Button, Stack } from 'tgui-core/components';
+import { capitalizeFirst } from 'tgui-core/string';
 
 import { useBackend } from '../../backend';
-import { Tooltip } from '../../components';
 import { IconDisplay } from './IconDisplay';
-import { SearchGroup, SearchItem } from './types';
-
-type Data = {
-  is_blind: BooleanLike;
-};
+import type { SearchGroup, SearchItem } from './types';
 
 type Props =
   | {
@@ -19,8 +14,7 @@ type Props =
     };
 
 export function LootBox(props: Props) {
-  const { act, data } = useBackend<Data>();
-  const { is_blind } = data;
+  const { act } = useBackend();
 
   let amount = 0;
   let item: SearchItem;
@@ -31,39 +25,46 @@ export function LootBox(props: Props) {
     item = props.item;
   }
 
-  const name = !item.name
-    ? '???'
-    : capitalizeFirst(item.name.split(' ')[0]).slice(0, 5);
+  const name = !item.name ? '???' : capitalizeFirst(item.name);
 
-  // So we can conditionally wrap tooltip
   const content = (
-    <div className="SearchItem">
-      <div
-        className="SearchItem--box"
-        onClick={(event) =>
-          act('grab', {
-            alt: event.altKey,
-            ctrl: event.ctrlKey,
-            ref: item.ref,
-            shift: event.shiftKey,
-          })
-        }
-        onContextMenu={(event) => {
-          event.preventDefault();
-          act('grab', {
-            right: true,
-            ref: item.ref,
-          });
-        }}
-      >
-        <IconDisplay item={item} />
-        {amount > 1 && <div className="SearchItem--amount">{amount}</div>}
-      </div>
-      {!is_blind && <span className="SearchItem--text">{name}</span>}
-    </div>
+    <Button
+      p={0}
+      fluid
+      color="transparent"
+      onClick={(event) =>
+        act('grab', {
+          alt: event.altKey,
+          ctrl: event.ctrlKey,
+          ref: item.ref,
+          shift: event.shiftKey,
+        })
+      }
+      onContextMenu={(event) => {
+        event.preventDefault();
+        act('grab', {
+          right: true,
+          ref: item.ref,
+        });
+      }}
+    >
+      <Stack>
+        <Stack.Item mb={-1} minWidth={'36px'} minHeight={'42px'}>
+          <IconDisplay item={item} size={{ height: 3, width: 3 }} />
+        </Stack.Item>
+        <Stack.Item
+          lineHeight="34px"
+          overflow="hidden"
+          style={{ textOverflow: 'ellipsis' }}
+        >
+          {name}
+        </Stack.Item>
+        <Stack.Item lineHeight="34px" pr={1}>
+          {amount > 1 && `x${amount}`}
+        </Stack.Item>
+      </Stack>
+    </Button>
   );
 
-  if (is_blind) return content;
-
-  return <Tooltip content={capitalizeAll(item.name)}>{content}</Tooltip>;
+  return content;
 }

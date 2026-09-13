@@ -10,6 +10,7 @@
  *
  */
 /datum/emote
+	abstract_type = /datum/emote
 	/// What calls the emote.
 	var/key = ""
 	/// This will also call the emote.
@@ -38,28 +39,47 @@
 	var/emote_type = EMOTE_VISIBLE
 	/// Checks if the mob can use its hands before performing the emote.
 	var/hands_use_check = FALSE
-	/// Will only work if the emote is EMOTE_AUDIBLE.
-	var/muzzle_ignore = FALSE
 	/// Types that are allowed to use that emote.
 	var/list/mob_type_allowed_typecache = /mob
 	/// Types that are NOT allowed to use that emote.
 	var/list/mob_type_blacklist_typecache
 	/// Types that can use this emote regardless of their state.
 	var/list/mob_type_ignore_stat_typecache
+	/// Trait that is required to use this emote.
+	var/trait_required
 	/// In which state can you use this emote? (Check stat.dm for a full list of them)
-	var/stat_allowed = CONSCIOUS
-	/// Sound to play when emote is called.
+	var/stat_allowed = STABLE
+
+	var/can_use_flags = NONE
+	/// A single, default sound to play if nothing else overrides this
 	var/sound
-	/// Used for the honk borg emote.
+	/// A more indepth list of sounds to play, ordered by mob type. Takes precedence over [sound]
+	var/list/sounds_by_mobtype
+	/// Does this emote vary in pitch?
 	var/vary = FALSE
+	/// The volume of the sound
+	var/sound_volume = 50
+	/// Does this emote's sound ignore walls?
+	var/sound_wall_ignore = FALSE
+	/// If this emote's sound is affected by TTS pitch
+	var/affected_by_pitch = TRUE
 	/// Can only code call this event instead of the player.
 	var/only_forced_audio = FALSE
 	/// The cooldown between the uses of the emote.
 	var/cooldown = 0.8 SECONDS
 	/// Does this message have a message that can be modified by the user?
 	var/can_message_change = FALSE
-	/// How long is the cooldown on the audio of the emote, if it has one?
-	var/audio_cooldown = 2 SECONDS
+	/// How long is the shared emote cooldown triggered by this emote when used intentionally?
+	var/manual_general_emote_audio_cooldown = 2 SECONDS
+	/// How long is the specific emote cooldown triggered by this emote when used intentionally?
+	var/manual_specific_emote_audio_cooldown = 5 SECONDS
+	/// How long is the shared emote cooldown triggered by this emote when forced?
+	var/forced_general_emote_audio_cooldown = 2 SECONDS
+	/// How long is the specific emote cooldown triggered by this emote when forced?
+	var/forced_specific_emote_audio_cooldown = 2 SECONDS
+	/// The volume of the sound
+	///Does this emote use sound tokens? this means it also ignores walls.
+	var/use_sound_tokens = FALSE
 
 /datum/emote/New()
 	switch(mob_type_allowed_typecache)
@@ -85,51 +105,77 @@
  * * type_override - Override to the current emote_type.
  * * intentional - Bool that says whether the emote was forced (FALSE) or not (TRUE).
  *
- * Returns TRUE if it was able to run the emote, FALSE otherwise.
  */
 /datum/emote/proc/run_emote(mob/user, params, type_override, intentional = FALSE)
-	if(!can_run_emote(user, TRUE, intentional))
-		return FALSE
-	if(SEND_SIGNAL(user, COMSIG_MOB_PRE_EMOTED, key, params, type_override, intentional) & COMPONENT_CANT_EMOTE)
-		return TRUE // We don't return FALSE because the error output would be incorrect, provide your own if necessary.
 	var/msg = select_message_type(user, message, intentional)
-	if(params && message_param)
-		msg = select_param(user, params)
+	if(params)
+		if(message_param)
+			msg = select_param(user, params)
+		else
+			msg = params
 
 	msg = replace_pronoun(user, msg)
 	if(!msg)
-		return TRUE
+		return
 
-	user.log_message(msg, LOG_EMOTE)
+	/// Use the type override if it exists
+	var/running_emote_type = type_override || emote_type
+
+	if(user.client)
+		user.log_message(msg, LOG_EMOTE)
 
 	var/tmp_sound = get_sound(user)
-	if(tmp_sound && should_play_sound(user, intentional) && TIMER_COOLDOWN_FINISHED(user, type))
-		TIMER_COOLDOWN_START(user, type, audio_cooldown)
-		//NOVA EDIT CHANGE BEGIN
-		//playsound(user, tmp_sound, 50, vary) - NOVA EDIT - ORIGINAL
-		if(istype(src, /datum/emote/living/lewd))
-			play_lewd_sound(user, tmp_sound, sound_volume, vary, pref_to_check = /datum/preference/toggle/erp/sounds)
+	if(tmp_sound && should_play_sound(user, intentional))
+		if(intentional)
+			if(!TIMER_COOLDOWN_FINISHED(user, MANUAL_GENERAL_EMOTE_AUDIO_COOLDOWN) || !TIMER_COOLDOWN_FINISHED(user, MANUAL_SPECIFIC_EMOTE_AUDIO_COOLDOWN(type)) || !TIMER_COOLDOWN_FINISHED(user, FORCED_GENERAL_EMOTE_AUDIO_COOLDOWN) || !TIMER_COOLDOWN_FINISHED(user, FORCED_SPECIFIC_EMOTE_AUDIO_COOLDOWN(type)))
+				return FALSE
 		else
-			playsound(user, tmp_sound, sound_volume, vary)
-		//NOVA EDIT CHANGE END
+			if(!TIMER_COOLDOWN_FINISHED(user, FORCED_GENERAL_EMOTE_AUDIO_COOLDOWN) || !TIMER_COOLDOWN_FINISHED(user, FORCED_SPECIFIC_EMOTE_AUDIO_COOLDOWN(type)))
+				return FALSE
+		TIMER_COOLDOWN_START(user, MANUAL_SPECIFIC_EMOTE_AUDIO_COOLDOWN(type), manual_specific_emote_audio_cooldown)
+		TIMER_COOLDOWN_START(user, MANUAL_GENERAL_EMOTE_AUDIO_COOLDOWN, manual_general_emote_audio_cooldown)
+		TIMER_COOLDOWN_START(user, FORCED_SPECIFIC_EMOTE_AUDIO_COOLDOWN(type), forced_specific_emote_audio_cooldown)
+		TIMER_COOLDOWN_START(user, FORCED_GENERAL_EMOTE_AUDIO_COOLDOWN, forced_general_emote_audio_cooldown)
 
-	var/is_important = emote_type & EMOTE_IMPORTANT
-	var/is_visual = emote_type & EMOTE_VISIBLE
-	var/is_audible = emote_type & EMOTE_AUDIBLE
+		var/frequency = null
+		if (affected_by_pitch && SStts.tts_enabled && SStts.pitch_enabled)
+			frequency = rand(MIN_EMOTE_PITCH, MAX_EMOTE_PITCH) * (1 + sqrt(abs(user.pitch)) * sign(user.pitch) * EMOTE_TTS_PITCH_MULTIPLIER)
+		else if(vary)
+			frequency = rand(MIN_EMOTE_PITCH, MAX_EMOTE_PITCH)
+		/* // NOVA EDIT REMOBAL START - Moving this into the 'else' below
+		if(use_sound_tokens && sound_wall_ignore)
+			playsoundtoken(source = user, soundin = tmp_sound, range = SOUND_RANGE, volume = sound_volume)
+		else
+			playsound(source = user,soundin = tmp_sound,vol = 50, vary = FALSE, ignore_walls = sound_wall_ignore, frequency = frequency)
+		*/ // NOVA EDIT REMOVAL END
+		// NOVA EDIT ADDITION START - Lewd emote prefs
+		if(running_emote_type & EMOTE_LEWD)
+			playsound_if_pref(source = user, soundin = tmp_sound, vol = sound_volume, vary = FALSE, frequency = frequency, pref_to_check = /datum/preference/toggle/erp/sounds)
+		else if(use_sound_tokens && sound_wall_ignore)
+			playsoundtoken(source = user, soundin = tmp_sound, range = SOUND_RANGE, volume = sound_volume)
+		else
+			playsound(source = user,soundin = tmp_sound,vol = sound_volume, vary = FALSE, ignore_walls = sound_wall_ignore, frequency = frequency)
+		// NOVA EDIT ADDITION END
+
+
+	var/is_important = running_emote_type & EMOTE_IMPORTANT
+	var/is_visual = running_emote_type & EMOTE_VISIBLE
+	var/is_audible = running_emote_type & EMOTE_AUDIBLE
 	var/space = should_have_space_before_emote(html_decode(msg)[1]) ? " " : "" // NOVA EDIT ADDITION
+	var/additional_message_flags = get_message_flags(intentional)
 
 	// Emote doesn't get printed to chat, runechat only
-	if(emote_type & EMOTE_RUNECHAT)
+	if(running_emote_type & EMOTE_RUNECHAT)
 		for(var/mob/viewer as anything in viewers(user))
 			if(isnull(viewer.client))
 				continue
 			if(!is_important && viewer != user && (!is_visual || !is_audible))
-				if(is_audible && !viewer.can_hear())
+				if(is_audible && HAS_TRAIT(viewer, TRAIT_DEAF))
 					continue
 				if(is_visual && viewer.is_blind())
 					continue
 				// NOVA EDIT ADDITION START - Pref checked emotes
-				if(!pref_check_emote(viewer))
+				if((running_emote_type & EMOTE_LEWD) && !pref_check_emote(viewer))
 					continue
 				// NOVA EDIT ADDITION END
 			if(user.runechat_prefs_check(viewer, EMOTE_MESSAGE))
@@ -139,22 +185,22 @@
 					runechat_flags = EMOTE_MESSAGE,
 				)
 			else if(is_important)
-				to_chat(viewer, "<span class='emote'><b>[user]</b> [msg]</span>")
+				to_chat(viewer, span_emote("<b>[user]</b> [msg]"))
 			else if(is_audible && is_visual)
 				viewer.show_message(
-					"<span class='emote'><b>[user]</b> [msg]</span>", MSG_AUDIBLE,
-					"<span class='emote'>You see how <b>[user]</b> [msg]</span>", MSG_VISUAL,
+					span_emote("<b>[user]</b> [msg]"), MSG_AUDIBLE,
+					span_emote("You see how <b>[user]</b> [msg]"), MSG_VISUAL,
 				)
 			else if(is_audible)
-				viewer.show_message("<span class='emote'><b>[user]</b> [msg]</span>", MSG_AUDIBLE)
+				viewer.show_message(span_emote("<b>[user]</b> [msg]"), MSG_AUDIBLE)
 			else if(is_visual)
-				viewer.show_message("<span class='emote'><b>[user]</b> [msg]</span>", MSG_VISUAL)
-		return TRUE // Early exit so no dchat message
+				viewer.show_message(span_emote("<b>[user]</b> [msg]"), MSG_VISUAL)
+		return // Early exit so no dchat message
 
 	// The emote has some important information, and should always be shown to the user
 	else if(is_important)
 		for(var/mob/viewer as anything in viewers(user))
-			to_chat(viewer, "<span class='emote'><b>[user]</b> [msg]</span>")
+			to_chat(viewer, span_emote("<b>[user]</b> [msg]"))
 			if(user.runechat_prefs_check(viewer, EMOTE_MESSAGE))
 				viewer.create_chat_message(
 					speaker = user,
@@ -166,9 +212,9 @@
 	else if(is_visual && is_audible)
 		user.audible_message(
 			message = msg,
-			deaf_message = "<span class='emote'>You see how <b>[user]</b> [msg]</span>",
+			deaf_message = span_emote("You see how <b>[user]</b> [msg]"),
 			self_message = msg,
-			audible_message_flags = EMOTE_MESSAGE|ALWAYS_SHOW_SELF_MESSAGE,
+			audible_message_flags = EMOTE_MESSAGE|ALWAYS_SHOW_SELF_MESSAGE|additional_message_flags,
 			separation = space, // NOVA EDIT ADDITION
 			pref_to_check = pref_to_check, // NOVA EDIT ADDITION
 		)
@@ -177,7 +223,7 @@
 		user.audible_message(
 			message = msg,
 			self_message = msg,
-			audible_message_flags = EMOTE_MESSAGE,
+			audible_message_flags = EMOTE_MESSAGE|additional_message_flags,
 			separation = space, // NOVA EDIT ADDITION
 			pref_to_check = pref_to_check, // NOVA EDIT ADDITION
 		)
@@ -186,7 +232,7 @@
 		user.visible_message(
 			message = msg,
 			self_message = msg,
-			visible_message_flags = EMOTE_MESSAGE|ALWAYS_SHOW_SELF_MESSAGE,
+			visible_message_flags = EMOTE_MESSAGE|ALWAYS_SHOW_SELF_MESSAGE|additional_message_flags,
 			separation = space, // NOVA EDIT ADDITION
 			pref_to_check = pref_to_check, // NOVA EDIT ADDITION
 		)
@@ -198,7 +244,7 @@
 	if(hologram)
 		if(is_important)
 			for(var/mob/living/viewer in viewers(world.view, hologram))
-				if(!pref_check_emote(viewer))
+				if((emote_type & EMOTE_LEWD) && !pref_check_emote(viewer))
 					continue
 				to_chat(viewer, msg)
 		else if(is_visual && is_audible)
@@ -235,12 +281,12 @@
 			if(!(get_chat_toggles(ghost.client) & CHAT_GHOSTSIGHT))
 				continue
 			// NOVA EDIT ADDITION START - Pref checked emotes
-			if(!pref_check_emote(ghost))
+			if((emote_type & EMOTE_LEWD) && !pref_check_emote(ghost))
 				continue
 			// NOVA EDIT ADDITION END
-			to_chat(ghost, "<span class='emote'>[FOLLOW_LINK(ghost, user)] [dchatmsg]</span>")
+			to_chat(ghost, span_emote("[FOLLOW_LINK(ghost, user)] [dchatmsg]"))
 
-	return TRUE
+	return
 
 
 
@@ -254,11 +300,14 @@
  * Returns FALSE if the cooldown is not over, TRUE if the cooldown is over.
  */
 /datum/emote/proc/check_cooldown(mob/user, intentional)
+
+	if(SEND_SIGNAL(user, COMSIG_MOB_EMOTE_COOLDOWN_CHECK, src.key, intentional) & COMPONENT_EMOTE_COOLDOWN_BYPASS)
+		intentional = FALSE
+
 	if(!intentional)
 		return TRUE
-	//NOVA EDIT CHANGE BEGIN - EMOTES - GLOBAL COOLDOWN
-	//if(user.emotes_used && user.emotes_used[src] + cooldown > world.time) - NOVA EDIT - ORIGINAL
-	if(user.nextsoundemote > world.time)
+
+	if(user.nextsoundemote > world.time) // NOVA EDIT CHANGE - ORIGINAL: if(user.emotes_used && user.emotes_used[src] + cooldown > world.time)
 		var/datum/emote/default_emote = /datum/emote
 		if(cooldown > initial(default_emote.cooldown)) // only worry about longer-than-normal emotes
 			to_chat(user, span_danger("You must wait another [DisplayTimeText(user.nextsoundemote - world.time)] before using that emote."))
@@ -279,7 +328,33 @@
  * Returns the sound that will be made while sending the emote.
  */
 /datum/emote/proc/get_sound(mob/living/user)
-	return sound //by default just return this var.
+	var/list/comsig_sounds = list()
+	SEND_SIGNAL(user, COMSIG_MOB_EMOTE_SOUND(key), key, comsig_sounds)
+	if(length(comsig_sounds))
+		var/chosen_sound
+		var/highest_priority = 0
+		for(var/candidate in comsig_sounds)
+			var/priority = comsig_sounds[candidate]
+			if(priority > highest_priority)
+				highest_priority = priority
+				chosen_sound = candidate
+		return chosen_sound
+	var/sound_or_sounds = is_type_in_list(user,  sounds_by_mobtype, zebra = TRUE)
+	if(sound_or_sounds)
+		return get_emote_sound_from_list(sound_or_sounds, user)
+	return sound
+
+/**
+ * To get the flags visible/audible messages for ran by the emote.
+ *
+ * Arguments:
+ * * intentional - Bool that says whether the emote was forced (FALSE) or not (TRUE).
+ *
+ * Returns the additional message flags we should be using, if any.
+ */
+/datum/emote/proc/get_message_flags(intentional)
+	// If we did it, we most often already know what's in it, so we try to avoid highlight clutter.
+	return intentional ? BLOCK_SELF_HIGHLIGHT_MESSAGE : NONE
 
 /**
  * To replace pronouns in the inputed string with the user's proper pronouns.
@@ -318,8 +393,6 @@
 		return .
 	var/mob/living/living_user = user
 
-	if(!muzzle_ignore && user.is_muzzled() && emote_type & EMOTE_AUDIBLE)
-		return "makes a [pick("strong ", "weak ", "")]noise."
 	if(HAS_MIND_TRAIT(user, TRAIT_MIMING) && message_mime)
 		. = message_mime
 	if(isalienadult(user) && message_alien)
@@ -328,7 +401,7 @@
 		. = message_larva
 	else if(isAI(user) && message_AI)
 		. = message_AI
-	else if(ismonkey(user) && message_monkey)
+	else if(HAS_TRAIT(user, TRAIT_LESSER_HUMANOID) && message_monkey)
 		. = message_monkey
 	else if((iscyborg(user) || (living_user.mob_biotypes & MOB_ROBOTIC)) && message_robot)
 		. = message_robot
@@ -356,31 +429,43 @@
  * * user - Person that is trying to send the emote.
  * * status_check - Bool that says whether we should check their stat or not.
  * * intentional - Bool that says whether the emote was forced (FALSE) or not (TRUE).
+ * * params - Parameters added after the emote.
  *
  * Returns a bool about whether or not the user can run the emote.
  */
-/datum/emote/proc/can_run_emote(mob/user, status_check = TRUE, intentional = FALSE)
+/datum/emote/proc/can_run_emote(mob/user, status_check = TRUE, intentional = FALSE, params)
+	if(trait_required && !HAS_TRAIT(user, trait_required))
+		return FALSE
 	if(!is_type_in_typecache(user, mob_type_allowed_typecache))
 		return FALSE
 	if(is_type_in_typecache(user, mob_type_blacklist_typecache))
 		return FALSE
 	if(status_check && !is_type_in_typecache(user, mob_type_ignore_stat_typecache))
-		if(user.stat > stat_allowed)
-			if(!intentional)
-				return FALSE
-			switch(user.stat)
-				if(SOFT_CRIT)
-					to_chat(user, span_warning("You cannot [key] while in a critical condition!"))
-				if(UNCONSCIOUS, HARD_CRIT)
-					to_chat(user, span_warning("You cannot [key] while unconscious!"))
-				if(DEAD)
-					to_chat(user, span_warning("You cannot [key] while dead!"))
+		if(IS_UNCONSCIOUS(user) && !(can_use_flags & EMOTE_CANUSE_UNCONSCIOUS))
+			if(intentional)
+				to_chat(user, span_warning("You cannot [key] while unconscious!"))
 			return FALSE
-		if(hands_use_check && HAS_TRAIT(user, TRAIT_HANDS_BLOCKED))
-			if(!intentional)
-				return FALSE
-			to_chat(user, span_warning("You cannot use your hands to [key] right now!"))
+		if(HAS_TRAIT(user, TRAIT_HANDS_BLOCKED) && (can_use_flags & EMOTE_CANUSE_REQUIRE_HANDS))
+			if(intentional)
+				to_chat(user, span_warning("You cannot use your hands to [key] right now!"))
 			return FALSE
+
+		switch(user.stat)
+			if(SOFT_CRIT)
+				if(!(can_use_flags & EMOTE_CANUSE_SOFTCRIT))
+					if(intentional)
+						to_chat(user, span_warning("You cannot [key] while in a critical condition!"))
+					return FALSE
+			if(HARD_CRIT)
+				if(!(can_use_flags & EMOTE_CANUSE_HARDCRIT))
+					if(intentional)
+						to_chat(user, span_warning("You cannot [key] while in a critical condition!"))
+					return FALSE
+			if(DEAD)
+				if(!(can_use_flags & EMOTE_CANUSE_DEAD))
+					if(intentional)
+						to_chat(user, span_warning("You cannot [key] while dead!"))
+					return FALSE
 
 	if(HAS_TRAIT(user, TRAIT_EMOTEMUTE))
 		return FALSE
@@ -406,17 +491,11 @@
  * Returns a bool about whether or not the user should play a sound when performing the emote.
  */
 /datum/emote/proc/should_play_sound(mob/user, intentional = FALSE)
-	if(emote_type & EMOTE_AUDIBLE && !muzzle_ignore)
-		if(user.is_muzzled())
+	if(emote_type & EMOTE_AUDIBLE && !hands_use_check)
+		if(HAS_TRAIT(user, TRAIT_MUTE) || HAS_MIND_TRAIT(user, TRAIT_MIMING))
 			return FALSE
-		if(HAS_TRAIT(user, TRAIT_MUTE))
+		if(iscarbon(user) && !user.get_organ_slot(ORGAN_SLOT_TONGUE))
 			return FALSE
-		if(ishuman(user))
-			var/mob/living/carbon/human/loud_mouth = user
-			if(HAS_MIND_TRAIT(loud_mouth, TRAIT_MIMING)) // vow of silence prevents outloud noises
-				return FALSE
-			if(!loud_mouth.get_organ_slot(ORGAN_SLOT_TONGUE))
-				return FALSE
 
 	if(only_forced_audio && intentional)
 		return FALSE
@@ -431,18 +510,21 @@
 *
 * Returns TRUE if it was able to run the emote, FALSE otherwise.
 */
-/atom/proc/manual_emote(text)
-	if(!text)
+/atom/proc/manual_emote(text, log_emote = TRUE)
+	if (!text)
 		CRASH("Someone passed nothing to manual_emote(), fix it")
 
-	log_message(text, LOG_EMOTE)
+	if (log_emote)
+		log_message(text, LOG_EMOTE)
 	visible_message(text, visible_message_flags = EMOTE_MESSAGE)
 	return TRUE
 
-/mob/manual_emote(text)
-	if (stat != CONSCIOUS)
+/mob/manual_emote(text, log_emote = null)
+	if (IS_UNCONSCIOUS_OR_CRIT(src))
 		return FALSE
-	. = ..()
+	if (isnull(log_emote))
+		log_emote = !isnull(client)
+	. = ..(text, log_emote)
 	if (!.)
 		return FALSE
 	if (!client)

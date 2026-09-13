@@ -71,7 +71,7 @@
 	host.mind?.remove_antag_datum(/datum/antagonist/mutant)
 	host.remove_filter("infection_glow")
 	host.update_appearance()
-	addtimer(CALLBACK(host, /mob/living/carbon/human/proc/remove_mutant_immunity), rand(IMMUNITY_LOWER, IMMUNITY_UPPER), TIMER_STOPPABLE)
+	addtimer(CALLBACK(host, TYPE_PROC_REF(/mob/living/carbon/human, remove_mutant_immunity)), rand(IMMUNITY_LOWER, IMMUNITY_UPPER), TIMER_STOPPABLE)
 
 /datum/component/mutant_infection/proc/extract_rna()
 	if(rna_extracted)
@@ -89,14 +89,14 @@
 
 /datum/component/mutant_infection/process(seconds_per_tick)
 	if(!ismutant(host) && host.stat != DEAD)
-		var/toxloss = host.getToxLoss()
+		var/toxloss = host.get_tox_loss()
 		if(toxloss < 50)
-			host.adjustToxLoss(tox_loss_mod * seconds_per_tick)
+			host.adjust_tox_loss(tox_loss_mod * seconds_per_tick)
 			if(SPT_PROB(5, seconds_per_tick))
 				to_chat(host, span_userdanger("You feel your motor controls seize up for a moment!"))
 				host.Paralyze(10)
 		else
-			host.adjustToxLoss((tox_loss_mod * 2) * seconds_per_tick)
+			host.adjust_tox_loss((tox_loss_mod * 2) * seconds_per_tick)
 			if(SPT_PROB(10, seconds_per_tick))
 				var/obj/item/bodypart/wound_area = host.get_bodypart(BODY_ZONE_CHEST)
 				if(wound_area)
@@ -131,14 +131,12 @@
 		old_species = host.dna.species
 		host.set_species(selected_type)
 
-	var/stand_up = (host.stat == DEAD) || (host.stat == UNCONSCIOUS)
-
 	//Fully heal the mutant's damage the first time they rise
 	regenerate()
 
 	host.do_jitter_animation(30)
-	host.visible_message(span_danger("[host] suddenly convulses, as [host.p_they()][stand_up ? " stagger to [host.p_their()] feet and" : ""] gain a ravenous hunger in [host.p_their()] eyes!"), span_alien("You HUNGER!"))
-	playsound(host.loc, 'sound/hallucinations/far_noise.ogg', 50, TRUE)
+	host.visible_message(span_danger("[host] suddenly convulses, as [host.p_they()][IS_UNCONSCIOUS(host) ? " stagger to [host.p_their()] feet and" : ""] gain a ravenous hunger in [host.p_their()] eyes!"), span_alien("You HUNGER!"))
+	playsound(host.loc, 'sound/effects/hallucinations/far_noise.ogg', 50, TRUE)
 	if(is_species(host, /datum/species/mutant/infectious/fast))
 		to_chat(host, span_redtext("You are a FAST zombie. You run fast and hit more quickly, beware however, you are much weaker and susceptible to damage."))
 	else
@@ -164,12 +162,12 @@
 		if(!candidates.len)
 			return
 		var/client/C = pick_n_take(candidates)
-		host.key = C.key
+		host.PossessByPlayer(C.key)
 	else
 		host.grab_ghost()
 	to_chat(host, span_notice("You feel an itching, both inside and \
 		outside as your tissues knit and reknit."))
-	playsound(host, 'sound/magic/demon_consume.ogg', 50, TRUE)
+	playsound(host, 'sound/effects/magic/demon_consume.ogg', 50, TRUE)
 	host.revive(TRUE, TRUE)
 
 /datum/component/mutant_infection/proc/create_glow()
@@ -187,3 +185,10 @@
 
 	animate(filter, alpha = 110, time = 1.5 SECONDS, loop = -1)
 	animate(alpha = 40, time = 2.5 SECONDS)
+
+#undef CURE_TIME
+#undef REVIVE_TIME_LOWER
+#undef REVIVE_TIME_UPPER
+#undef IMMUNITY_LOWER
+#undef IMMUNITY_UPPER
+#undef RNA_REFRESH_TIME

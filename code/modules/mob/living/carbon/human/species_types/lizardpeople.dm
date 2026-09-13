@@ -4,30 +4,36 @@
 	plural_form = "Lizardfolk"
 	id = SPECIES_LIZARD
 	inherent_traits = list(
+		TRAIT_COLD_BLOODED,
 		TRAIT_MUTANT_COLORS,
-		TRAIT_TACKLING_TAILED_DEFENDER,
 	)
 	inherent_biotypes = MOB_ORGANIC|MOB_HUMANOID|MOB_REPTILE
-	mutant_bodyparts = list("body_markings" = "None", "legs" = "Normal Legs") // NOVA EDIT CHANGE - ORIGINAL: mutant_bodyparts = list("legs" = "Normal Legs")
-	//body_markings = list(/datum/bodypart_overlay/simple/body_marking/lizard = "None") // NOVA EDIT REMOVAL - We do this our own way
-	external_organs = list(
-		/obj/item/organ/external/horns = "None",
-		/obj/item/organ/external/frills = "None",
-		/obj/item/organ/external/snout = "Round",
-		/obj/item/organ/external/spines = "None",
-		/obj/item/organ/external/tail/lizard = "Smooth",
+	/* NOVA EDIT REMOVAL START - Customization
+	body_markings = list(
+		/datum/bodypart_overlay/simple/body_marking/lizard = SPRITE_ACCESSORY_NONE,
 	)
-	mutanttongue = /obj/item/organ/internal/tongue/lizard
+	*/ // NOVA EDIT REMOVAL END
+	mutant_organs = list(
+		/obj/item/organ/horns = SPRITE_ACCESSORY_NONE,
+		/obj/item/organ/frills = SPRITE_ACCESSORY_NONE,
+		/obj/item/organ/snout = "Round",
+		/obj/item/organ/spines = SPRITE_ACCESSORY_NONE,
+		/obj/item/organ/tail/lizard = "Smooth",
+		/obj/item/organ/fangs/lizard,
+	)
+	mutanttongue = /obj/item/organ/tongue/lizard
+	mutanteyes = /obj/item/organ/eyes/lizard
+	mutantbrain = /obj/item/organ/brain/lizard
+	mutantliver = /obj/item/organ/liver/lizard
 	coldmod = 1.5
 	heatmod = 0.67
 	payday_modifier = 1.0
 	changesource_flags = MIRROR_BADMIN | WABBAJACK | MIRROR_PRIDE | MIRROR_MAGIC | RACE_SWAP | ERT_SPAWN | SLIME_EXTRACT
 	species_cookie = /obj/item/food/meat/slab
 	meat = /obj/item/food/meat/slab/human/mutant/lizard
-	skinned_type = /obj/item/stack/sheet/animalhide/lizard
-	exotic_bloodtype = "L"
-	inert_mutation = /datum/mutation/human/firebreath
-	death_sound = 'sound/voice/lizard/deathsound.ogg'
+	skinned_type = /obj/item/stack/sheet/animalhide/carbon/lizard
+	exotic_bloodtype = /datum/blood_type/lizard
+	inert_mutation = /datum/mutation/firebreath
 	species_language_holder = /datum/language_holder/lizard
 	digitigrade_customization = DIGITIGRADE_OPTIONAL
 
@@ -44,66 +50,14 @@
 		BODY_ZONE_R_LEG = /obj/item/bodypart/leg/right/lizard,
 	)
 
-/// Lizards are cold blooded and do not stabilize body temperature naturally
-/datum/species/lizard/body_temperature_core(mob/living/carbon/human/humi, seconds_per_tick, times_fired)
-	return
-
 //NOVA EDIT REMOVAL BEGIN
 /*
 /datum/species/lizard/randomize_features()
 	var/list/features = ..()
-	features["lizard_markings"] = pick(SSaccessories.lizard_markings_list)
+	features[FEATURE_LIZARD_MARKINGS] = pick(SSaccessories.feature_list[FEATURE_LIZARD_MARKINGS])
 	return features
 */
 //NOVA EDIT REMOVAL END
-
-/datum/species/lizard/get_scream_sound(mob/living/carbon/human/lizard)
-	return pick(
-		'sound/voice/lizard/lizard_scream_1.ogg',
-		'sound/voice/lizard/lizard_scream_2.ogg',
-		'sound/voice/lizard/lizard_scream_3.ogg',
-	)
-
-/datum/species/lizard/get_cough_sound(mob/living/carbon/human/lizard)
-	if(lizard.physique == FEMALE)
-		return pick(
-			'sound/voice/human/female_cough1.ogg',
-			'sound/voice/human/female_cough2.ogg',
-			'sound/voice/human/female_cough3.ogg',
-			'sound/voice/human/female_cough4.ogg',
-			'sound/voice/human/female_cough5.ogg',
-			'sound/voice/human/female_cough6.ogg',
-		)
-	return pick(
-		'sound/voice/human/male_cough1.ogg',
-		'sound/voice/human/male_cough2.ogg',
-		'sound/voice/human/male_cough3.ogg',
-		'sound/voice/human/male_cough4.ogg',
-		'sound/voice/human/male_cough5.ogg',
-		'sound/voice/human/male_cough6.ogg',
-	)
-
-
-/datum/species/lizard/get_cry_sound(mob/living/carbon/human/lizard)
-	if(lizard.physique == FEMALE)
-		return pick(
-			'sound/voice/human/female_cry1.ogg',
-			'sound/voice/human/female_cry2.ogg',
-		)
-	return pick(
-		'sound/voice/human/male_cry1.ogg',
-		'sound/voice/human/male_cry2.ogg',
-		'sound/voice/human/male_cry3.ogg',
-	)
-
-
-/datum/species/lizard/get_sneeze_sound(mob/living/carbon/human/lizard)
-	if(lizard.physique == FEMALE)
-		return 'sound/voice/human/female_sneeze1.ogg'
-	return 'sound/voice/human/male_sneeze1.ogg'
-
-/datum/species/lizard/get_laugh_sound(mob/living/carbon/human/lizard)
-	return 'sound/voice/lizard/lizard_laugh1.ogg'
 
 /datum/species/lizard/get_physical_attributes()
 	return "Lizardpeople can withstand slightly higher temperatures than most species, but they are very vulnerable to the cold \
@@ -156,11 +110,20 @@ Lizard subspecies: ASHWALKERS
 	name = "Ash Walker"
 	id = SPECIES_LIZARD_ASH
 	examine_limb_id = SPECIES_LIZARD
-	mutantlungs = /obj/item/organ/internal/lungs/lavaland
-	mutantbrain = /obj/item/organ/internal/brain/primitive
+	mutantlungs = /obj/item/organ/lungs/lavaland
+	mutantbrain = /obj/item/organ/brain/primitive
 	inherent_traits = list(
+		TRAIT_COLD_BLOODED,
 		TRAIT_MUTANT_COLORS,
 		TRAIT_VIRUSIMMUNE,
+	)
+	mutant_organs = list(
+		/obj/item/organ/horns = SPRITE_ACCESSORY_NONE,
+		/obj/item/organ/frills = SPRITE_ACCESSORY_NONE,
+		/obj/item/organ/snout = "Round",
+		/obj/item/organ/spines = SPRITE_ACCESSORY_NONE,
+		/obj/item/organ/tail/lizard = "Smooth",
+		/obj/item/organ/fangs/lizard/ash,
 	)
 	// inherent_factions = list(FACTION_ASHWALKER) // NOVA EDIT REMOVAL: Moving to Ritual
 	species_language_holder = /datum/language_holder/lizard/ash
@@ -187,6 +150,7 @@ Lizard subspecies: SILVER SCALED
 	id = SPECIES_LIZARD_SILVER
 	inherent_biotypes = MOB_ORGANIC|MOB_HUMANOID|MOB_REPTILE
 	inherent_traits = list(
+		TRAIT_COLD_BLOODED,
 		TRAIT_HOLY,
 		TRAIT_NOBREATH,
 		TRAIT_PIERCEIMMUNE,
@@ -196,36 +160,29 @@ Lizard subspecies: SILVER SCALED
 		TRAIT_WINE_TASTER,
 	)
 	mutantlungs = null
-	damage_modifier = 10 //very light silvery scales soften blows
 	species_language_holder = /datum/language_holder/lizard/silver
-	mutanttongue = /obj/item/organ/internal/tongue/lizard/silver
-	changesource_flags = MIRROR_BADMIN | MIRROR_MAGIC | RACE_SWAP | ERT_SPAWN
+	mutanttongue = /obj/item/organ/tongue/lizard/silver
+	changesource_flags = MIRROR_BADMIN | WABBAJACK | MIRROR_PRIDE | MIRROR_MAGIC | RACE_SWAP | ERT_SPAWN
 	examine_limb_id = SPECIES_LIZARD
 	///stored mutcolor for when we turn back off of a silverscale.
 	var/old_mutcolor
-	///stored eye color for when we turn back off of a silverscale.
-	var/old_eye_color_left
-	///See above
-	var/old_eye_color_right
 
 /datum/species/lizard/silverscale/get_physical_attributes()
 	return "Silver Scales are to lizardpeople what angels are to humans. \
 		Mostly identical, they are holy, don't breathe, don't get viruses, their hide cannot be pierced, love the taste of wine, \
 		and their tongue allows them to turn into a statue, for some reason."
 
-/datum/species/lizard/silverscale/on_species_gain(mob/living/carbon/human/new_silverscale, datum/species/old_species, pref_load)
-	old_mutcolor = new_silverscale.dna.features["mcolor"]
-	old_eye_color_left = new_silverscale.eye_color_left
-	old_eye_color_right = new_silverscale.eye_color_right
-	new_silverscale.dna.features["mcolor"] = "#eeeeee"
-	new_silverscale.eye_color_left = "#0000a0"
-	new_silverscale.eye_color_right = "#0000a0"
+/datum/species/lizard/silverscale/on_species_gain(mob/living/carbon/human/new_silverscale, datum/species/old_species, pref_load, regenerate_icons)
+	old_mutcolor = new_silverscale.dna.features[FEATURE_MUTANT_COLOR]
+	new_silverscale.dna.features[FEATURE_MUTANT_COLOR] = "#eeeeee"
+	new_silverscale.add_eye_color("#0000a0", EYE_COLOR_SPECIES_PRIORITY)
 	. = ..()
 	new_silverscale.add_filter("silver_glint", 2, list("type" = "outline", "color" = "#ffffff63", "size" = 2))
+	new_silverscale.damage_resistance += 10
 
 /datum/species/lizard/silverscale/on_species_loss(mob/living/carbon/human/was_silverscale, datum/species/new_species, pref_load)
-	was_silverscale.dna.features["mcolor"] = old_mutcolor
-	was_silverscale.eye_color_left = old_eye_color_left
-	was_silverscale.eye_color_right = old_eye_color_right
+	was_silverscale.dna.features[FEATURE_MUTANT_COLOR] = old_mutcolor
+	was_silverscale.remove_eye_color(EYE_COLOR_SPECIES_PRIORITY)
 	was_silverscale.remove_filter("silver_glint")
+	was_silverscale.damage_resistance -= 10
 	return ..()

@@ -1,12 +1,11 @@
-ADMIN_VERB(cmd_loud_admin_say, R_NONE, "loudAsay", "Send a message to other admins (loudly).", ADMIN_CATEGORY_MAIN, msg as text)
+ADMIN_VERB(cmd_loud_admin_say, R_NONE, "loudAsay", "Send a message to other admins (loudly).", ADMIN_CATEGORY_MAIN)
+	VERB_ARG(msg, VERB_ARG_TYPE_TEXT, VERB_ARG_SOURCE_INPUT)
 	msg = emoji_parse(copytext_char(sanitize(msg), 1, MAX_MESSAGE_LEN))
 	if(!msg)
 		return
 
 	msg = emoji_parse(msg)
 	user.mob.log_talk(msg, LOG_ASAY)
-
-	send_asay_to_other_server(user.ckey, span_command_headset(msg))
 
 	msg = keywords_lookup(msg)
 	var/custom_asay_color = (CONFIG_GET(flag/allow_admin_asaycolor) && user.mob.client?.prefs?.read_preference(/datum/preference/color/asay_color)) ? "<font color=[user.mob.client?.prefs?.read_preference(/datum/preference/color/asay_color)]>" : "<font color='#FF4500'>"

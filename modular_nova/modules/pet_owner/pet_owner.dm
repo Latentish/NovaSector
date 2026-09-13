@@ -4,7 +4,7 @@
 	icon = FA_ICON_HORSE
 	value = 4
 	mob_trait = TRAIT_PET_OWNER
-	veteran_only = TRUE
+	nova_stars_only = TRUE
 	gain_text = span_notice("You brought your pet with you to work.")
 	lose_text = span_danger("You feel lonely, as if leaving somebody behind...")
 	medical_record_text = "Patient mentions their fondness for their pet."
@@ -24,10 +24,11 @@
 		pet_type = GLOB.possible_player_pet[desired_pet]
 
 	if(pet_type == NONE) // Pet not set, we're picking one for them.
-		pet_type = pick(flatten_list(GLOB.possible_player_pet))
+		pet_type = pick(assoc_to_values(GLOB.possible_player_pet))
 
 	var/obj/item/pet_carrier/carrier = new /obj/item/pet_carrier(get_turf(quirk_holder))
 	var/mob/living/basic/pet/pet = new pet_type(carrier)
+	var/obj/item/pet_food/pet_space_treat/space_treat = new /obj/item/pet_food/pet_space_treat
 	var/new_name = client_source?.prefs.read_preference(/datum/preference/text/pet_name)
 	if (new_name)
 		pet.name = new_name
@@ -44,9 +45,20 @@
 	give_item_to_holder(
 		carrier,
 		list(
-			LOCATION_HANDS = ITEM_SLOT_HANDS
+			LOCATION_HANDS,
 		),
 		flavour_text = "Looks tightly packed - you might not be able to put the pet back in once they're out.",
+		notify_player = TRUE,
+	)
+	//Nanotrasen
+	give_item_to_holder(
+		space_treat,
+		list(
+			LOCATION_LPOCKET,
+			LOCATION_RPOCKET,
+			LOCATION_BACKPACK,
+			LOCATION_HANDS,
+		),
 	)
 
 /datum/preference/choiced/pet_owner
@@ -62,18 +74,24 @@ GLOBAL_LIST_INIT(possible_player_pet, list(
 	"Bull terrier" = /mob/living/basic/pet/dog/bullterrier,
 	"Butterfly" = /mob/living/basic/butterfly,
 	"Cat" = /mob/living/basic/pet/cat,
+	"Cat (Black)" = /mob/living/basic/pet/cat/black,
+	"Cat (Clown)" = /mob/living/basic/pet/cat/clown,
+	"Cat (Mime)" = /mob/living/basic/pet/cat/mime,
+	"Carp (Clown)" = /mob/living/basic/carp/clarp,
 	"Chick" = /mob/living/basic/chick/permanent,
 	"Chicken" = /mob/living/basic/chicken,
-	"Chinchilla (dark)" = /mob/living/basic/pet/chinchilla/black,
+	"Chinchilla (black)" = /mob/living/basic/pet/chinchilla/black,
 	"Chinchilla (white)" = /mob/living/basic/pet/chinchilla/white,
 	"Corgi" = /mob/living/basic/pet/dog/corgi,
 	"Corgi puppy" = /mob/living/basic/pet/dog/corgi/puppy,
+	"Cyber Corgi" = /mob/living/basic/pet/dog/corgi/robocorgo,
 	"Cockroach" = /mob/living/basic/cockroach,
 	"Crab" = /mob/living/basic/crab,
 	"Deer" = /mob/living/basic/deer,
 	"Dobermann" = /mob/living/basic/pet/dog/dobermann,
 	"Fennec" = /mob/living/basic/pet/cat/fennec,
 	"Fox" = /mob/living/basic/pet/fox/docile,
+	"Sweater Fox" = /mob/living/basic/pet/fox/docile/sweater,
 	"Frog" = /mob/living/basic/frog,
 	"Giant ant" = /mob/living/basic/ant,
 	"Kitten" = /mob/living/basic/pet/cat/kitten,
@@ -82,14 +100,23 @@ GLOBAL_LIST_INIT(possible_player_pet, list(
 	"Mouse (white)" = /mob/living/basic/mouse/white,
 	"Mouse (gray)" = /mob/living/basic/mouse/gray,
 	"Mouse (brown)" = /mob/living/basic/mouse/brown,
+	"Mouse (Clown)" = /mob/living/basic/mouse/clown,
 	"Penguin" = /mob/living/basic/pet/penguin/emperor/neuter,
 	"Pig" = /mob/living/basic/pig,
+	"Pitbull" = /mob/living/basic/pet/dog/pitbull,
 	"Pug" = /mob/living/basic/pet/dog/pug,
 	"Rabbit" = /mob/living/basic/rabbit,
+	"Red Panda" = /mob/living/basic/pet/fox/redpanda,
+	"Shorg" = /mob/living/basic/pet/dog/shorg,
 	"Sloth" = /mob/living/basic/sloth,
-	"Snake" = /mob/living/basic/snake,
+	"Snake (Green)" = /mob/living/basic/snake,
+	"Snake (Banded)" = /mob/living/basic/snake/banded,
 	"Spider" = /mob/living/basic/spider/maintenance,
+	"Stoat" = /mob/living/basic/stoat,
 	"Tegu" = /mob/living/basic/lizard/tegu,
+	"Tiger" = /mob/living/basic/pet/cat/tiger,
+	"Turtle" = /mob/living/basic/turtle,
+	"Wolf" = /mob/living/basic/pet/dog/wolf,
 )) //some of these are too big to be put back into the pet carrier once taken out, so I put a warning on the carrier.
 
 /datum/preference/choiced/pet_owner/init_possible_values()
@@ -102,7 +129,7 @@ GLOBAL_LIST_INIT(possible_player_pet, list(
 	if (!..())
 		return FALSE
 
-	return "Pet Owner" in preferences.all_quirks
+	return /datum/quirk/item_quirk/pet_owner::name in preferences.all_quirks
 
 /datum/preference/choiced/pet_owner/apply_to_human(mob/living/carbon/human/target, value)
 	return
@@ -118,7 +145,7 @@ GLOBAL_LIST_INIT(possible_player_pet, list(
 	if (!..())
 		return FALSE
 
-	return "Pet Owner" in preferences.all_quirks
+	return /datum/quirk/item_quirk/pet_owner::name in preferences.all_quirks
 
 /datum/preference/text/pet_name/serialize(input)
 	return htmlrendertext(input)
@@ -136,7 +163,7 @@ GLOBAL_LIST_INIT(possible_player_pet, list(
 	if (!..())
 		return FALSE
 
-	return "Pet Owner" in preferences.all_quirks
+	return /datum/quirk/item_quirk/pet_owner::name in preferences.all_quirks
 
 /datum/preference/text/pet_desc/serialize(input)
 	return htmlrendertext(input)
@@ -160,7 +187,7 @@ GLOBAL_LIST_INIT(possible_player_pet, list(
 	if (!..())
 		return FALSE
 
-	return "Pet Owner" in preferences.all_quirks
+	return /datum/quirk/item_quirk/pet_owner::name in preferences.all_quirks
 
 /datum/preference/choiced/pet_gender/apply_to_human(mob/living/carbon/human/target, value)
 	return

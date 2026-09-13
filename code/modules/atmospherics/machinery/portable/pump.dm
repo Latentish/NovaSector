@@ -109,7 +109,7 @@
 		data["holding"] = null
 	return data
 
-/obj/machinery/portable_atmospherics/pump/ui_act(action, params)
+/obj/machinery/portable_atmospherics/pump/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
 	. = ..()
 	if(.)
 		return
@@ -119,11 +119,11 @@
 			if(on)
 				SSair.start_processing_machine(src)
 			if(on && !holding)
-				var/plasma = air_contents.gases[/datum/gas/plasma]
-				var/n2o = air_contents.gases[/datum/gas/nitrous_oxide]
-				if(n2o || plasma)
-					message_admins("[ADMIN_LOOKUPFLW(usr)] turned on a pump that contains [n2o ? "N2O" : ""][n2o && plasma ? " & " : ""][plasma ? "Plasma" : ""] at [ADMIN_VERBOSEJMP(src)]")
-					log_admin("[key_name(usr)] turned on a pump that contains [n2o ? "N2O" : ""][n2o && plasma ? " & " : ""][plasma ? "Plasma" : ""] at [AREACOORD(src)]")
+				var/plasma_moles = air_contents.moles[/datum/gas/plasma]
+				var/n2o_moles = air_contents.moles[/datum/gas/nitrous_oxide]
+				if(n2o_moles || plasma_moles)
+					message_admins("[ADMIN_LOOKUPFLW(usr)] turned on a pump that contains [n2o_moles ? "N2O" : ""][n2o_moles && plasma_moles ? " & " : ""][plasma_moles ? "Plasma" : ""] at [ADMIN_VERBOSEJMP(src)]")
+					log_admin("[key_name(usr)] turned on a pump that contains [n2o_moles ? "N2O" : ""][n2o_moles && plasma_moles ? " & " : ""][plasma_moles ? "Plasma" : ""] at [AREACOORD(src)]")
 			else if(on && direction == PUMP_OUT)
 				usr.investigate_log("started a transfer into [holding].", INVESTIGATE_ATMOS)
 			. = TRUE
@@ -150,7 +150,7 @@
 				pressure = text2num(pressure)
 				. = TRUE
 			if(.)
-				target_pressure = clamp(round(pressure), PUMP_MIN_PRESSURE, PUMP_MAX_PRESSURE)
+				target_pressure = clamp(pressure, PUMP_MIN_PRESSURE, PUMP_MAX_PRESSURE)
 				investigate_log("was set to [target_pressure] kPa by [key_name(usr)].", INVESTIGATE_ATMOS)
 		if("eject")
 			if(holding)
@@ -163,7 +163,7 @@
 			suppress_reactions = !suppress_reactions
 			SSair.start_processing_machine(src)
 			message_admins("[ADMIN_LOOKUPFLW(usr)] turned [suppress_reactions ? "on" : "off"] the [src] reaction suppression.")
-			usr.investigate_log("turned [suppress_reactions ? "on" : "off"] the [src] reaction suppression.")
+			usr.investigate_log("turned [suppress_reactions ? "on" : "off"] the [src] reaction suppression.", INVESTIGATE_ATMOS)
 			. = TRUE
 	update_appearance()
 

@@ -22,6 +22,10 @@
 		lgroup.remove_from_group(src)
 	SSliquids.add_active_turf(src)
 
+/// Called when liquids flow or otherwise update - intercept COMSIG_TURF_LIQUIDS_CHANGE to react.
+/turf/proc/liquids_change(new_state)
+	SEND_SIGNAL(src, COMSIG_TURF_LIQUIDS_CHANGE, new_state)
+
 /obj/effect/abstract/liquid_turf/proc/liquid_simple_delete_flat(flat_amount)
 	if(flat_amount >= total_reagents)
 		qdel(src, TRUE)
@@ -268,29 +272,42 @@
 /turf/proc/process_liquid_cell()
 	if(!liquids)
 		if(!lgroup)
-			for(var/tur in get_atmos_adjacent_turfs())
-				var/turf/T2 = tur
-				if(T2.liquids)
-					if(T2.liquids.immutable)
-						SSliquids.active_immutables[T2] = TRUE
-					else if (T2.can_share_liquids_with(src))
-						if(T2.lgroup)
-							lgroup = new(liquid_height)
-							lgroup.add_to_group(src)
-						SSliquids.add_active_turf(T2)
-						SSliquids.remove_active_turf(src)
-						break
+			for(var/turf/turf_to_process as anything in get_atmos_adjacent_turfs())
+				if(!turf_to_process.liquids)
+					continue
+
+				var/obj/effect/abstract/liquid_turf/liquid_turf_liquids = turf_to_process.liquids
+				if(liquid_turf_liquids)
+					if(liquid_turf_liquids.immutable)
+						SSliquids.active_immutables[turf_to_process] = TRUE
+						continue
+
+					if(!turf_to_process.can_share_liquids_with(src))
+						continue
+
+					if(turf_to_process.lgroup)
+						lgroup = new(liquid_height)
+						lgroup.add_to_group(src)
+
+					SSliquids.add_active_turf(turf_to_process)
+					SSliquids.remove_active_turf(src)
+					break
+
 		SSliquids.remove_active_turf(src)
 		return
+
 	if(!lgroup)
 		lgroup = new(liquid_height)
 		lgroup.add_to_group(src)
+
 	var/shared = lgroup.process_cell(src)
 	if(QDELETED(liquids)) //Liquids may be deleted in process cell
 		SSliquids.remove_active_turf(src)
 		return
+
 	if(!shared)
 		liquids.attrition++
+
 	if(liquids.attrition >= LIQUID_ATTRITION_TO_STOP_ACTIVITY)
 		SSliquids.remove_active_turf(src)
 
@@ -319,19 +336,14 @@
 //Could probably have the variables on the turf level, and the behaviours being activated/deactived on the component level as the vars are updated
 /turf/open/CanPass(atom/movable/mover, turf/location)
 	if(isliving(mover) && !(mover.movement_type & (FLYING | FLOATING)))
+		var/mob/living/living_mover = mover
 		var/turf/current_turf = get_turf(mover)
 		if(current_turf && current_turf.turf_height - turf_height <= -TURF_HEIGHT_BLOCK_THRESHOLD)
+			if(COOLDOWN_FINISHED(living_mover, last_height_alert))
+				COOLDOWN_START(living_mover, last_height_alert, 1 SECONDS)
+				living_mover.balloon_alert(living_mover, "too high, climb out!")
 			return FALSE
 	return ..()
-
-/turf/open/Exit(atom/movable/mover, atom/newloc)
-	. = ..()
-	if(. && isliving(mover) && mover.has_gravity() && isturf(newloc))
-		var/mob/living/moving_mob = mover
-		var/turf/new_turf = get_turf(newloc)
-		if(new_turf && new_turf.turf_height - turf_height <= -TURF_HEIGHT_BLOCK_THRESHOLD)
-			moving_mob.on_fall()
-			moving_mob.onZImpact(new_turf, 1)
 
 // Handles climbing up and down between turfs with height differences, as well as manipulating others to do the same.
 /turf/open/mouse_drop_receive(mob/living/dropped_mob, mob/living/user, params)

@@ -1,11 +1,12 @@
 
-#define EMOTE_DELAY (5 SECONDS) //To prevent spam emotes.
+#define EMOTE_DELAY (2 SECONDS) //To prevent spam emotes.
 
 /mob
 	var/nextsoundemote = 1 //Time at which the next emote can be played
 
 /datum/emote
 	cooldown = EMOTE_DELAY
+	var/muzzle_ignore = FALSE
 
 //Disables the custom emote blacklist from TG that normally applies to slimes.
 /datum/emote/living/custom
@@ -22,6 +23,12 @@
 	return TRUE
 
 
+/datum/emote/living/nodnod
+	key = "nod2"
+	key_third_person = "nod2s"
+	message = "nods twice."
+	message_param = "nods twice at %t."
+
 /datum/emote/living/blush
 	sound = 'modular_nova/modules/emotes/sound/emotes/blush.ogg'
 
@@ -37,28 +44,24 @@
 
 
 /datum/emote/living/cough/get_sound(mob/living/user)
+	. = ..()
 	if(isvox(user))
 		return 'modular_nova/modules/emotes/sound/emotes/voxcough.ogg'
-	if(iscarbon(user))
-		if(user.gender == MALE)
-			return pick('modular_nova/modules/emotes/sound/emotes/male/male_cough_1.ogg',
-						'modular_nova/modules/emotes/sound/emotes/male/male_cough_2.ogg',
-						'modular_nova/modules/emotes/sound/emotes/male/male_cough_3.ogg')
-		return pick('modular_nova/modules/emotes/sound/emotes/female/female_cough_1.ogg',
-					'modular_nova/modules/emotes/sound/emotes/female/female_cough_2.ogg',
-					'modular_nova/modules/emotes/sound/emotes/female/female_cough_3.ogg')
 	return
 
+/datum/emote/living/cough
+	manual_specific_emote_audio_cooldown = 5 SECONDS
+
+/datum/emote/living/carbon/whistle
+	manual_specific_emote_audio_cooldown = 5 SECONDS
+
 /datum/emote/living/sneeze
-	vary = TRUE
+	manual_specific_emote_audio_cooldown = 5 SECONDS
 
 /datum/emote/living/sneeze/get_sound(mob/living/user)
+	. = ..()
 	if(isvox(user))
 		return 'modular_nova/modules/emotes/sound/emotes/voxsneeze.ogg'
-	if(iscarbon(user))
-		if(user.gender == MALE)
-			return 'modular_nova/modules/emotes/sound/emotes/male/male_sneeze.ogg'
-		return 'modular_nova/modules/emotes/sound/emotes/female/female_sneeze.ogg'
 	return
 
 /datum/emote/living/yawn
@@ -67,15 +70,14 @@
 
 /datum/emote/living/sniff/run_emote(mob/user, params, type_override, intentional)
 	. = ..()
-	if(.)
-		var/turf/open/current_turf = get_turf(user)
-		if(istype(current_turf) && current_turf.pollution)
-			if(iscarbon(user))
-				var/mob/living/carbon/carbon_user = user
-				if(carbon_user.internal) //Breathing from internals means we cant smell
-					return
-				carbon_user.next_smell = world.time + SMELL_COOLDOWN
-			current_turf.pollution.smell_act(user)
+	var/turf/open/current_turf = get_turf(user)
+	if(istype(current_turf) && current_turf.pollution)
+		if(iscarbon(user))
+			var/mob/living/carbon/carbon_user = user
+			if(carbon_user.internal) //Breathing from internals means we cant smell
+				return
+			carbon_user.next_smell = world.time + SMELL_COOLDOWN
+		current_turf.pollution.smell_act(user)
 
 
 /datum/emote/living/peep
@@ -100,7 +102,6 @@
 	message = "snaps twice."
 	message_param = "snaps twice at %t."
 	emote_type = EMOTE_AUDIBLE
-	muzzle_ignore = TRUE
 	hands_use_check = TRUE
 	vary = TRUE
 	sound = 'modular_nova/modules/emotes/sound/voice/snap2.ogg'
@@ -111,7 +112,6 @@
 	message = "snaps thrice."
 	message_param = "snaps thrice at %t."
 	emote_type = EMOTE_AUDIBLE
-	muzzle_ignore = TRUE
 	hands_use_check = TRUE
 	vary = TRUE
 	sound = 'modular_nova/modules/emotes/sound/voice/snap3.ogg'
@@ -140,13 +140,12 @@
 	vary = TRUE
 	sound = 'modular_nova/modules/emotes/sound/voice/weh.ogg'
 
-/datum/emote/living/mothsqueak
+/datum/emote/living/moth
+	trait_required = null
+
+/datum/emote/living/moth/msqueak
 	key = "msqueak"
-	key_third_person = "lets out a tiny squeak"
-	message = "lets out a tiny squeak!"
-	emote_type = EMOTE_AUDIBLE
 	vary = TRUE
-	sound = 'modular_nova/modules/emotes/sound/voice/mothsqueak.ogg'
 
 /datum/emote/living/mousesqueak
 	key = "squeak"
@@ -154,7 +153,46 @@
 	message = "squeaks!"
 	emote_type = EMOTE_AUDIBLE
 	vary = TRUE
-	sound = 'sound/creatures/mousesqueek.ogg'
+	sound = 'sound/mobs/non-humanoids/mouse/mousesqueek.ogg'
+
+/datum/emote/living/yip
+	key = "yip"
+	key_third_person = "yips"
+	message = "yips!"
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+	sound = 'modular_nova/modules/emotes/sound/voice/fox_squeak.ogg'
+
+/datum/emote/living/gecker
+	key = "gecker"
+	key_third_person = "geckers"
+	message = "geckers!"
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+	sound = 'modular_nova/modules/emotes/sound/voice/gecker.ogg'
+
+/datum/emote/living/fwhine
+	key = "fwhine"
+	key_third_person = "fwhines"
+	message = "whines like a fox."
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+	mob_type_allowed_typecache = list(/mob/living/carbon, /mob/living/silicon/pai)
+
+/datum/emote/living/fwhine/get_sound(mob/living/user)
+	return pick('modular_nova/modules/emotes/sound/voice/fox1.ogg',
+				'modular_nova/modules/emotes/sound/voice/fox2.ogg',
+				'modular_nova/modules/emotes/sound/voice/fox3.ogg',
+				'modular_nova/modules/emotes/sound/voice/fox4.ogg',
+				'modular_nova/modules/emotes/sound/voice/fox5.ogg',
+				'modular_nova/modules/emotes/sound/voice/fox6.ogg',
+				'modular_nova/modules/emotes/sound/voice/fox7.ogg',
+				'modular_nova/modules/emotes/sound/voice/fox8.ogg',
+				'modular_nova/modules/emotes/sound/voice/fox9.ogg',
+				'modular_nova/modules/emotes/sound/voice/fox10.ogg',
+				'modular_nova/modules/emotes/sound/voice/fox11.ogg',
+				'modular_nova/modules/emotes/sound/voice/fox12.ogg',
+				'modular_nova/modules/emotes/sound/voice/fox13.ogg')
 
 /datum/emote/living/merp
 	key = "merp"
@@ -177,39 +215,45 @@
 	key_third_person = "squishes"
 	message = "squishes!"
 	emote_type = EMOTE_AUDIBLE
+	muzzle_ignore = TRUE
 	vary = TRUE
 	sound = 'modular_nova/modules/emotes/sound/voice/slime_squish.ogg'
 
-/datum/emote/living/meow
-	key = "meow"
-	key_third_person = "meows"
-	message = "meows!"
+/datum/emote/living/bubble
+	key = "bubble"
+	key_third_person = "bubbles"
+	message = "bubbles."
+	message_param = "bubbles at %t."
+	message_mime = "bubbles silently."
+	emote_type = EMOTE_AUDIBLE
+	muzzle_ignore = TRUE
+	vary = TRUE
+	sound = 'modular_nova/modules/emotes/sound/voice/slime_bubble.ogg'
+
+/datum/emote/living/pop
+	key = "pop"
+	key_third_person = "pops"
+	message = "makes a popping sound."
+	message_param = "makes a popping sound at %t."
+	message_mime = "makes a silent pop."
 	emote_type = EMOTE_AUDIBLE
 	vary = TRUE
-	sound = 'modular_nova/modules/emotes/sound/emotes/meow.ogg'
+	sound = 'modular_nova/modules/emotes/sound/voice/slime_pop.ogg'
 
-/datum/emote/living/hiss
-	key = "hiss1"
-	key_third_person = "hisses"
-	message = "hisses!"
-	emote_type = EMOTE_AUDIBLE
+/datum/emote/living/carbon/hiss
 	mob_type_allowed_typecache = list(/mob/living/carbon, /mob/living/silicon/pai)
-	vary = TRUE
-	sound = 'modular_nova/modules/emotes/sound/emotes/hiss.ogg'
+	sounds_by_mobtype = list(
+		/mob/living/carbon/human = 'modular_nova/modules/emotes/sound/emotes/hiss.ogg',
+		/mob/living/carbon/alien = SFX_HISS,
+	)
 
-/datum/emote/living/chitter
-	key = "chitter"
-	key_third_person = "chitters"
-	message = "chitters!"
-	emote_type = EMOTE_AUDIBLE
-	mob_type_allowed_typecache = list(/mob/living/carbon, /mob/living/silicon/pai)
+/datum/emote/living/moth/mchitter
 	vary = TRUE
 
-/datum/emote/living/chitter/get_sound(mob/living/user)
-	if(ismoth(user))
-		return 'modular_nova/modules/emotes/sound/emotes/mothchitter.ogg'
-	else
-		return'sound/creatures/chitter.ogg'
+/datum/emote/living/moth/mchitter/get_sound(mob/living/user)
+	. = ..()
+	if(!ismoth(user))
+		return 'sound/mobs/non-humanoids/insect/chitter.ogg'
 
 /datum/emote/living/sigh/get_sound(mob/living/user)
 	if(iscarbon(user))
@@ -218,31 +262,13 @@
 		return 'modular_nova/modules/emotes/sound/emotes/female/female_sigh.ogg'
 	return
 
-/datum/emote/living/sniff
-	vary = TRUE
-
-/datum/emote/living/sniff/get_sound(mob/living/user)
-	if(iscarbon(user))
-		if(user.gender == MALE)
-			return 'modular_nova/modules/emotes/sound/emotes/male/male_sniff.ogg'
-		return 'modular_nova/modules/emotes/sound/emotes/female/female_sniff.ogg'
-	return
-
 /datum/emote/living/gasp/get_sound(mob/living/user)
+	. = ..()
 	if(iscarbon(user))
-		if(user.gender == MALE)
-			return pick('modular_nova/modules/emotes/sound/emotes/male/gasp_m1.ogg',
-						'modular_nova/modules/emotes/sound/emotes/male/gasp_m2.ogg',
-						'modular_nova/modules/emotes/sound/emotes/male/gasp_m3.ogg',
-						'modular_nova/modules/emotes/sound/emotes/male/gasp_m4.ogg',
-						'modular_nova/modules/emotes/sound/emotes/male/gasp_m5.ogg',
-						'modular_nova/modules/emotes/sound/emotes/male/gasp_m6.ogg')
-		return pick('modular_nova/modules/emotes/sound/emotes/female/gasp_f1.ogg',
-					'modular_nova/modules/emotes/sound/emotes/female/gasp_f2.ogg',
-					'modular_nova/modules/emotes/sound/emotes/female/gasp_f3.ogg',
-					'modular_nova/modules/emotes/sound/emotes/female/gasp_f4.ogg',
-					'modular_nova/modules/emotes/sound/emotes/female/gasp_f5.ogg',
-					'modular_nova/modules/emotes/sound/emotes/female/gasp_f6.ogg')
+		if(isxenohybrid(user))
+			return pick('sound/mobs/non-humanoids/hiss/lowHiss2.ogg',
+						'sound/mobs/non-humanoids/hiss/lowHiss3.ogg',
+						'sound/mobs/non-humanoids/hiss/lowHiss4.ogg')
 	return
 
 /datum/emote/living/snore
@@ -263,20 +289,20 @@
 	key = "clap"
 	key_third_person = "claps"
 	message = "claps."
-	muzzle_ignore = TRUE
 	hands_use_check = TRUE
 	emote_type = EMOTE_AUDIBLE
-	audio_cooldown = 5 SECONDS
 	vary = TRUE
 	mob_type_allowed_typecache = list(/mob/living/carbon, /mob/living/silicon/pai)
+	manual_specific_emote_audio_cooldown = 5 SECONDS
+	affected_by_pitch = FALSE
 
 /datum/emote/living/clap/get_sound(mob/living/user)
-	return pick('modular_nova/modules/emotes/sound/emotes/clap1.ogg',
-				'modular_nova/modules/emotes/sound/emotes/clap2.ogg',
-				'modular_nova/modules/emotes/sound/emotes/clap3.ogg',
-				'modular_nova/modules/emotes/sound/emotes/clap4.ogg')
+	return pick('sound/mobs/humanoids/human/clap/clap1.ogg',
+				'sound/mobs/humanoids/human/clap/clap2.ogg',
+				'sound/mobs/humanoids/human/clap/clap3.ogg',
+				'sound/mobs/humanoids/human/clap/clap4.ogg')
 
-/datum/emote/living/clap/can_run_emote(mob/living/carbon/user, status_check = TRUE , intentional)
+/datum/emote/living/clap/can_run_emote(mob/living/carbon/user, status_check = TRUE, intentional, params)
 	if(user.usable_hands < 2)
 		return FALSE
 	return ..()
@@ -286,16 +312,16 @@
 	key_third_person = "claps once"
 	message = "claps once."
 	emote_type = EMOTE_AUDIBLE
-	muzzle_ignore = TRUE
 	hands_use_check = TRUE
 	vary = TRUE
 	mob_type_allowed_typecache = list(/mob/living/carbon, /mob/living/silicon/pai)
+	affected_by_pitch = FALSE
 
 /datum/emote/living/clap1/get_sound(mob/living/user)
 	return pick('modular_nova/modules/emotes/sound/emotes/claponce1.ogg',
 				'modular_nova/modules/emotes/sound/emotes/claponce2.ogg')
 
-/datum/emote/living/clap1/can_run_emote(mob/living/carbon/user, status_check = TRUE , intentional)
+/datum/emote/living/clap1/can_run_emote(mob/living/carbon/user, status_check = TRUE , intentional, params)
 	if(user.usable_hands < 2)
 		return FALSE
 	return ..()
@@ -394,6 +420,7 @@
 	emote_type = EMOTE_AUDIBLE
 	vary = TRUE
 	sound = 'modular_nova/modules/emotes/sound/voice/bork.ogg'
+	manual_specific_emote_audio_cooldown = 4 SECONDS
 
 /datum/emote/living/hoot
 	key = "hoot"
@@ -411,6 +438,7 @@
 	muzzle_ignore = TRUE
 	vary = TRUE
 	sound = 'modular_nova/modules/emotes/sound/voice/growl.ogg'
+	manual_specific_emote_audio_cooldown = 4 SECONDS
 
 /datum/emote/living/woof
 	key = "woof"
@@ -443,6 +471,7 @@
 	emote_type = EMOTE_AUDIBLE
 	vary = TRUE
 	sound = 'modular_nova/modules/emotes/sound/voice/wurble.ogg'
+	manual_specific_emote_audio_cooldown = 4 SECONDS
 
 /datum/emote/living/rattle
 	key = "rattle"
@@ -460,6 +489,7 @@
 	emote_type = EMOTE_AUDIBLE
 	vary = TRUE
 	sound = 'modular_nova/modules/emotes/sound/voice/cackle_yeen.ogg'
+	manual_specific_emote_audio_cooldown = 5 SECONDS
 
 /mob/living/proc/do_ass_slap_animation(atom/slapped)
 	do_attack_animation(slapped, no_effect=TRUE)
@@ -495,16 +525,15 @@
 	key_third_person = "purrs!"
 	message = "purrs!"
 	emote_type = EMOTE_AUDIBLE
+	muzzle_ignore = TRUE
 	vary = TRUE
 	sound = 'modular_nova/modules/emotes/sound/voice/raptor_purr.ogg'
 
-/datum/emote/living/purr //Ported from CitRP originally by buffyuwu.
-	key = "purr"
-	key_third_person = "purrs!"
-	message = "purrs!"
-	emote_type = EMOTE_AUDIBLE
-	vary = TRUE
-	sound = 'modular_nova/modules/emotes/sound/voice/feline_purr.ogg'
+/datum/emote/living/cat
+	trait_required = null
+
+/datum/emote/living/cat/purr
+	muzzle_ignore = TRUE
 
 /datum/emote/living/moo
 	key = "moo"
@@ -552,23 +581,25 @@
 	message = "gnashes."
 	emote_type = EMOTE_AUDIBLE
 	vary = TRUE
-	sound = 'sound/weapons/bite.ogg'
+	sound = 'sound/items/weapons/bite.ogg'
 
 /datum/emote/living/thump
 	key = "thump"
 	key_third_person = "thumps"
 	message = "thumps their foot!"
 	emote_type = EMOTE_AUDIBLE
+	muzzle_ignore = TRUE
 	vary = TRUE
-	sound = 'sound/effects/glassbash.ogg'
+	sound = 'sound/effects/glass/glassbash.ogg'
 
 /datum/emote/living/flutter
 	key = "flutter"
 	key_third_person = "rapidly flutters their wings!"
 	message = "rapidly flutters their wings!"
 	emote_type = EMOTE_AUDIBLE
+	muzzle_ignore = TRUE
 	vary = TRUE
-	sound = 'sound/voice/moth/moth_flutter.ogg'
+	sound = 'sound/mobs/humanoids/moth/moth_flutter.ogg'
 
 /datum/emote/living/sigh_exasperated
 	key = "esigh" // short for exasperated sigh
@@ -576,9 +607,228 @@
 	message = "lets out an exasperated sigh."
 	emote_type = EMOTE_AUDIBLE
 
+/datum/emote/living/sigh_exasperated/run_emote(mob/living/user, params, type_override, intentional)
+	. = ..()
+	if(!ishuman(user))
+		return
+	var/image/emote_animation = image('icons/mob/human/emote_visuals.dmi', user, "sigh")
+	flick_overlay_global(emote_animation, GLOB.clients, 2.0 SECONDS)
+
 /datum/emote/living/sigh_exasperated/get_sound(mob/living/user)
 	if(iscarbon(user))
 		if(user.gender == MALE)
 			return 'modular_nova/modules/emotes/sound/emotes/male/male_sigh_exasperated.ogg'
 		return 'modular_nova/modules/emotes/sound/emotes/female/female_sigh_exasperated.ogg'
 	return
+
+/datum/emote/living/surrender
+	muzzle_ignore = TRUE
+
+/datum/emote/living/awuff
+	key = "awuff"
+	key_third_person = "awuffs"
+	message = "wuffs softly."
+	message_mime = "snorts, quietly, with sass, and in a belligerent fashion."
+	sound = 'modular_nova/modules/emotes/sound/voice/awuff.ogg'
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+
+/datum/emote/living/awuff/get_sound(mob/living/user)
+	. = ..()
+	return pick('modular_nova/modules/emotes/sound/voice/awuff.ogg', 'modular_nova/modules/emotes/sound/voice/awuff2.ogg', 'modular_nova/modules/emotes/sound/voice/awuff3.ogg')
+
+/datum/emote/living/arf
+	key = "arf"
+	key_third_person = "arfs"
+	message = "arfs!"
+	message_mime = "imitates a small dog's yap!"
+	sound = 'modular_nova/modules/emotes/sound/voice/arf.ogg'
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+
+/datum/emote/living/arf/get_sound(mob/living/user)
+	. = ..()
+	return pick('modular_nova/modules/emotes/sound/voice/arf.ogg', 'modular_nova/modules/emotes/sound/voice/arf2.ogg', 'modular_nova/modules/emotes/sound/voice/arf3.ogg')
+
+/datum/emote/living/coyhowl
+	key = "coyhowl"
+	key_third_person = "coyhowls"
+	message = "howls like coyote!"
+	message_mime = "acts out a coyote's howl!"
+	sound = 'modular_nova/modules/emotes/sound/voice/coyotehowl.ogg'
+	manual_specific_emote_audio_cooldown = 2.8 SECONDS // Uses longest sound's time
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+
+/datum/emote/living/coyhowl/get_sound(mob/living/user)
+	. = ..()
+	return pick(
+		'modular_nova/modules/emotes/sound/voice/coyotehowl.ogg',
+		'modular_nova/modules/emotes/sound/voice/coyotehowl2.ogg',
+		'modular_nova/modules/emotes/sound/voice/coyotehowl3.ogg',
+		'modular_nova/modules/emotes/sound/voice/coyotehowl4.ogg',
+		'modular_nova/modules/emotes/sound/voice/coyotehowl5.ogg',
+	)
+
+/datum/emote/living/wolfhowl
+	key = "wolfhowl"
+	key_third_person = "wolfhowls"
+	message = "howls like wolf!"
+	message_mime = "acts out a wolf's howl!"
+	sound = 'modular_nova/modules/emotes/sound/voice/wolfhowl.ogg'
+	manual_specific_emote_audio_cooldown = 6.3 SECONDS // Use length of longest sound file
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+
+/datum/emote/living/wolfhowl/get_sound(mob/living/user)
+	. = ..()
+	return pick('modular_nova/modules/emotes/sound/voice/wolfhowl.ogg', 'modular_nova/modules/emotes/sound/voice/wolfhowl2.ogg', 'modular_nova/modules/emotes/sound/voice/wolfhowl3.ogg')
+
+/datum/emote/living/dwhine
+	key = "dwhine"
+	key_third_person = "dwhines"
+	message = "whines anxiously like a dog."
+	message_mime = "looks distressed and pouts a bit!"
+	sound = 'modular_nova/modules/emotes/sound/voice/dwhine.ogg'
+	manual_specific_emote_audio_cooldown = 3.52 SECONDS // Use length of longest sound file
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+
+/datum/emote/living/dwhine/get_sound(mob/living/user)
+	. = ..()
+	return pick(
+		'modular_nova/modules/emotes/sound/voice/dwhine.ogg',
+		'modular_nova/modules/emotes/sound/voice/dwhine2.ogg',
+		'modular_nova/modules/emotes/sound/voice/dwhine3.ogg',
+		'modular_nova/modules/emotes/sound/voice/dwhine4.ogg',
+		'modular_nova/modules/emotes/sound/voice/dwhine5.ogg',
+	)
+
+/datum/emote/living/dgrowl
+	key = "dgrowl"
+	key_third_person = "dgrowls"
+	message = "growls like a dog."
+	message_mime = "grits and bares their teeth, leaning in and shaking their head like a dog!"
+	sound = 'modular_nova/modules/emotes/sound/voice/dgrowl.ogg'
+	manual_specific_emote_audio_cooldown = 3.17 SECONDS // Use length of longest sound file
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+
+/datum/emote/living/dgrowl/get_sound(mob/living/user)
+	. = ..()
+	return pick(
+		'modular_nova/modules/emotes/sound/voice/dgrowl.ogg',
+		'modular_nova/modules/emotes/sound/voice/dgrowl2.ogg',
+		'modular_nova/modules/emotes/sound/voice/dgrowl3.ogg',
+		'modular_nova/modules/emotes/sound/voice/dgrowl4.ogg',
+		'modular_nova/modules/emotes/sound/voice/dgrowl5.ogg',
+	)
+
+/datum/emote/living/aggrobark
+	key = "aggrobark"
+	key_third_person = "aggrobarks"
+	message = "barks aggressively!"
+	message_mime = "imitates barking aggressively, and gnashes at the air!"
+	sound = 'modular_nova/modules/emotes/sound/voice/aggrobark.ogg'
+	manual_specific_emote_audio_cooldown = 2.5 SECONDS // Use length of longest sound file
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+
+/datum/emote/living/aggrobark/get_sound(mob/living/user)
+	. = ..()
+	return pick('modular_nova/modules/emotes/sound/voice/aggrobark.ogg', 'modular_nova/modules/emotes/sound/voice/aggrobark2.ogg', 'modular_nova/modules/emotes/sound/voice/aggrobark3.ogg', 'modular_nova/modules/emotes/sound/voice/aggrobark4.ogg')
+
+/datum/emote/living/dcomplain
+	key = "dcomplain"
+	key_third_person = "dcomplains"
+	message = "complains like a dog."
+	message_mime = "imitates a canine's whine with neck stretched out."
+	sound = 'modular_nova/modules/emotes/sound/voice/dcomplain.ogg'
+	manual_specific_emote_audio_cooldown = 2.6 SECONDS // Use length of longest sound file
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+
+/datum/emote/living/dcomplain/get_sound(mob/living/user)
+	. = ..()
+	return pick(
+		'modular_nova/modules/emotes/sound/voice/dcomplain.ogg',
+		'modular_nova/modules/emotes/sound/voice/dcomplain2.ogg',
+		'modular_nova/modules/emotes/sound/voice/dcomplain3.ogg',
+		'modular_nova/modules/emotes/sound/voice/dcomplain4.ogg',
+		'modular_nova/modules/emotes/sound/voice/dcomplain5.ogg',
+	)
+
+/datum/emote/living/meowdeep
+	key = "meowdeep"
+	key_third_person = "meowdeeps"
+	message = "meows, in a deep tone."
+	message_mime = "takes on a stern, yet smug expression, and mouths a 'mao'."
+	sound = 'modular_nova/modules/emotes/sound/voice/meowdeep.ogg'
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+
+/datum/emote/living/meowdeep/get_sound(mob/living/user)
+	. = ..()
+	return pick('modular_nova/modules/emotes/sound/voice/meowdeep.ogg', 'modular_nova/modules/emotes/sound/voice/meowdeep2.ogg', 'modular_nova/modules/emotes/sound/voice/meowdeep3.ogg')
+
+/datum/emote/living/teshchirp
+	key = "teshchirp"
+	key_third_person = "chirps!"
+	message = "chirps!"
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+	sound = 'modular_nova/modules/emotes/sound/voice/teshchirp.ogg' // Credits to Virgo Station for the files.
+
+/datum/emote/living/teshsqueak
+	key = "teshsqueak"
+	key_third_person = "squeaks!"
+	message = "squeaks!"
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+	sound = 'modular_nova/modules/emotes/sound/voice/teshsqueak.ogg' // Credits to Virgo Station for the files.
+
+/datum/emote/living/teshtrill
+	key = "teshtrill"
+	key_third_person = "trills!"
+	message = "trills!"
+	emote_type = EMOTE_AUDIBLE
+	vary = TRUE
+	sound = 'modular_nova/modules/emotes/sound/voice/teshtrill.ogg' // Credits to Virgo Station for the files.
+
+/datum/emote/living/gulp
+	key = "gulp"
+	key_third_person = "gulps"
+	message = "gulps nervously."
+	message_mime = "gulps silently!"
+	vary = TRUE
+	emote_type = EMOTE_AUDIBLE | EMOTE_VISIBLE
+
+/datum/emote/living/gulp/get_sound(mob/living/user)
+	return pick(
+		'modular_nova/modules/emotes/sound/voice/gulp1.ogg',
+		'modular_nova/modules/emotes/sound/voice/gulp2.ogg',
+	)
+
+/datum/emote/living/carbon/wink
+	sound = 'modular_nova/modules/emotes/sound/voice/wink.ogg'
+
+/datum/emote/living/carbon/human/blink
+	sound = 'modular_nova/modules/emotes/sound/voice/blink.ogg'
+
+/datum/emote/rolld20
+	key = "rolld20"
+	affected_by_pitch = FALSE
+
+/datum/emote/rolld20/run_emote(mob/user, params, type_override, intentional)
+	. = ..()
+	var/result = roll(20)
+	user.client?.looc_message("[user] rolls a d20 and gets [result].")
+
+/datum/emote/living/mar
+	key = "mar"
+	key_third_person = "mars"
+	message = "lets out a mar!"
+	vary = TRUE
+	sound = 'modular_nova/modules/emotes/sound/voice/mar.ogg'
+
+#undef EMOTE_DELAY

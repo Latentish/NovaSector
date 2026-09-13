@@ -12,7 +12,7 @@
 /datum/component/organ_corruption
 	dupe_mode = COMPONENT_DUPE_UNIQUE
 	/// The type of organ affected by this specific type of organ corruption.
-	var/corruptable_organ_type = /obj/item/organ/internal
+	var/corruptable_organ_type = /obj/item/organ
 	/// If this type of organ has a unique sprite for what its corrupted
 	/// version should look like, this will be the icon file it will be pulled
 	/// from.
@@ -77,7 +77,7 @@
  * Arguments:
  * * corruption_target - The organ that will get corrupted.
  */
-/datum/component/organ_corruption/proc/corrupt_organ(obj/item/organ/internal/corruption_target)
+/datum/component/organ_corruption/proc/corrupt_organ(obj/item/organ/corruption_target)
 	SHOULD_CALL_PARENT(TRUE)
 	if(!corruption_target)
 		return FALSE
@@ -114,6 +114,10 @@
 	SIGNAL_HANDLER
 	SHOULD_CALL_PARENT(TRUE)
 
+	if(istype(implanted_organ, /obj/item/organ/heart))
+		var/obj/item/organ/heart/implanted_heart = implanted_organ
+		implanted_heart.blood_regeneration_multiplier = 1 // No heart blood regen buffs
+
 	if(implanted_organ != parent)
 		return FALSE
 
@@ -130,6 +134,10 @@
 /datum/component/organ_corruption/proc/unregister_signals_from_organ_loser(obj/item/organ/target, mob/living/carbon/loser)
 	SIGNAL_HANDLER
 	SHOULD_CALL_PARENT(TRUE)
+
+	if(istype(target, /obj/item/organ/heart))
+		var/obj/item/organ/heart/removed_heart = target
+		removed_heart.blood_regeneration_multiplier = initial(removed_heart.blood_regeneration_multiplier)
 
 	if(target != parent)
 		return FALSE
@@ -168,7 +176,7 @@
 /**
  * Handles damaging the corrupted organ when the tumor is no longer present in the body.
  */
-/datum/component/organ_corruption/proc/decay_corrupted_organ(mob/living/carbon/tumorless, seconds_per_tick, times_fired)
+/datum/component/organ_corruption/proc/decay_corrupted_organ(mob/living/carbon/tumorless, seconds_per_tick)
 	SIGNAL_HANDLER
 
 	var/obj/item/organ/corrupted_organ = parent

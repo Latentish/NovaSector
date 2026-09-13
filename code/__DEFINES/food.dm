@@ -19,7 +19,8 @@
 #define BUGS (1<<18)
 #define GORE (1<<19)
 #define STONE (1<<20)
-#define BLOODY (1<<21) // NOVA EDIT - Hemophage Food
+#define EGG (1<<21)
+#define BLOODY (1<<22) // NOVA EDIT ADDITION - Hemophage Food
 
 DEFINE_BITFIELD(foodtypes, list(
 	"MEAT" = MEAT,
@@ -43,7 +44,8 @@ DEFINE_BITFIELD(foodtypes, list(
 	"BUGS" = BUGS,
 	"GORE" = GORE,
 	"STONE" = STONE,
-	"BLOODY" = BLOODY, // NOVA EDIT - Hemophage Food
+	"EGG" = EGG,
+	"BLOODY" = BLOODY, // NOVA EDIT ADDITION - Hemophage Food
 ))
 
 /// A list of food type names, in order of their flags
@@ -69,7 +71,8 @@ DEFINE_BITFIELD(foodtypes, list(
 	"BUGS", \
 	"GORE", \
 	"STONE", \
-	"BLOODY", /* NOVA EDIT - Hemophage Food */ \
+	"EGG", \
+	"BLOODY", /* NOVA EDIT ADDITION - Hemophage Food */ \
 )
 
 /// IC meaning (more or less) for food flags
@@ -95,8 +98,12 @@ DEFINE_BITFIELD(foodtypes, list(
 	"Bugs", \
 	"Gore", \
 	"Rocks", \
-	"Bloody", /* NOVA EDIT - Hemophage Food */ \
+	"Eggs", \
+	"Bloody", /* NOVA EDIT ADDITION - Hemophage Food */ \
 )
+
+/// Food types assigned to all podperson organs
+#define PODPERSON_ORGAN_FOODTYPES (VEGETABLES | RAW | GORE)
 
 #define DRINK_REVOLTING 1
 #define DRINK_NICE 2
@@ -123,29 +130,18 @@ DEFINE_BITFIELD(foodtypes, list(
 #define FOOD_COMPLEXITY_5 5
 
 /// Labels for food quality
-GLOBAL_LIST_INIT(food_quality_description, list(
+GLOBAL_ALIST_INIT(food_quality_description, alist(
 	FOOD_QUALITY_NORMAL = "okay",
 	FOOD_QUALITY_NICE = "nice",
 	FOOD_QUALITY_GOOD = "good",
 	FOOD_QUALITY_VERYGOOD = "very good",
 	FOOD_QUALITY_FANTASTIC = "fantastic",
 	FOOD_QUALITY_AMAZING = "amazing",
-	FOOD_QUALITY_TOP = "godlike",
+	FOOD_QUALITY_TOP = "divine",
 ))
 
-/// Mood events for food quality
-GLOBAL_LIST_INIT(food_quality_events, list(
-	FOOD_QUALITY_NORMAL = /datum/mood_event/food,
-	FOOD_QUALITY_NICE = /datum/mood_event/food/nice,
-	FOOD_QUALITY_GOOD = /datum/mood_event/food/good,
-	FOOD_QUALITY_VERYGOOD = /datum/mood_event/food/verygood,
-	FOOD_QUALITY_FANTASTIC = /datum/mood_event/food/fantastic,
-	FOOD_QUALITY_AMAZING = /datum/mood_event/food/amazing,
-	FOOD_QUALITY_TOP = /datum/mood_event/food/top,
-))
-
-/// Crafted food buffs grouped by crafting_complexity
-GLOBAL_LIST_INIT(food_buffs, list(
+/// Weighted lists of crafted food buffs randomly given according to crafting_complexity unless the food has a specific buff
+GLOBAL_ALIST_INIT(food_buffs, alist(
 	FOOD_COMPLEXITY_1 = list(
 		/datum/status_effect/food/haste = 1,
 	),
@@ -157,11 +153,9 @@ GLOBAL_LIST_INIT(food_buffs, list(
 	),
 	FOOD_COMPLEXITY_4 = list(
 		/datum/status_effect/food/haste = 1,
-		/datum/status_effect/food/trait/shockimmune = 1,
 	),
 	FOOD_COMPLEXITY_5 = list(
 		/datum/status_effect/food/haste = 1,
-		/datum/status_effect/food/trait/shockimmune = 2,
 	),
 ))
 
@@ -177,13 +171,22 @@ GLOBAL_LIST_INIT(food_buffs, list(
 #define FOOD_IN_CONTAINER (1<<0)
 /// Finger food can be eaten while walking / running around
 #define FOOD_FINGER_FOOD (1<<1)
+/// Examining this edible won't show infos on food types, bites and remote tasting etc.
+#define FOOD_NO_EXAMINE (1<<2)
+/// This food item doesn't track bitecounts, use responsibly.
+#define FOOD_NO_BITECOUNT (1<<3)
 
 DEFINE_BITFIELD(food_flags, list(
 	"FOOD_FINGER_FOOD" = FOOD_FINGER_FOOD,
 	"FOOD_IN_CONTAINER" = FOOD_IN_CONTAINER,
+	"FOOD_NO_EXAMINE" = FOOD_NO_EXAMINE,
+	"FOOD_NO_BITECOUNT" = FOOD_NO_BITECOUNT,
 ))
 
-#define STOP_SERVING_BREAKFAST (35 MINUTES) // NOVA EDIT - ORIGINAL: 15 MINUTES
+///Define for return value of the after_eat callback that will call OnConsume if it hasn't already.
+#define FOOD_AFTER_EAT_CONSUME_ANYWAY 2
+
+#define STOP_SERVING_BREAKFAST (35 MINUTES) // NOVA EDIT CHANGE - ORIGINAL: #define STOP_SERVING_BREAKFAST (15 MINUTES)
 
 #define FOOD_MEAT_HUMAN 50
 #define FOOD_MEAT_MUTANT 100
@@ -228,6 +231,15 @@ DEFINE_BITFIELD(food_flags, list(
 ///Drinks that are made through rare ingredients, or high levels of processing.
 #define DRINK_PRICE_HIGH 200
 
+/// Time spent deep frying an item after which it becomes fried.
+#define FRYING_TIME_FRIED (15 SECONDS)
+/// Time spent deep frying an item after which it becomes fried to perfection.
+#define FRYING_TIME_PERFECT (50 SECONDS)
+/// Time spent deep frying an item after which it becomes burnt.
+#define FRYING_TIME_BURNT (85 SECONDS)
+/// Time spent deep frying an item after which it starts smelling bad.
+#define FRYING_TIME_WARNING (120 SECONDS)
+
 
 /// Flavour defines (also names) for GLOB.ice_cream_flavours list access. Safer from mispelling than plain text.
 #define ICE_CREAM_VANILLA "vanilla"
@@ -266,3 +278,13 @@ DEFINE_BITFIELD(food_flags, list(
 
 /// How much milk is needed to make butter on a reagent grinder
 #define MILK_TO_BUTTER_COEFF 25
+
+/// How much material one slab of meat usually contains
+#define MEATSLAB_MATERIAL_AMOUNT SHEET_MATERIAL_AMOUNT * 4
+/// How many cutlets or meatballs one slab gives when processed
+#define MEATSLAB_PROCESSED_AMOUNT 3
+/// This should be 1/3 of the amount found in a slab (a portion will be lost when rounding but it's negligible)
+#define MEATDISH_MATERIAL_AMOUNT (MEATSLAB_MATERIAL_AMOUNT / MEATSLAB_PROCESSED_AMOUNT)
+
+/// The multiplier for nutrition when a golem eats this particular type of food.
+#define GOLEMFOOD_PREPARED_MEAL 1.3

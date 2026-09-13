@@ -15,9 +15,6 @@
 	payment_department = ACCOUNT_MED
 	interaction_flags_click = ALLOW_SILICON_REACH
 
-/obj/machinery/stasissleeper/Destroy()
-	. = ..()
-
 /obj/machinery/stasissleeper/examine(mob/user)
 	. = ..()
 	. += span_notice("Alt-click to [state_open ? "close" : "open"] the machine.")
@@ -49,9 +46,9 @@
 	if(last_stasis_sound != _running)
 		var/sound_freq = rand(5120, 8800)
 		if(!(_running))
-			playsound(src, 'sound/machines/synth_yes.ogg', 50, TRUE, frequency = sound_freq)
+			playsound(src, 'sound/machines/synth/synth_yes.ogg', 50, TRUE, frequency = sound_freq)
 		else
-			playsound(src, 'sound/machines/synth_no.ogg', 50, TRUE, frequency = sound_freq)
+			playsound(src, 'sound/machines/synth/synth_no.ogg', 50, TRUE, frequency = sound_freq)
 		last_stasis_sound = _running
 
 /obj/machinery/stasissleeper/click_alt(mob/user)
@@ -82,7 +79,7 @@
 	return !(state_open) && is_operational
 
 /obj/machinery/stasissleeper/update_icon_state()
-	icon_state = "[occupant ? "o-" : null][base_icon_state][state_open ? "-open" : null]"
+	icon_state = "[occupant ? "o-" : null][base_icon_state][panel_open ? "-o" : state_open ? "-open" : null]"
 	return ..()
 
 /obj/machinery/stasissleeper/power_change()
@@ -107,7 +104,7 @@
 
 
 /obj/machinery/stasissleeper/process()
-	if( !( occupant && isliving(occupant) && check_nap_violations() ) )
+	if(!(occupant && isliving(occupant)))
 		use_power = IDLE_POWER_USE
 		return
 	var/mob/living/L_occupant = occupant
@@ -117,36 +114,37 @@
 	else if(HAS_TRAIT(L_occupant, TRAIT_STASIS))
 		thaw_them(L_occupant)
 
-/obj/machinery/stasissleeper/screwdriver_act(mob/living/user, obj/item/used_item)
-	. = ..()
-	if(.)
-		return
+/obj/machinery/stasissleeper/screwdriver_act(mob/living/user, obj/item/tool)
 	if(occupant)
 		to_chat(user, span_warning("[src] is currently occupied!"))
 		return
 	if(state_open)
 		to_chat(user, span_warning("[src] must be closed to [panel_open ? "close" : "open"] its maintenance hatch!"))
 		return
-	default_deconstruction_screwdriver(user, "[initial(icon_state)]-o", initial(icon_state), used_item)
+	return default_deconstruction_screwdriver(user, tool)
 
-/obj/machinery/stasissleeper/wrench_act(mob/living/user, obj/item/used_item)
-	. = ..()
-	default_change_direction_wrench(user, used_item)
+/obj/machinery/stasissleeper/wrench_act(mob/living/user, obj/item/tool)
+	return default_change_direction_wrench(user, tool)
 
-/obj/machinery/stasissleeper/crowbar_act(mob/living/user, obj/item/used_item)
-	. = ..()
-	if(default_pry_open(used_item))
-		return TRUE
-	default_deconstruction_crowbar(used_item)
+/obj/machinery/stasissleeper/crowbar_act(mob/living/user, obj/item/tool)
+	return default_pry_open(user, tool, close_after_pry = FALSE, open_density = FALSE, closed_density = TRUE, deconstruct_on_fail = TRUE)
 
-/obj/machinery/stasissleeper/default_pry_open(obj/item/used_item)
+/obj/machinery/stasissleeper/default_pry_open(mob/living/user,
+	obj/item/crowbar,
+	close_after_pry = FALSE,
+	open_density = FALSE,
+	closed_density = TRUE,
+	deconstruct_on_fail = FALSE,
+)
 	if(occupant)
 		thaw_them(occupant)
-	. = !(state_open || panel_open) && used_item.tool_behaviour == TOOL_CROWBAR
+	. = !(state_open || panel_open) && crowbar.tool_behaviour == TOOL_CROWBAR
 	if(.)
-		used_item.play_tool_sound(src, 50)
+		crowbar.play_tool_sound(src, 50)
 		visible_message(span_notice("[usr] pries open [src]."), span_notice("You pry open [src]."))
 		open_machine()
+		return ITEM_INTERACT_SUCCESS
+	return ITEM_INTERACT_BLOCKING
 
 /obj/machinery/stasissleeper/attack_hand(mob/user)
 	if(occupant)
@@ -154,7 +152,7 @@
 			to_chat(user, span_notice("You read the vitals readout on the inside of the stasis unit."))
 		else
 			to_chat(user, span_notice("You read the vitals readout on the side of the stasis unit."))
-		healthscan(user, occupant, SCANNER_VERBOSE, TRUE)
+		healthscan(user, occupant, mode = SCANNER_VERBOSE, scanpower = SCANPOWER_ADVANCED)
 	else
 		to_chat(user, span_warning("The vitals readout is blank, the stasis unit is unoccupied!"))
 

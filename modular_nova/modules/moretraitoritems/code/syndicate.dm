@@ -31,15 +31,11 @@
 	desc = "A sleek, sturdy box used to hold an emergency spacesuit."
 	icon_state = "syndiebox"
 	illustration = "syndiesuit"
+	storage_type = /datum/storage/box/syndicate_space
 
-/obj/item/storage/box/syndie_kit/space_suit/Initialize(mapload)
-	. = ..()
-	atom_storage.max_specific_storage = WEIGHT_CLASS_BULKY
-	atom_storage.max_slots = 2
-	atom_storage.set_holdable(list(
-		/obj/item/clothing/head/helmet/space/syndicate,
-		/obj/item/clothing/suit/space/syndicate,
-		))
+/datum/storage/box/syndicate_space
+	max_specific_storage = WEIGHT_CLASS_BULKY
+	max_slots = 2
 
 /obj/item/storage/box/syndie_kit/space_suit/PopulateContents()
 	switch(pick(list("red", "green", "dgreen", "blue", "orange", "black")))
@@ -66,7 +62,7 @@
 /obj/item/clothing/suit/jacket/det_suit/noir/armoured
 	armor_type = /datum/armor/heister
 
-/obj/item/clothing/head/frenchberet/armoured
+/obj/item/clothing/head/beret/frenchberet/armoured
 	armor_type = /datum/armor/cosmetic_sec
 
 /obj/item/clothing/under/suit/black/armoured
@@ -83,7 +79,7 @@
 	name = "gunman clothing bundle"
 	desc = "A box filled with armored and stylish clothing for the aspiring gunmans."
 
-/obj/item/clothing/suit/jacket/trenchcoat/gunman
+/obj/item/clothing/suit/jacket/leather_trenchcoat/gunman
 	name = "leather overcoat"
 	desc = "An armored leather overcoat, intended as the go-to wear for any aspiring gunman."
 	body_parts_covered = CHEST|GROIN|ARMS
@@ -144,10 +140,10 @@
 
 	to_chat(user, span_boldannounce("You start skimming through [src], and feel suddenly imparted with the knowledge of the following code words:"))
 
-	user.AddComponent(/datum/component/codeword_hearing, GLOB.syndicate_code_phrase_regex, "blue", src)
-	user.AddComponent(/datum/component/codeword_hearing, GLOB.syndicate_code_response_regex, "red", src)
-	to_chat(user, "<b>Code Phrases</b>: [jointext(GLOB.syndicate_code_phrase, ", ")]")
-	to_chat(user, "<b>Code Responses</b>: [span_red("[jointext(GLOB.syndicate_code_response, ", ")]")]")
+	user.AddComponent(/datum/component/codeword_hearing, SStraitor.syndicate_code_phrase_regex, "blue", src)
+	user.AddComponent(/datum/component/codeword_hearing, SStraitor.syndicate_code_response_regex, "red", src)
+	to_chat(user, "<b>Code Phrases</b>: [jointext(SStraitor.syndicate_code_phrase, ", ")]")
+	to_chat(user, "<b>Code Responses</b>: [span_red("[jointext(SStraitor.syndicate_code_response, ", ")]")]")
 
 	use_charge(user)
 
@@ -166,11 +162,11 @@
 		attacked_mob.visible_message(span_danger("[user] smacks [attacked_mob]'s lifeless corpse with [src]."), span_userdanger("[user] smacks your lifeless corpse with [src]."), span_hear("You hear smacking."))
 	else
 		attacked_mob.visible_message(span_notice("[user] teaches [attacked_mob] by beating [attacked_mob.p_them()] over the head with [src]!"), span_boldnotice("As [user] hits you with [src], you feel suddenly imparted with the knowledge of some [span_red("specific words")]."), span_hear("You hear smacking."))
-		attacked_mob.AddComponent(/datum/component/codeword_hearing, GLOB.syndicate_code_phrase_regex, "blue", src)
-		attacked_mob.AddComponent(/datum/component/codeword_hearing, GLOB.syndicate_code_response_regex, "red", src)
+		attacked_mob.AddComponent(/datum/component/codeword_hearing, SStraitor.syndicate_code_phrase_regex, "blue", src)
+		attacked_mob.AddComponent(/datum/component/codeword_hearing, SStraitor.syndicate_code_response_regex, "red", src)
 		to_chat(attacked_mob, span_boldnotice("You feel suddenly imparted with the knowledge of the following code words:"))
-		to_chat(attacked_mob, "<b>Code Phrases</b>: [span_blue("[jointext(GLOB.syndicate_code_phrase, ", ")]")]")
-		to_chat(attacked_mob, "<b>Code Responses</b>: [span_red("[jointext(GLOB.syndicate_code_response, ", ")]")]")
+		to_chat(attacked_mob, "<b>Code Phrases</b>: [span_blue("[jointext(SStraitor.syndicate_code_phrase, ", ")]")]")
+		to_chat(attacked_mob, "<b>Code Responses</b>: [span_red("[jointext(SStraitor.syndicate_code_response, ", ")]")]")
 		use_charge(user)
 
 

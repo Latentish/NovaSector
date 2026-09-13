@@ -25,19 +25,18 @@
 	. = ..()
 	AddElement(/datum/element/manufacturer_examine, COMPANY_FRONTIER)
 	AddElement(/datum/element/repackable, repacked_type, 5 SECONDS)
+	AddElement(/datum/element/tool_blocker, TOOL_CROWBAR)
 
 /obj/machinery/biogenerator/foodricator/RefreshParts()
 	. = ..()
 	efficiency = 1
 	productivity = 3
 
-/obj/machinery/biogenerator/foodricator/default_deconstruction_crowbar()
-	return
-
 // Deployable item for cargo for the rations printer
 
 /obj/item/flatpacked_machine/organics_ration_printer
 	name = "organic rations printer parts kit"
+	desc = /obj/machinery/biogenerator/foodricator::desc
 	icon = 'modular_nova/modules/colony_fabricator/icons/foodricator.dmi'
 	icon_state = "biogenerator_parts"
 	type_to_deploy = /obj/machinery/biogenerator/foodricator

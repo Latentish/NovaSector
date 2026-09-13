@@ -7,7 +7,7 @@
 	lose_text = span_notice("Your contacts to the underworld have gone quiet.")
 	medical_record_text = "Patient records may have been tampered with in the past."
 	quirk_flags = QUIRK_HIDE_FROM_SCAN
-	mail_goodies = list(/obj/item/storage/briefcase/secure)
+	mail_goodies = list(/obj/item/circuitboard/machine/ltsrbt, /obj/item/stack/ore/bluespace_crystal/artificial, /datum/stock_part/ansible)
 
 /datum/quirk/item_quirk/underworld_connections/add_unique(client/client_source)
 	if (ishuman(quirk_holder))
@@ -31,10 +31,10 @@
 		give_item_to_holder(
 			roundstart_uplink,
 			list(
-				LOCATION_LPOCKET = ITEM_SLOT_LPOCKET,
-				LOCATION_RPOCKET = ITEM_SLOT_RPOCKET,
-				LOCATION_BACKPACK = ITEM_SLOT_BACKPACK,
-				LOCATION_HANDS = ITEM_SLOT_HANDS,
+				LOCATION_LPOCKET,
+				LOCATION_RPOCKET,
+				LOCATION_BACKPACK,
+				LOCATION_HANDS,
 			)
 		)
 
@@ -45,9 +45,6 @@
 	quirk_holder.mind.has_exploitables_override = TRUE
 	quirk_holder.mind.handle_exploitables()
 
-	// Also let the user know that they need to OPFOR if they want to do heavy antagonism. Policy request.
-	to_chat(quirk_holder, span_boldwarning("REMEMBER: The Underworld Connections quirk does NOT make you an antagonist. Please make an OPFOR request if you intend to do serious criminal activity."))
-
 	// Set us as 'suspected' on HUDs at roundstart and leave a note about our dark and mysterious past. No permits for us! If we're human.
 	if (ishuman(quirk_holder))
 		var/mob/living/carbon/human/human_holder = quirk_holder
@@ -57,9 +54,13 @@
 			our_record.security_note += "DO NOT ISSUE WEAPON PERMITS. Subject has suspected links to covert criminal elements."
 
 /datum/quirk/item_quirk/underworld_connections/remove()
+	quirk_holder.mind.has_exploitables_override = FALSE
+	quirk_holder.mind.handle_exploitables()
 	if (ishuman(quirk_holder))
 		var/mob/living/carbon/human/human_holder = quirk_holder
 		var/datum/record/crew/our_record = find_record(human_holder.name)
+		if (isnull(our_record))
+			return
 		if (our_record.security_note)
 			our_record.security_note = replacetext(our_record.security_note, "DO NOT ISSUE WEAPON PERMITS. Subject has suspected links to covert criminal elements.", "")
 		if (!length(our_record.security_note)) // that was the only thing in the notes
@@ -67,8 +68,6 @@
 		if (isnull(our_record.security_note) && our_record.wanted_status == WANTED_SUSPECT) // only clear this if the security notes contain nothing but the quirk-generated note, just to be certain we are not accidentally resetting the wanted status for an unrelated crime
 			our_record.wanted_status = WANTED_NONE
 
-	quirk_holder.mind.has_exploitables_override = FALSE
-	quirk_holder.mind.handle_exploitables()
 
 /datum/quirk_constant_data/underworld_connections
 	associated_typepath = /datum/quirk/item_quirk/underworld_connections
@@ -104,7 +103,7 @@ GLOBAL_LIST_INIT(possible_uplink_skins, list(
 	if (!..())
 		return FALSE
 
-	return "Underworld Connections" in preferences.all_quirks
+	return /datum/quirk/item_quirk/underworld_connections::name in preferences.all_quirks
 
 /datum/preference/choiced/uplink_skin/apply_to_human(mob/living/carbon/human/target, value)
 	return
@@ -120,7 +119,7 @@ GLOBAL_LIST_INIT(possible_uplink_skins, list(
 	if (!..())
 		return FALSE
 
-	return "Underworld Connections" in preferences.all_quirks
+	return /datum/quirk/item_quirk/underworld_connections::name in preferences.all_quirks
 
 /datum/preference/text/uplink_name/serialize(input)
 	return htmlrendertext(input)
@@ -138,7 +137,7 @@ GLOBAL_LIST_INIT(possible_uplink_skins, list(
 	if (!..())
 		return FALSE
 
-	return "Underworld Connections" in preferences.all_quirks
+	return /datum/quirk/item_quirk/underworld_connections::name in preferences.all_quirks
 
 /datum/preference/text/uplink_desc/serialize(input)
 	return htmlrendertext(input)

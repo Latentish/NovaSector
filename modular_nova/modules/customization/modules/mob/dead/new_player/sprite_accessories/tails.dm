@@ -1,43 +1,49 @@
 /datum/sprite_accessory/tails
-	key = "tail"
-	generic = "Tail"
-	organ_type = /obj/item/organ/external/tail
+	key = FEATURE_TAIL
+	organ_type = /obj/item/organ/tail
 	icon = 'modular_nova/master_files/icons/mob/sprite_accessory/tails.dmi'
-	relevent_layers = list(BODY_BEHIND_LAYER, BODY_FRONT_LAYER)
-	genetic = TRUE
+	flags_custom_mod_icon = MOD_ACCESSORY_CHESTPLATE
 	/// Can we use this tail for the fluffy tail turf emote?
 	var/fluffy = FALSE
 
-/datum/sprite_accessory/tails/is_hidden(mob/living/carbon/human/wearer)
-	var/list/used_in_turf = list("tail")
-	if(wearer.owned_turf?.name in used_in_turf)
+/datum/sprite_accessory/tails/is_hidden(mob/living/carbon/human/wearer, datum/bodypart_overlay/mutant/bodypart_overlay)
+	. = ..()
+	if(.)
+		return
+
 	// Emote exception
+	if(wearer.owned_turf?.name == "tail")
 		return TRUE
 
-	if(!wearer.w_uniform && !wearer.wear_suit)
-		return FALSE
-	if(key in wearer.try_hide_mutant_parts)
+	if(wearer.obscured_slots & HIDETAIL)
 		return TRUE
-
-	if(wearer.wear_suit)
-		// Exception for MODs
-		if(istype(wearer.wear_suit, /obj/item/clothing/suit/mod))
-			return FALSE
-		// Hide accessory if flagged to do so
-		else if(wearer.wear_suit.flags_inv & HIDETAIL)
-			return TRUE
 
 /datum/sprite_accessory/tails/none
-	name = "None"
+	name = SPRITE_ACCESSORY_NONE
 	icon_state = "none"
-	recommended_species = list(SPECIES_SYNTH, SPECIES_MAMMAL, SPECIES_HUMAN, SPECIES_HUMANOID, SPECIES_GHOUL)
+	recommended_species = list(
+		SPECIES_SYNTH = 1,
+		SPECIES_MAMMAL = 1,
+		SPECIES_HUMAN = 1,
+		SPECIES_HUMANOID = 1,
+		SPECIES_GHOUL = 1,
+	)
 	color_src = null
 	factual = FALSE
+	natural_spawn = FALSE
 
 /datum/sprite_accessory/tails/lizard
 	icon = 'modular_nova/master_files/icons/mob/sprite_accessory/tails.dmi'
-	recommended_species = list(SPECIES_LIZARD, SPECIES_LIZARD_ASH, SPECIES_MAMMAL, SPECIES_UNATHI, SPECIES_LIZARD_SILVER)
-	organ_type = /obj/item/organ/external/tail/lizard
+	recommended_species = list(
+		SPECIES_LIZARD = 1,
+		SPECIES_LIZARD_ASH = 1,
+		SPECIES_MAMMAL = 1,
+		SPECIES_UNATHI = 1,
+		SPECIES_LIZARD_SILVER = 1,
+		SPECIES_KOBOLD = 1,
+		SPECIES_LIZARD = 1,
+	)
+	organ_type = /obj/item/organ/tail/lizard
 
 /datum/sprite_accessory/tails/lizard/short/twotone
 	name = "Short (Two-Tone)"
@@ -45,41 +51,105 @@
 	color_src = USE_MATRIXED_COLORS
 
 /datum/sprite_accessory/tails/human
-	recommended_species = list(SPECIES_HUMAN, SPECIES_SYNTH, SPECIES_FELINE, SPECIES_MAMMAL, SPECIES_GHOUL)
-	organ_type = /obj/item/organ/external/tail/cat
+	recommended_species = list(
+		SPECIES_HUMAN = 1,
+		SPECIES_SYNTH = 1,
+		SPECIES_FELINE = 1,
+		SPECIES_MAMMAL = 1,
+		SPECIES_GHOUL = 1,
+	)
+	organ_type = /obj/item/organ/tail/cat
 
-/datum/sprite_accessory/tails/human/cat
+/datum/sprite_accessory/tails/felinid/cat
 	icon = 'modular_nova/master_files/icons/mob/sprite_accessory/tails.dmi'
 	icon_state = "cat"
 	color_src = USE_ONE_COLOR
+	recommended_species = list(
+		SPECIES_HUMAN = 1,
+		SPECIES_SYNTH = 1,
+		SPECIES_FELINE = 1,
+		SPECIES_MAMMAL = 1,
+		SPECIES_GHOUL = 1,
+	)
+	organ_type = /obj/item/organ/tail/cat
+
+/datum/sprite_accessory/tails/human/monkey_colorable
+	name = "Monkey Colorable"
+	icon = 'modular_nova/master_files/icons/mob/sprite_accessory/tails.dmi'
+	icon_state = "monkey_colorable"
+	recommended_species = list(
+		SPECIES_HUMAN = 1,
+		SPECIES_SYNTH = 1,
+		SPECIES_FELINE = 1,
+		SPECIES_MAMMAL = 1,
+		SPECIES_MONKEY = 1,
+		SPECIES_GHOUL = 1,
+	)
+	color_src = USE_ONE_COLOR
+	organ_type = /obj/item/organ/tail/monkey
 
 /datum/sprite_accessory/tails/monkey/default
 	icon = 'modular_nova/master_files/icons/mob/sprite_accessory/tails.dmi'
 	icon_state = "monkey"
-	recommended_species = list(SPECIES_HUMAN, SPECIES_SYNTH, SPECIES_FELINE, SPECIES_MAMMAL, SPECIES_MONKEY, SPECIES_GHOUL)
-	organ_type = /obj/item/organ/external/tail/monkey
+	recommended_species = list(
+		SPECIES_HUMAN = 1,
+		SPECIES_SYNTH = 1,
+		SPECIES_FELINE = 1,
+		SPECIES_MAMMAL = 1,
+		SPECIES_MONKEY = 1,
+		SPECIES_GHOUL = 1,
+	)
+	organ_type = /obj/item/organ/tail/monkey
 
 /datum/sprite_accessory/tails/mammal
 	icon_state = "none"
-	recommended_species = list(SPECIES_MAMMAL,SPECIES_HUMAN, SPECIES_SYNTH, SPECIES_HUMANOID, SPECIES_GHOUL)
-	organ_type = /obj/item/organ/external/tail/fluffy/no_wag
+	recommended_species = list(
+		SPECIES_MAMMAL = 1,
+		SPECIES_HUMAN = 1,
+		SPECIES_SYNTH = 1,
+		SPECIES_HUMANOID = 1,
+		SPECIES_GHOUL = 1,
+	)
+	organ_type = /obj/item/organ/tail/fluffy/no_wag
 	color_src = USE_MATRIXED_COLORS
 
 /datum/sprite_accessory/tails/mammal/wagging
-	organ_type = /obj/item/organ/external/tail/fluffy
+	organ_type = /obj/item/organ/tail/fluffy
 	flags_for_organ = SPRITE_ACCESSORY_WAG_ABLE
 
 /datum/sprite_accessory/tails/mammal/wagging/akula
-	recommended_species = list(SPECIES_MAMMAL, SPECIES_HUMAN, SPECIES_SYNTH, SPECIES_AKULA, SPECIES_AQUATIC, SPECIES_HUMANOID, SPECIES_GHOUL)
+	recommended_species = list(
+		SPECIES_MAMMAL = 1,
+		SPECIES_HUMAN = 1,
+		SPECIES_SYNTH = 1,
+		SPECIES_AKULA = 1,
+		SPECIES_AQUATIC = 1,
+		SPECIES_HUMANOID = 1,
+		SPECIES_GHOUL = 1,
+	)
 
 /datum/sprite_accessory/tails/mammal/wagging/tajaran
-	recommended_species = list(SPECIES_MAMMAL, SPECIES_HUMAN, SPECIES_SYNTH, SPECIES_TAJARAN, SPECIES_HUMANOID, SPECIES_GHOUL)
+	recommended_species = list(
+		SPECIES_MAMMAL = 1,
+		SPECIES_HUMAN = 1,
+		SPECIES_SYNTH = 1,
+		SPECIES_TAJARAN = 1,
+		SPECIES_HUMANOID = 1,
+		SPECIES_GHOUL = 1,
+	)
 
 /datum/sprite_accessory/tails/mammal/teshari
-	recommended_species = list(SPECIES_TESHARI)
+	recommended_species = list(SPECIES_TESHARI = 1)
 
 /datum/sprite_accessory/tails/mammal/wagging/vulpkanin
-	recommended_species = list(SPECIES_MAMMAL, SPECIES_HUMAN, SPECIES_SYNTH, SPECIES_VULP, SPECIES_HUMANOID, SPECIES_GHOUL)
+	recommended_species = list(
+		SPECIES_MAMMAL = 1,
+		SPECIES_HUMAN = 1,
+		SPECIES_SYNTH = 1,
+		SPECIES_VULP = 1,
+		SPECIES_HUMANOID = 1,
+		SPECIES_GHOUL = 1,
+	)
 
 /datum/sprite_accessory/tails/mammal/wagging/big
 	icon = 'modular_nova/master_files/icons/mob/sprite_accessory/tails_big.dmi'
@@ -89,6 +159,7 @@
 /datum/sprite_accessory/tails/mammal/wagging/avian
 	name = "Avian"
 	icon_state = "avian1"
+
 /datum/sprite_accessory/tails/mammal/wagging/avian/alt
 	name = "Avian (Alt)"
 	icon_state = "avian2"
@@ -174,6 +245,10 @@
 	name = "Fox (Alt 2)"
 	icon_state = "fox3"
 
+/datum/sprite_accessory/tails/mammal/wagging/vulpkanin/fox/ann
+	name = "Fox (Alt 3)"
+	icon_state = "foxann"
+
 /datum/sprite_accessory/tails/mammal/wagging/guilmon
 	name = "Guilmon"
 	icon_state = "guilmon"
@@ -200,6 +275,12 @@
 /datum/sprite_accessory/tails/mammal/wagging/queeninsect
 	name = "Queen Insect"
 	icon_state = "queeninsect"
+
+/datum/sprite_accessory/tails/mammal/insectoid
+	name = "Insectoid"
+	icon_state = "insectoid"
+	color_src = USE_ONE_COLOR
+	default_color = DEFAULT_PRIMARY
 
 /datum/sprite_accessory/tails/mammal/wagging/kangaroo
 	name = "Kangaroo"
@@ -231,6 +312,10 @@
 	name = "Kitsune (Tamamo)"
 	icon_state = "9sune"
 
+/datum/sprite_accessory/tails/mammal/wagging/kitsune/ann
+	name = "Kitsune (Ann)"
+	icon_state = "kitsuann"
+
 /datum/sprite_accessory/tails/mammal/wagging/lab
 	name = "Labrador"
 	icon_state = "lab"
@@ -256,11 +341,15 @@
 	name = "Otusian"
 	icon_state = "otie"
 
-/datum/sprite_accessory/tails/mammal/wagging/plug
+/datum/sprite_accessory/tails/mammal/wagging/otter
+	name = "Otter"
+	icon_state = "otter"
+
+/datum/sprite_accessory/tails/mammal/plug
 	name = "Plug"
 	icon_state = "plugtail"
 
-/datum/sprite_accessory/tails/mammal/wagging/plug/scorpion
+/datum/sprite_accessory/tails/mammal/plug/scorpion
 	name = "Scorpion Plug"
 	icon_state = "scorptail"
 
@@ -302,14 +391,35 @@
 	name = "Shade"
 	icon_state = "shadekin_large"
 	color_src = USE_MATRIXED_COLORS
+	recommended_species = list(
+		SPECIES_SHADEKIN = 1,
+		SPECIES_MAMMAL = 1,
+		SPECIES_HUMAN = 1,
+		SPECIES_SYNTH = 1,
+		SPECIES_HUMANOID = 1,
+		SPECIES_GHOUL = 1,
+	)
 
 /datum/sprite_accessory/tails/mammal/wagging/big/shade/long
-	name = "Shade (Long)"
+	name = "Shadekin (Long)"
 	icon_state = "shadekinlong_large"
 
 /datum/sprite_accessory/tails/mammal/wagging/big/shade/striped
-	name = "Shade (Striped)"
+	name = "Shadekin (Striped)"
 	icon_state = "shadekinlongstriped_large"
+
+/datum/sprite_accessory/tails/mammal/wagging/big/shade/fluffy
+	name = "Shadekin (Fluffy)"
+	icon_state = "bigandfluffy"
+	color_src = USE_MATRIXED_COLORS
+
+/datum/sprite_accessory/tails/mammal/wagging/shadekin
+	name = "Shadekin"
+	icon_state = "shadekin"
+
+/datum/sprite_accessory/tails/mammal/wagging/shadekin/shadekinshort
+	name = "Shadekin Short"
+	icon_state = "shadekinshort"
 
 /datum/sprite_accessory/tails/mammal/wagging/big/ringtail
 	name = "Ring Tail (Long)"
@@ -390,9 +500,34 @@
 	name = "Tailmaw (Wag)"
 	icon_state = "tailmawwag"
 
+/datum/sprite_accessory/tails/mammal/wagging/tailmaw/stripedhead
+	name = "Tailmaw (Striped, Coloured Head)"
+	icon_state = "tailmawwag_stripedhead"
+	color_src = USE_MATRIXED_COLORS
+
 /datum/sprite_accessory/tails/mammal/wagging/tentacle
 	name = "Tentacle"
 	icon_state = "tentacle"
+
+/datum/sprite_accessory/tails/mammal/acrador
+	name = "Acrador (Narrow)"
+	icon_state = "acrador_1"
+
+/datum/sprite_accessory/tails/mammal/acrador/normal
+	name = "Acrador (Medium)"
+	icon_state = "acrador_2"
+
+/datum/sprite_accessory/tails/mammal/acrador/big
+	name = "Acrador (Big)"
+	icon_state = "acrador_3"
+
+/datum/sprite_accessory/tails/mammal/wagging/acrador
+	name = "Acrador (Narrow and Long)"
+	icon_state = "acrador_4"
+
+/datum/sprite_accessory/tails/mammal/wagging/acrador/femine_very_long
+	name = "Acrador (Narrow and Very Long)"
+	icon_state = "acrador_5"
 
 /*
 *	TESHARI
@@ -412,6 +547,11 @@
 /datum/sprite_accessory/tails/mammal/wagging/tiger
 	name = "Tiger"
 	icon_state = "tiger"
+
+/datum/sprite_accessory/tails/mammal/experiment
+	name = "Experiment"
+	icon_state = "exptail"
+	fluffy = TRUE
 
 /datum/sprite_accessory/tails/mammal/wagging/wolf
 	name = "Wolf"
@@ -439,3 +579,54 @@
 /datum/sprite_accessory/tails/mammal/wagging/rattlesnake
 	name = "Rattlesnake"
 	icon_state = "rattlesnake"
+
+/datum/sprite_accessory/tails/mammal/black_jackal
+	name = "Black-backed Jackal"
+	icon_state = "blackjackal"
+
+/datum/sprite_accessory/tails/mammal/wagging/gecko
+	name = "Gecko"
+	icon_state = "gecko"
+
+/datum/sprite_accessory/tails/mammal/wagging/chemlight
+	name = "Striped Tail"
+	icon_state = "chemlight"
+
+/datum/sprite_accessory/tails/mammal/wagging/chemlight_alt
+	name = "Striped Tail (Alt)"
+	icon_state = "chemlight_alt"
+
+/datum/sprite_accessory/tails/mammal/insectunder
+	name = "Insect (Underbelly)"
+	icon_state = "insectunder"
+
+// TG Fish infusion tails
+/datum/sprite_accessory/tails/fish
+	recommended_species = list(
+		SPECIES_AKULA = 1,
+		SPECIES_AQUATIC = 1,
+	)
+	color_src = USE_ONE_COLOR
+	feature_key_override = FEATURE_TAIL_FISH
+
+/datum/sprite_accessory/tails/fish/simple
+	name = "Simple (Fish Infusion)"
+
+/datum/sprite_accessory/tails/fish/crescent
+	name = "Crescent (Fish Infusion)"
+
+/datum/sprite_accessory/tails/fish/long
+	name = "Long (Fish Infusion)"
+
+/datum/sprite_accessory/tails/fish/shark
+	name = "Shark (Fish Infusion)"
+
+/datum/sprite_accessory/tails/fish/chonky
+	name = "Chonky (Fish Infusion)"
+
+/datum/sprite_accessory/tails/xeno
+	feature_key_override = FEATURE_TAIL_XENO
+	recommended_species = list(SPECIES_XENO = 1)
+
+/datum/sprite_accessory/tails/xeno/queen
+	locked = TRUE

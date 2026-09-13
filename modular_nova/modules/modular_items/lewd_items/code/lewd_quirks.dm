@@ -54,6 +54,7 @@
 	var/lust_message = "Your breath begins to feel warm..."
 	//we are using if statements so that it slowly becomes more and more to the person
 	human_owner.manual_emote(pick(lust_emotes))
+	var/need_mob_update
 	if(stress >= 60)
 		human_owner.set_jitter_if_lower(40 SECONDS)
 		lust_message = "You feel a static sensation all across your skin..."
@@ -64,11 +65,13 @@
 		owner.adjust_hallucinations(60 SECONDS)
 		lust_message = "You begin to fantasize of what you could do to someone..."
 	if(stress >= 240)
-		human_owner.adjustStaminaLoss(30)
+		need_mob_update += human_owner.adjust_stamina_loss(30)
 		lust_message = "You body feels so very hot, almost unwilling to cooperate..."
 	if(stress >= 300)
-		human_owner.adjustOxyLoss(40)
+		need_mob_update += human_owner.adjust_oxy_loss(40)
 		lust_message = "You feel your neck tightening, straining..."
+	if(need_mob_update)
+		human_owner.updatehealth()
 	to_chat(human_owner, span_purple(lust_message))
 	return TRUE
 
@@ -126,7 +129,7 @@
 		if(201 to 250)
 			to_chat(human_owner, span_purple("Desire fogs your decisions."))
 		if(251 to 1000)
-			to_chat(human_owner, span_purple("Jeez, it's hot in here.."))
+			to_chat(human_owner, span_purple("Jeez, it's hot in here..."))
 
 /**
  * If we have another human in view, return true
@@ -180,6 +183,8 @@
 /datum/quirk
 	/// Is this a quirk disabled by disabling the ERP config?
 	var/erp_quirk = FALSE
+	/// Is this a quirk disabled by disabling the tums module in the ERP config?
+	var/tum_quirk = FALSE
 
 /datum/quirk/masochism
 	name = "Masochism"
@@ -262,7 +267,7 @@
 	random_gain = FALSE
 	resilience = TRAUMA_RESILIENCE_ABSOLUTE
 
-/datum/brain_trauma/very_special/sadism/on_life(seconds_per_tick, times_fired)
+/datum/brain_trauma/very_special/sadism/on_life(seconds_per_tick)
 	var/mob/living/carbon/human/affected_mob = owner
 	if(!owner.has_status_effect(/datum/status_effect/climax_cooldown) && affected_mob.client?.prefs?.read_preference(/datum/preference/toggle/erp) && someone_suffering())
 		affected_mob.adjust_arousal(2)
@@ -313,7 +318,7 @@
 	desc = "You find the weaving of rope knots on the body wonderful."
 	value = 0 //ERP Traits don't have price. They are priceless. Ba-dum-tss
 	mob_trait = TRAIT_RIGGER
-	medical_record_text = "Subject has a increased dexterity when tying knots."
+	medical_record_text = "Subject has increased dexterity when tying knots."
 	gain_text = span_danger("Suddenly you understand rope weaving much better than before.")
 	lose_text = span_notice("Rope knots looks complicated again.")
 	icon = FA_ICON_CHAIN_BROKEN
@@ -329,30 +334,31 @@
 	var/mob/living/carbon/human/affected_mob = quirk_holder
 	REMOVE_TRAIT(affected_mob, TRAIT_RIGGER, TRAIT_LEWDQUIRK)
 /datum/mood_event/sadistic
-	description = span_purple("Others' suffering makes me happier\n")
+	description = span_purple("Others' suffering makes me happier.\n")
 
 /*
 *	EMPATH BONUS
 */
 
-/mob/living/carbon/human/examine(mob/user)
-	. = ..()
+/// Examine lines letting empaths read how aroused we are. Called by /mob/living/carbon/human/examine().
+/mob/living/carbon/human/proc/get_empath_examine(mob/user)
+	. = list()
 	var/mob/living/examiner = user
-	if(stat >= DEAD || HAS_TRAIT(src, TRAIT_FAKEDEATH) || src == examiner || !HAS_TRAIT(examiner, TRAIT_EMPATH))
+	if(src == examiner || IS_DEAD_OR_FAKING(src) || IS_UNCONSCIOUS(src) || !HAS_TRAIT(examiner, TRAIT_SEE_MASK_WHISPER)) // See mask whisper is for the empath quirk. This is more performant than GetComponent()...
 		return
 
 	if(examiner.client?.prefs?.read_preference(/datum/preference/toggle/erp))
 		var/arousal_message
 		switch(arousal)
 			if(AROUSAL_MINIMUM_DETECTABLE to AROUSAL_LOW)
-				arousal_message = span_purple("[p_They()] [p_are()] slightly blushed.") + "\n"
+				arousal_message = span_purple("[p_They()] [p_are()] slightly flushed in the cheeks.") + "\n"
 			if(AROUSAL_LOW to AROUSAL_MEDIUM)
 				arousal_message = span_purple("[p_They()] [p_are()] quite aroused and seems to be stirring up lewd thoughts in [p_their()] head.") + "\n"
 			if(AROUSAL_HIGH to AROUSAL_AUTO_CLIMAX_THRESHOLD)
 				arousal_message = span_purple("[p_They()] [p_are()] aroused as hell.") + "\n"
 			if(AROUSAL_AUTO_CLIMAX_THRESHOLD to INFINITY)
-				arousal_message = span_purple("[p_They()] [p_are()] extremely excited, exhausting from entolerable desire.") + "\n"
+				arousal_message = span_purple("[p_They()] [p_are()] extremely excited, exhausted from intolerable desire.") + "\n"
 		if(arousal_message)
 			. += arousal_message
 	else if(arousal > AROUSAL_MINIMUM_DETECTABLE)
-		. += span_purple("[p_They()] [p_are()] slightly blushed.") + "\n"
+		. += span_purple("[p_They()] [p_are()] slightly flushed in the cheeks.") + "\n"

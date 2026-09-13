@@ -1,5 +1,4 @@
 // THIS IS A NOVA SECTOR UI FILE
-import { useBackend } from '../backend';
 import {
   BlockQuote,
   Box,
@@ -9,7 +8,9 @@ import {
   Flex,
   LabeledList,
   Section,
-} from '../components';
+} from 'tgui-core/components';
+
+import { useBackend } from '../backend';
 import { Window } from '../layouts';
 
 export const SoulcatcherUser = (props) => {
@@ -49,9 +50,7 @@ export const SoulcatcherUser = (props) => {
                   onClick={() => act('reset_name', {})}
                 />
               </>
-            ) : (
-              <> </>
-            )}
+            ) : null}
             {communicate_as_parent ? (
               <Button
                 color={user_data.communicating_externally ? 'green' : 'red'}
@@ -61,9 +60,7 @@ export const SoulcatcherUser = (props) => {
                 tooltip="Toggle sending messages as part of the soulcatcher."
                 onClick={() => act('toggle_external_communication', {})}
               />
-            ) : (
-              <> </>
-            )}
+            ) : null}
           </Box>
           <Divider />
           <Collapsible title="Flavor Text">
@@ -105,9 +102,7 @@ export const SoulcatcherUser = (props) => {
                       : 'Disabled'}
                   </LabeledList.Item>
                 </>
-              ) : (
-                <> </>
-              )}
+              ) : null}
               <LabeledList.Item label="Ability to change name">
                 {user_data.able_to_rename && !user_data.scan_needed
                   ? 'Enabled'
@@ -150,9 +145,7 @@ export const SoulcatcherUser = (props) => {
                 ))}
               </Flex>
             </>
-          ) : (
-            <> </>
-          )}
+          ) : null}
         </Section>
       </Window.Content>
     </Window>

@@ -16,6 +16,7 @@
 	metabolization_rate = 0.25
 	life_pref_datum = /datum/preference/toggle/erp/breast_enlargement
 	overdose_pref_datum = /datum/preference/toggle/erp
+	chemical_flags = REAGENT_ORGANIC | REAGENT_SYNTHETIC
 
 	/// Words for the breasts when huge.
 	var/static/list/words_for_bigger = list(
@@ -113,7 +114,7 @@
 * suppress_chat - whether or not to display a message in chat
 * NOTE: this function doesn't get called often enough to warrant suppressing chat, hence the var's omission
 */
-/datum/reagent/drug/aphrodisiac/succubus_milk/growth_to_chat(mob/living/carbon/human/exposed_mob, obj/item/organ/external/genital/breasts/mob_breasts = exposed_mob?.get_organ_slot(ORGAN_SLOT_BREASTS))
+/datum/reagent/drug/aphrodisiac/succubus_milk/growth_to_chat(mob/living/carbon/human/exposed_mob, obj/item/organ/genital/breasts/mob_breasts = exposed_mob?.get_organ_slot(ORGAN_SLOT_BREASTS))
 
 	if(!mob_breasts)
 		return
@@ -152,7 +153,7 @@
 					to_chat(exposed_mob, span_purple("Your [pick(boob_text_list)] [pick(action_text_list)]about [translation]-cups."))
 
 // Notify the user that they're overdosing. Doesn't affect their mood.
-/datum/reagent/drug/aphrodisiac/succubus_milk/overdose_start(mob/living/carbon/human/exposed_mob)
+/datum/reagent/drug/aphrodisiac/succubus_milk/overdose_start(mob/living/carbon/human/exposed_mob, metabolization_ratio)
 	to_chat(exposed_mob, span_userdanger("You feel like you took too much [name]!"))
 	exposed_mob.add_mood_event("[type]_overdose", /datum/mood_event/minor_overdose, name)
 

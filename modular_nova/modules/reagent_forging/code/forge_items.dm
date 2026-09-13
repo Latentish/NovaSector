@@ -39,6 +39,7 @@ GLOBAL_LIST_INIT(allowed_forging_materials, list(
 /obj/item/forging/tongs/primitive
 	name = "primitive forging tongs"
 	toolspeed = 2
+	custom_materials = list(/datum/material/iron = SHEET_MATERIAL_AMOUNT * 5)
 
 /obj/item/forging/tongs/attack_self(mob/user, modifiers)
 	. = ..()
@@ -69,6 +70,7 @@ GLOBAL_LIST_INIT(allowed_forging_materials, list(
 
 /obj/item/forging/hammer/primitive
 	name = "primitive forging hammer"
+	custom_materials = list(/datum/material/iron = SHEET_MATERIAL_AMOUNT * 5)
 
 /obj/item/forging/billow
 	name = "forging billow"
@@ -79,6 +81,7 @@ GLOBAL_LIST_INIT(allowed_forging_materials, list(
 /obj/item/forging/billow/primitive
 	name = "primitive forging billow"
 	toolspeed = 2
+	custom_materials = list(/datum/material/wood = SHEET_MATERIAL_AMOUNT * 5)
 
 //incomplete pre-complete items
 /obj/item/forging/incomplete
@@ -97,7 +100,7 @@ GLOBAL_LIST_INIT(allowed_forging_materials, list(
 	///the path of the item that will be spawned upon completion
 	var/spawn_item
 	//because who doesn't want to have a plasma sword?
-	material_flags = MATERIAL_EFFECTS | MATERIAL_ADD_PREFIX | MATERIAL_GREYSCALE | MATERIAL_COLOR
+	material_flags = MATERIAL_EFFECTS | MATERIAL_ADD_PREFIX | MATERIAL_COLOR
 
 /obj/item/forging/incomplete/tong_act(mob/living/user, obj/item/tool)
 	. = ..()
@@ -192,7 +195,7 @@ GLOBAL_LIST_INIT(allowed_forging_materials, list(
 	///the path of the item that will be created
 	var/spawning_item
 	//because who doesn't want to have a plasma sword?
-	material_flags = MATERIAL_EFFECTS | MATERIAL_ADD_PREFIX | MATERIAL_GREYSCALE | MATERIAL_COLOR
+	material_flags = MATERIAL_EFFECTS | MATERIAL_ADD_PREFIX | MATERIAL_COLOR
 
 /obj/item/forging/complete/examine(mob/user)
 	. = ..()
@@ -282,16 +285,16 @@ GLOBAL_LIST_INIT(allowed_forging_materials, list(
 	icon_state = "coil"
 
 /obj/item/forging/incomplete_bow
-	name = "incomplete bow"
+	name = "incomplete longbow"
 	desc = "A wooden bow that has yet to be strung."
 	icon_state = "nostring_bow"
 
-/obj/item/forging/incomplete_bow/attackby(obj/item/attacking_item, mob/user, params)
-	if(istype(attacking_item, /obj/item/weaponcrafting/silkstring))
+/obj/item/forging/incomplete_bow/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(istype(tool, /obj/item/weaponcrafting/silkstring))
 		new /obj/item/gun/ballistic/bow/longbow(get_turf(src))
-		qdel(attacking_item)
+		qdel(tool)
 		qdel(src)
-		return
+		return ITEM_INTERACT_SUCCESS
 	return ..()
 
 /obj/item/arrow_spawner
@@ -307,14 +310,14 @@ GLOBAL_LIST_INIT(allowed_forging_materials, list(
 		new /obj/item/ammo_casing/arrow/(src_turf)
 	qdel(src)
 
-/obj/item/stock_parts/power_store/cell/attackby(obj/item/attacking_item, mob/user, params)
-	if(istype(attacking_item, /obj/item/forging/coil))
+/obj/item/stock_parts/power_store/cell/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(istype(tool, /obj/item/forging/coil))
 		var/obj/item/stock_parts/power_store/cell/crank/new_crank = new(get_turf(src))
 		new_crank.maxcharge = maxcharge
 		new_crank.charge = charge
-		qdel(attacking_item)
+		qdel(tool)
 		qdel(src)
-		return
+		return ITEM_INTERACT_SUCCESS
 	return ..()
 
 /obj/item/stack/tong_act(mob/living/user, obj/item/tool)
@@ -339,3 +342,6 @@ GLOBAL_LIST_INIT(allowed_forging_materials, list(
 	if(obj_flags_nova & ANVIL_REPAIR)
 		forceMove(tool)
 		tool.icon_state = "tong_full"
+
+/obj/item/stack/sheet/mineral/adamantine
+	material_type = /datum/material/adamantine

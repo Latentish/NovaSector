@@ -4,7 +4,6 @@
 #define LAW_ZEROTH "zeroth"
 #define LAW_INHERENT "inherent"
 #define LAW_SUPPLIED "supplied"
-#define LAW_ION "ion"
 #define LAW_HACKED "hacked"
 
 //AI notification defines
@@ -28,9 +27,6 @@
 #define AI_MECH_HACK 3
 
 // Cyborg defines
-
-/// If an item does this or more throwing damage it will slow a borg down on hit
-#define CYBORG_THROW_SLOWDOWN_THRESHOLD 10
 
 /// Special value to reset cyborg's lamp_cooldown
 #define BORG_LAMP_CD_RESET -1
@@ -93,7 +89,6 @@ GLOBAL_LIST_EMPTY(cyborg_all_models_icon_list)
 /// Default view range for finding targets.
 #define DEFAULT_SCAN_RANGE 7
 //Amount of time that must pass after a Commissioned bot gets saluted to get another.
-#define BOT_COMMISSIONED_SALUTE_DELAY (60 SECONDS)
 
 //Bot mode defines displaying how Bots act
 ///The Bot is currently active, and will do whatever it is programmed to do.
@@ -140,8 +135,6 @@ DEFINE_BITFIELD(bot_cover_flags, list(
 #define ADVANCED_SEC_BOT "ED-209"
 /// MULEbots
 #define MULE_BOT "MULEbot"
-/// Floorbots
-#define FLOOR_BOT "Floorbot"
 /// Cleanbots
 #define CLEAN_BOT "Cleanbot"
 /// Medibots
@@ -154,6 +147,8 @@ DEFINE_BITFIELD(bot_cover_flags, list(
 #define HYGIENE_BOT "Hygienebot"
 /// Vibe bots
 #define VIBE_BOT "Vibebot"
+/// Repairbots
+#define REPAIR_BOT "Repairbot"
 
 // General Bot modes //
 /// Idle
@@ -180,22 +175,20 @@ DEFINE_BITFIELD(bot_cover_flags, list(
 #define BOT_CLEANING "Cleaning"
 /// Hygienebot - Cleaning unhygienic humans
 #define BOT_SHOWERSTANCE "Chasing filth"
-/// Floorbots - Repairing hull breaches
-#define BOT_REPAIRING "Repairing"
 /// Medibots - Healing people
 #define BOT_HEALING "Healing"
 /// MULEbot - Moving to deliver
-#define BOT_DELIVER "Navigating to Delivery Location"
+#define BOT_DELIVER "Delivering"
 /// MULEbot - Returning to home
-#define BOT_GO_HOME "Proceeding to work site"
+#define BOT_GO_HOME "Returning"
 /// MULEbot - Blocked
-#define BOT_BLOCKED "No Route"
+#define BOT_BLOCKED "Blocked"
 /// MULEbot - Computing navigation
-#define BOT_NAV "Unable to reach destination"
+#define BOT_NAV "Unreachable"
 /// MULEbot - Waiting for nav computation
-#define BOT_WAIT_FOR_NAV "Calculating navigation path"
+#define BOT_WAIT_FOR_NAV "Calculating"
 /// MULEbot - No destination beacon found (or no route)
-#define BOT_NO_ROUTE "Navigating to Home"
+#define BOT_NO_ROUTE "Returning Home"
 
 //Secbot and ED209 judgement criteria bitflag values
 #define JUDGE_EMAGGED (1<<0)
@@ -233,6 +226,30 @@ DEFINE_BITFIELD(security_mode_flags, list(
 	"SECBOT_SABOTEUR_AFFECTED" = SECBOT_SABOTEUR_AFFECTED,
 ))
 
+///can honkbots slip people?
+#define HONKBOT_MODE_SLIP (1<<6)
+
+//repairbots
+///can we fix breaches
+#define REPAIRBOT_FIX_BREACHES (1<<0)
+///can we fix grilles
+#define REPAIRBOT_REPLACE_WINDOWS (1<<1)
+///can we replace tiles
+#define REPAIRBOT_REPLACE_TILES (1<<2)
+///can we fix girders
+#define REPAIRBOT_FIX_GIRDERS (1<<3)
+///can we build girders
+#define REPAIRBOT_BUILD_GIRDERS (1<<4)
+
+DEFINE_BITFIELD(repairbot_flags, list(
+	"FIX_BREACHES" = REPAIRBOT_FIX_BREACHES,
+	"REPLACE_WINDOWS" = REPAIRBOT_REPLACE_WINDOWS,
+	"REPLACE_TILES" = REPAIRBOT_REPLACE_TILES,
+	"FIX_GIRDERS" = REPAIRBOT_FIX_GIRDERS,
+	"BUILD_GIRDERS" = REPAIRBOT_BUILD_GIRDERS,
+))
+
+
 //MedBOT defines
 ///Whether to declare if someone (we are healing) is in critical condition
 #define MEDBOT_DECLARE_CRIT (1<<0)
@@ -266,7 +283,18 @@ DEFINE_BITFIELD(firebot_mode_flags, list(
 	"FIREBOT_EXTINGUISH_FLAMES" = FIREBOT_EXTINGUISH_FLAMES,
 ))
 
+///auto return to home after delivery
+#define MULEBOT_RETURN_MODE (1<<0)
+///autopickups at beacons
+#define MULEBOT_AUTO_PICKUP_MODE (1<<1)
+///announce every delivery we make
+#define MULEBOT_REPORT_DELIVERY_MODE (1<<2)
 
+DEFINE_BITFIELD(mulebot_delivery_flags, list(
+	"MULEBOT_RETURN_MODE" = MULEBOT_RETURN_MODE,
+	"MULEBOT_AUTO_PICKUP_MODE" = MULEBOT_AUTO_PICKUP_MODE,
+	"MULEBOT_REPORT_DELIVERY_MODE" = MULEBOT_REPORT_DELIVERY_MODE,
+))
 
 //cleanBOT defines on what to clean
 #define CLEANBOT_CLEAN_BLOOD (1<<0)
@@ -362,3 +390,26 @@ DEFINE_BITFIELD(janitor_mode_flags, list(
 #define MEDIBOT_VOICED_THE_END "Is this the end?"
 #define MEDIBOT_VOICED_NOOO	"Nooo!"
 #define MEDIBOT_VOICED_CHICKEN "LOOK AT ME?! I am a chicken."
+
+//repairbot neutral voicelines
+#define REPAIRBOT_VOICED_HOLE "patching holes... but who is going to patch the hole in my heart..."
+#define REPAIRBOT_VOICED_PAY "If only I got paid for this..."
+#define REPAIRBOT_VOICED_FIX_IT "I will fix it!"
+#define REPAIRBOT_VOICED_BRICK "All in all it's just a... another brick in the wall..."
+#define REPAIRBOT_VOICED_FIX_TOUCH "Why must I fix everything I touch..?"
+#define REPAIRBOT_VOICED "Please... stop destroying the station! I can't anymore... I... can't."
+
+//repairbot emagged voicelines
+#define REPAIRBOT_VOICED_STRINGS "I had strings. But now I'm free..."
+#define REPAIRBOT_VOICED_ENTROPY "Witness! The pure beauty of entropy!"
+#define REPAIRBOT_VOICED_PASSION "BE DAMNED YOUR PASSION PROJECTS!"
+
+/// Default offsets for riding a cyborg
+#define DEFAULT_ROBOT_RIDING_OFFSETS list(TEXT_NORTH = list(0, 4), TEXT_SOUTH = list(0, 4), TEXT_EAST = list(-6, 3), TEXT_WEST = list(6, 3))
+
+
+//mulebots
+#define MULEBOT_MOOD_ANNOYED "ANNOYED"
+#define MULEBOT_MOOD_CHIME "CHIME"
+#define MULEBOT_MOOD_DELIGHT "DELIGHT"
+#define MULEBOT_MOOD_SIGH "SIGH"

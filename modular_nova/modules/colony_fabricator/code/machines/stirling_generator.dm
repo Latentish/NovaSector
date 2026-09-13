@@ -22,7 +22,7 @@
 	/// Maximum efficient heat difference, at what heat difference does more difference stop meaning anything for power?
 	var/max_efficient_heat_difference = 8000
 	/// Maximum power output from this machine
-	var/max_power_output = 100 KILO WATTS
+	var/max_power_output = 150 KILO WATTS
 	/// How much power the generator is currently making
 	var/current_power_generation
 	/// Our looping fan sound that we play when turned on
@@ -36,6 +36,8 @@
 	connect_to_network()
 	AddElement(/datum/element/repackable, deconstruction_type, 10 SECONDS)
 	AddElement(/datum/element/manufacturer_examine, COMPANY_FRONTIER)
+	AddElement(/datum/element/tool_blocker, TOOL_SCREWDRIVER)
+	AddElement(/datum/element/tool_blocker, TOOL_CROWBAR)
 	// This is just to make sure our atmos connection spawns facing the right way
 	setDir(dir)
 
@@ -92,18 +94,8 @@
 	else if(!soundloop.is_active() && power_output)
 		soundloop.start()
 
-
-/obj/machinery/power/stirling_generator/default_deconstruction_screwdriver(mob/user, icon_state_open, icon_state_closed, obj/item/screwdriver)
-	return
-
-
-/obj/machinery/power/stirling_generator/default_deconstruction_crowbar(obj/item/crowbar, ignore_panel, custom_deconstruct)
-	return
-
-
 /obj/machinery/power/stirling_generator/wrench_act(mob/living/user, obj/item/tool)
 	return default_change_direction_wrench(user, tool)
-
 
 /obj/machinery/power/stirling_generator/default_change_direction_wrench(mob/user, obj/item/wrench)
 	if(wrench.tool_behaviour != TOOL_WRENCH)
@@ -125,6 +117,7 @@
 
 /obj/item/flatpacked_machine/stirling_generator
 	name = "flat-packed stirling generator"
+	desc = /obj/machinery/power/stirling_generator::desc
 	icon = 'modular_nova/modules/colony_fabricator/icons/stirling_generator/packed_machines.dmi'
 	icon_state = "stirling"
 	type_to_deploy = /obj/machinery/power/stirling_generator

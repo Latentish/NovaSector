@@ -2,9 +2,8 @@
 	name = "Ghoul"
 	id = SPECIES_GHOUL
 	examine_limb_id = SPECIES_GHOUL
-	can_have_genitals = FALSE //WHY WOULD YOU WANT TO FUCK ONE OF THESE THINGS?
-	mutant_bodyparts = list("ghoulcolor" = "Tan Necrotic")
-	mutanttongue = /obj/item/organ/internal/tongue/ghoul
+	can_have_genitals = FALSE
+	mutanttongue = /obj/item/organ/tongue/ghoul
 	inherent_traits = list(
 		TRAIT_ADVANCEDTOOLUSER,
 		TRAIT_RADIMMUNE,
@@ -33,61 +32,63 @@
 
 /datum/species/ghoul/get_default_mutant_bodyparts()
 	return list(
-		"tail" = list("None", FALSE),
-		"ears" = list("None", FALSE),
-		"legs" = list("Normal Legs", FALSE),
+		FEATURE_EARS = MUTPART_BLUEPRINT(SPRITE_ACCESSORY_NONE, is_randomizable = FALSE),
+		FEATURE_TAIL = MUTPART_BLUEPRINT(SPRITE_ACCESSORY_NONE, is_randomizable = FALSE),
+		FEATURE_EARS = MUTPART_BLUEPRINT(SPRITE_ACCESSORY_NONE, is_randomizable = FALSE),
+		FEATURE_LEGS = MUTPART_BLUEPRINT(NORMAL_LEGS, is_randomizable = FALSE, is_feature = TRUE),
+		FEATURE_GHOUL_COLOR = MUTPART_BLUEPRINT("Tan Necrotic", is_randomizable = FALSE, is_feature = TRUE),
 	)
 
-/proc/proof_ghoul_features(list/inFeatures)
+/proc/proof_ghoul_features(list/in_features)
 	// Missing Defaults in DNA? Randomize!
-	if(inFeatures["ghoulcolor"] == null || inFeatures["ghoulcolor"] == "")
-		inFeatures["ghoulcolor"] = GLOB.color_list_ghoul[pick(GLOB.color_list_ghoul)]
+	if(in_features[FEATURE_GHOUL_COLOR] == null || in_features[FEATURE_GHOUL_COLOR] == "")
+		in_features[FEATURE_GHOUL_COLOR] = GLOB.color_list_ghoul[pick(GLOB.color_list_ghoul)]
 
 /datum/species/proc/set_ghoul_color(mob/living/carbon/human/human_ghoul)
 	return // Do Nothing
 
 /datum/species/ghoul/set_ghoul_color(mob/living/carbon/human/human_ghoul)
 	// Called on Assign, or on Color Change (or any time proof_ghoul_features() is used)
-	fixed_mut_color = human_ghoul.dna.features["ghoulcolor"]
+	fixed_mut_color = human_ghoul.dna.features[FEATURE_GHOUL_COLOR]
 
 /mob/living/carbon/proc/ReassignForeignBodyparts()
 	var/obj/item/bodypart/head = get_bodypart(BODY_ZONE_HEAD)
 	if (head?.type != part_default_head)
 		var/obj/item/bodypart/limb = new part_default_head
-		limb.replace_limb(src, TRUE)
+		limb.replace_limb(src)
 		qdel(head)
 
 	var/obj/item/bodypart/chest = get_bodypart(BODY_ZONE_CHEST)
 	if (chest?.type != part_default_chest)
 		var/obj/item/bodypart/limb = new part_default_chest
-		limb.replace_limb(src, TRUE)
+		limb.replace_limb(src)
 		qdel(chest)
 
 	var/obj/item/bodypart/arm/left/left_arm = get_bodypart(BODY_ZONE_L_ARM)
 	if (left_arm?.type != part_default_l_arm)
 		var/obj/item/bodypart/limb = new part_default_l_arm
-		limb.replace_limb(src, TRUE)
+		limb.replace_limb(src)
 		qdel(left_arm)
 
 	var/obj/item/bodypart/arm/right/right_arm = get_bodypart(BODY_ZONE_R_ARM)
 	if (right_arm?.type != part_default_r_arm)
 		var/obj/item/bodypart/limb = new part_default_r_arm
-		limb.replace_limb(src, TRUE)
+		limb.replace_limb(src)
 		qdel(right_arm)
 
 	var/obj/item/bodypart/leg/left/left_leg = get_bodypart(BODY_ZONE_L_LEG)
 	if (left_leg?.type != part_default_l_leg)
 		var/obj/item/bodypart/limb = new part_default_l_leg
-		limb.replace_limb(src, TRUE)
+		limb.replace_limb(src)
 		qdel(left_leg)
 
 	var/obj/item/bodypart/leg/right/right_leg = get_bodypart(BODY_ZONE_R_LEG)
 	if (right_leg?.type != part_default_r_leg)
 		var/obj/item/bodypart/limb = new part_default_r_leg
-		limb.replace_limb(src, TRUE)
+		limb.replace_limb(src)
 		qdel(right_leg)
 
-/datum/species/ghoul/on_species_gain(mob/living/carbon/new_ghoul, datum/species/old_species, pref_load)
+/datum/species/ghoul/on_species_gain(mob/living/carbon/new_ghoul, datum/species/old_species, pref_load, regenerate_icons)
 	// Missing Defaults in DNA? Randomize!
 	proof_ghoul_features(new_ghoul.dna.features)
 
@@ -156,7 +157,7 @@
 			if (istype(I, /obj/item/food/meat/slab))
 				user.put_in_hands(I)
 
-			new /obj/effect/temp_visual/dir_setting/bloodsplatter(target.loc, target.dir)
+			new /obj/effect/temp_visual/dir_setting/bloodsplatter(target.loc, target.dir, target.dna.blood_type.color)
 			target.add_splatter_floor(target.loc)
 			target.bleed(60)
 

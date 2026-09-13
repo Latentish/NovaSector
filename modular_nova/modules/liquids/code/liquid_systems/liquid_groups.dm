@@ -71,10 +71,9 @@ GLOBAL_VAR_INIT(liquid_debug_colors, FALSE)
 
 /datum/liquid_group/Destroy()
 	SSliquids.active_groups -= src
-	for(var/t in members)
-		var/turf/T = t
-		T.lgroup = null
-	members = null
+	for(var/turf/turf as anything in members)
+		turf.lgroup = null
+	members.Cut()
 	return ..()
 
 /datum/liquid_group/proc/check_adjacency(turf/T)
@@ -163,7 +162,7 @@ GLOBAL_VAR_INIT(liquid_debug_colors, FALSE)
 			cached_color = mix_color_from_reagent_list(cached_add)
 		mixed_color = cached_color
 
-	var/height = CEILING(cached_volume/LIQUID_HEIGHT_DIVISOR, 1)
+	var/height = ceil(cached_volume/LIQUID_HEIGHT_DIVISOR)
 
 	var/determined_new_state
 	var/state_height = height

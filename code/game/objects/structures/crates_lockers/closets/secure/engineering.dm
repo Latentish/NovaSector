@@ -7,7 +7,7 @@
 	..()
 
 	new /obj/item/storage/bag/garment/engineering_chief (src)
-	new /obj/item/computer_disk/command/ce(src)
+	new /obj/item/disk/computer/command/ce(src)
 	new /obj/item/radio/headset/heads/ce(src)
 	new /obj/item/megaphone/command(src)
 	new /obj/item/holosign_creator/atmos(src)
@@ -16,12 +16,8 @@
 	new /obj/item/storage/lockbox/medal/engineering(src)
 	new /obj/item/circuitboard/machine/techfab/department/engineering(src)
 	new /obj/item/extinguisher/advanced(src)
-	new /obj/item/storage/photo_album/ce(src)
 	new /obj/item/storage/box/skillchips/engineering(src)
-	new /obj/item/storage/box/gas_miner_beacons(src) // NOVA EDIT ADDITION
-	new /obj/item/construction/plumbing/engineering(src) //NOVA EDIT ADDITION
-	new /obj/item/circuitboard/machine/rodstopper(src) //NOVA EDIT ADDITION
-	new /obj/item/card/id/departmental_budget/eng(src) //NOVA EDIT ADDITION
+	new /obj/item/storage/box/stickers/chief_engineer(src)
 
 /obj/structure/closet/secure_closet/engineering_chief/populate_contents_immediate()
 	. = ..()
@@ -29,6 +25,8 @@
 	// Traitor steal objective
 	new /obj/item/blueprints(src)
 	new /obj/item/pipe_dispenser/bluespace(src) // NOVA EDIT -- BLUESPACE RPD -- ORIGINAL: new /obj/item/pipe_dispenser(src)
+
+	new /obj/item/storage/photo_album/ce(src)
 
 /obj/structure/closet/secure_closet/engineering_electrical
 	name = "electrical supplies locker"
@@ -38,7 +36,7 @@
 
 /obj/structure/closet/secure_closet/engineering_electrical/PopulateContents()
 	..()
-	var/static/items_inside = list(
+	var/list/items_inside = list(
 		/obj/item/inducer = 2,
 		/obj/item/storage/toolbox/electrical = 3,
 		/obj/item/electronics/apc = 3,
@@ -79,7 +77,6 @@
 	new /obj/item/clothing/glasses/meson/engine(src)
 	new /obj/item/storage/box/emptysandbags(src)
 	new /obj/item/storage/bag/construction(src)
-	new /obj/item/construction/plumbing/engineering(src) //NOVA EDIT ADDITION
 
 
 /obj/structure/closet/secure_closet/atmospherics

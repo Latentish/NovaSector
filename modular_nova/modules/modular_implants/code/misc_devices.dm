@@ -1,24 +1,29 @@
 ///NIFSoft Remover. This is mostly here so that security and antags have a way to remove NIFSofts from someome
 /obj/item/nifsoft_remover
-	name = "Lopland 'Wrangler' NIF-Cutter"
+	name = "Nanotrasen 'Wrangler' NIF-Cutter"
 	desc = "A small device that lets the user remove NIFSofts from a NIF user"
 	special_desc = "Given the relatively recent and sudden proliferation of NIFs, their use in crime both petty and organized has skyrocketed in recent years. \
 	The existence of nanomachine-based real-time burst communication that cannot be effectively monitored or hacked into has given most PMCs cause enough for concern \
 	to invent their own devices. This one is a 'Wrangler' model NIF-Cutter, used for crudely wiping programs directly off a user's Framework."
 	icon = 'modular_nova/modules/modular_implants/icons/obj/devices.dmi'
 	icon_state = "nifsoft_remover"
+	custom_materials = list(/datum/material/silver = HALF_SHEET_MATERIAL_AMOUNT, /datum/material/uranium = HALF_SHEET_MATERIAL_AMOUNT, /datum/material/iron = SMALL_MATERIAL_AMOUNT)
 
 	///Is a disk with the corresponding NIFSoft created when said NIFSoft is removed?
 	var/create_disk = FALSE
 
 /obj/item/nifsoft_remover/attack(mob/living/carbon/human/target_mob, mob/living/user)
 	. = ..()
-	var/obj/item/organ/internal/cyberimp/brain/nif/target_nif = target_mob.get_organ_by_type(/obj/item/organ/internal/cyberimp/brain/nif)
+	var/obj/item/organ/cyberimp/brain/nif/target_nif = target_mob.get_organ_by_type(/obj/item/organ/cyberimp/brain/nif)
 
-	if(!target_nif || !length(target_nif.loaded_nifsofts))
+	if(!target_nif || !LAZYLEN(target_nif.loaded_nifsofts))
 		balloon_alert(user, "[target_mob] has no NIFSofts!")
 		return
 
+	user.visible_message(span_warning("[user] starts to scan [src] [target_mob]"), span_notice("You start to scan [src] on [target_mob]"))
+	if(!do_after(user, 5 SECONDS, target_mob))
+		balloon_alert(user, "scan cancelled!")
+		return FALSE
 	var/list/installed_nifsofts = target_nif.loaded_nifsofts
 	var/datum/nifsoft/nifsoft_to_remove = tgui_input_list(user, "Chose a NIFSoft to remove.", "[src]", installed_nifsofts)
 
@@ -55,6 +60,42 @@
 	icon_state = "nifsoft_remover_syndie"
 	create_disk = TRUE
 
+/obj/item/nifsoft_remover/syndie/interact_with_atom(atom/interacting_with, mob/living/user, list/modifiers)
+	if(!isliving(interacting_with))
+		return NONE
+
+	var/mob/living/carbon/human/target_mob = interacting_with
+	var/obj/item/organ/cyberimp/brain/nif/target_nif = target_mob.get_organ_by_type(/obj/item/organ/cyberimp/brain/nif)
+
+	if(!target_nif || !LAZYLEN(target_nif.loaded_nifsofts))
+		balloon_alert(user, "[target_mob] has no NIFSofts!")
+		return ITEM_INTERACT_BLOCKING
+
+	var/datum/nifsoft/nifsoft_to_remove = tgui_input_list(user, "Choose a NIFSoft to remove.", "[src]", target_nif.loaded_nifsofts)
+	if(!nifsoft_to_remove)
+		return ITEM_INTERACT_BLOCKING
+
+	user.visible_message(span_warning("[user] starts to use [src] on [target_mob]"), span_notice("You start to use [src] on [target_mob]"))
+	if(!do_after(user, 5 SECONDS, target_mob))
+		balloon_alert(user, "removal cancelled!")
+		return ITEM_INTERACT_BLOCKING
+
+	if(!target_nif.remove_nifsoft(nifsoft_to_remove))
+		balloon_alert(user, "removal failed!")
+		return ITEM_INTERACT_BLOCKING
+
+	balloon_alert(user, "removal successful")
+	user.log_message("removed [nifsoft_to_remove] from [target_mob]", LOG_GAME)
+
+	if(create_disk)
+		var/obj/item/disk/nifsoft_uploader/new_disk = new
+		new_disk.loaded_nifsoft = nifsoft_to_remove.type
+		new_disk.name = "[nifsoft_to_remove] datadisk"
+		user.put_in_hands(new_disk)
+
+	qdel(nifsoft_to_remove)
+	return ITEM_INTERACT_SUCCESS
+
 /datum/uplink_item/device_tools/nifsoft_remover
 	name = "Cybersun 'Scalpel' NIF-Cutter"
 	desc = "A modified version of a NIFSoft remover that allows the user to remove a NIFSoft and have a blank copy of the removed NIFSoft saved to a disk."
@@ -80,7 +121,7 @@
 /obj/item/nif_repair_kit/attack(mob/living/carbon/human/mob_to_repair, mob/living/user)
 	. = ..()
 
-	var/obj/item/organ/internal/cyberimp/brain/nif/installed_nif = mob_to_repair.get_organ_by_type(/obj/item/organ/internal/cyberimp/brain/nif)
+	var/obj/item/organ/cyberimp/brain/nif/installed_nif = mob_to_repair.get_organ_by_type(/obj/item/organ/cyberimp/brain/nif)
 	if(!installed_nif)
 		balloon_alert(user, "[mob_to_repair] lacks a NIF")
 
@@ -104,6 +145,7 @@
 	desc = "A kit that modifies select glasses to display HUDs for NIFs"
 	icon = 'modular_nova/master_files/icons/donator/obj/kits.dmi'
 	icon_state = "partskit"
+	custom_materials = list(/datum/material/iron = SHEET_MATERIAL_AMOUNT * 2, /datum/material/glass = SHEET_MATERIAL_AMOUNT * 2, /datum/material/plastic = SHEET_MATERIAL_AMOUNT)
 
 	/// Can this item be used multiple times? If not, it will delete itself after being used.
 	var/multiple_uses = FALSE
@@ -118,7 +160,7 @@
 		/obj/item/clothing/glasses/phantom,
 		/obj/item/clothing/glasses/salesman, // Now's your chance.
 		/obj/item/clothing/glasses/nice_goggles,
-		/obj/item/clothing/glasses/thin,
+		/obj/item/clothing/glasses/regular/thin,
 		/obj/item/clothing/glasses/biker,
 		/obj/item/clothing/glasses/sunglasses/gar,
 		/obj/item/clothing/glasses/hypno,
@@ -140,7 +182,7 @@
 		compatible_glasses_names += glasses_name
 
 	if(length(compatible_glasses_names))
-		. += span_cyan("\n This item will work on the following glasses: [english_list(compatible_glasses_names)].")
+		. += span_cyan_nova("\n This item will work on the following glasses: [english_list(compatible_glasses_names)].")
 
 	return .
 
@@ -157,7 +199,7 @@
 	user.visible_message(span_notice("[user] upgrades [target_glasses] with [src]."), span_notice("You upgrade [target_glasses] to be NIF HUD compatible."))
 	target_glasses.name = "\improper HUD-upgraded " + target_glasses.name
 	target_glasses.AddElement(/datum/element/nifsoft_hud)
-	playsound(target_glasses.loc, 'sound/weapons/circsawhit.ogg', 50, vary = TRUE)
+	playsound(target_glasses.loc, 'sound/items/weapons/circsawhit.ogg', 50, vary = TRUE)
 
 	if(!multiple_uses)
 		qdel(src)

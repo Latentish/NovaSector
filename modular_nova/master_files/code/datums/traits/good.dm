@@ -13,7 +13,7 @@
 /datum/quirk/linguist
 	name = "Linguist"
 	desc = "You're a student of numerous languages and come with an additional language point."
-	value = 4
+	value = 0
 	mob_trait = TRAIT_LINGUIST
 	gain_text = span_notice("Your brain seems more equipped to handle different modes of conversation.")
 	lose_text = span_danger("Your grasp of the finer points of Draconic idioms fades away.")
@@ -38,16 +38,16 @@
 	if(left_arm)
 		left_arm.unarmed_attack_verbs = list("slash")
 		left_arm.unarmed_attack_effect = ATTACK_EFFECT_CLAW
-		left_arm.unarmed_attack_sound = 'sound/weapons/slash.ogg'
-		left_arm.unarmed_miss_sound = 'sound/weapons/slashmiss.ogg'
+		left_arm.unarmed_attack_sound = 'sound/items/weapons/slash.ogg'
+		left_arm.unarmed_miss_sound = 'sound/items/weapons/slashmiss.ogg'
 		left_arm.unarmed_sharpness = SHARP_EDGED
 
 	var/obj/item/bodypart/arm/right/right_arm = human_holder.get_bodypart(BODY_ZONE_R_ARM)
 	if(right_arm)
 		right_arm.unarmed_attack_verbs = list("slash")
 		right_arm.unarmed_attack_effect = ATTACK_EFFECT_CLAW
-		right_arm.unarmed_attack_sound = 'sound/weapons/slash.ogg'
-		right_arm.unarmed_miss_sound = 'sound/weapons/slashmiss.ogg'
+		right_arm.unarmed_attack_sound = 'sound/items/weapons/slash.ogg'
+		right_arm.unarmed_miss_sound = 'sound/items/weapons/slashmiss.ogg'
 		right_arm.unarmed_sharpness = SHARP_EDGED
 
 /datum/quirk/sharpclaws/remove(client/client_source)
@@ -67,16 +67,6 @@
 		right_arm.unarmed_attack_sound = initial(right_arm.unarmed_attack_sound)
 		right_arm.unarmed_miss_sound = initial(right_arm.unarmed_miss_sound)
 		right_arm.unarmed_sharpness = initial(right_arm.unarmed_sharpness)
-
-/datum/quirk/water_breathing
-	name = "Water breathing"
-	desc = "You are able to breathe underwater!"
-	value = 2
-	mob_trait = TRAIT_WATER_BREATHING
-	gain_text = span_notice("You become acutely aware of the moisture in your lungs and in the air. It feels nice.")
-	lose_text = span_danger("You suddenly realize the moisture in your lungs feels <i>really weird</i>, and you almost choke on it!")
-	medical_record_text = "Patient possesses biology compatible with aquatic respiration."
-	icon = FA_ICON_FISH
 
 // AdditionalEmotes *turf quirks
 /datum/quirk/water_aspect
@@ -117,7 +107,7 @@
 	gain_text = span_notice("There is a forge smouldering inside of you.")
 	lose_text = span_danger("Somehow, you've lost your ability to breathe fire.")
 	medical_record_text = "Patients possess a fire breathing gland commonly found in lizard folk."
-	icon = FA_ICON_FIRE
+	icon = FA_ICON_FIRE_ALT
 
 /datum/quirk/sparkle_aspect
 	name = "Sparkle aspect (Emotes)"
@@ -133,12 +123,12 @@
 	name = "Appendicitis Survivor"
 	desc = "You had a run in with appendicitis in the past and no longer have an appendix."
 	icon = FA_ICON_NOTES_MEDICAL
-	value = 2
+	value = 0
 	gain_text = span_notice("You no longer have an appendix.")
 	lose_text = span_danger("Your appendix has magically.. regrown?")
 	medical_record_text = "Patient had appendicitis in the past and has had their appendix surgically removed."
 	/// The mob's original appendix
-	var/obj/item/organ/internal/appendix/old_appendix
+	var/obj/item/organ/appendix/old_appendix
 
 /datum/quirk/no_appendix/post_add()
 	var/mob/living/carbon/carbon_quirk_holder = quirk_holder
@@ -158,7 +148,7 @@
 	if(isnull(old_appendix))
 		return
 
-	var/obj/item/organ/internal/appendix/current_appendix = carbon_quirk_holder.get_organ_slot(ORGAN_SLOT_APPENDIX)
+	var/obj/item/organ/appendix/current_appendix = carbon_quirk_holder.get_organ_slot(ORGAN_SLOT_APPENDIX)
 
 	// if we have not gained an appendix already, put the old one back
 	if(isnull(current_appendix))
@@ -167,3 +157,39 @@
 		qdel(old_appendix)
 
 	old_appendix = null
+
+/datum/quirk/sensitive_hearing
+	name = "Sensitive Hearing"
+	desc = "You can hear even the quietest of sounds, but you're more vulnerable to hearing damage as a result. \
+			This is a direct downgrade for any species that has innate sensitive hearing!"
+	icon = FA_ICON_HEADPHONES_SIMPLE
+	value = 6
+	hidden_quirk = TRUE // disabled until reworked.
+	mob_trait = TRAIT_SENSITIVE_HEARING
+	gain_text = span_notice("You could hear a pin drop from 10 feet away.")
+	lose_text = span_danger("Your hearing feels less sensitive.")
+	medical_record_text = "Patient scored very highly in hearing tests."
+	/// Holds the sensitive hearing action
+	var/datum/action/cooldown/spell/sensitive_hearing/hearing_action
+
+/datum/quirk/sensitive_hearing/add_unique()
+	var/obj/item/organ/ears/ears = quirk_holder.get_organ_slot(ORGAN_SLOT_EARS)
+	ears.damage_multiplier *= 2 // You do want to think twice about taking this on certain species
+	hearing_action = new
+	LAZYADD(ears.actions_types, hearing_action.type)
+	ears.add_item_action(hearing_action)
+	hearing_action.Grant(quirk_holder)
+
+/datum/quirk/sensitive_hearing/remove()
+	if(QDELING(quirk_holder))
+		return
+	var/obj/item/organ/ears/ears = quirk_holder.get_organ_slot(ORGAN_SLOT_EARS)
+	if(isnull(ears))
+		return
+
+	LAZYREMOVE(ears.actions_types, hearing_action.type)
+	ears.remove_item_action(hearing_action)
+	hearing_action.Remove(quirk_holder)
+	// Doing ears.damage_multiplier /= 2 is not safe because the ears may've
+	// changed, so just set it to the initial value of the current ears
+	ears.damage_multiplier = initial(ears.damage_multiplier)

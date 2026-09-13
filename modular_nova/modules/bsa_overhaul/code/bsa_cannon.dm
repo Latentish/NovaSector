@@ -4,16 +4,6 @@
 *	Requires high amount of power
 *	Requires high level stock parts
 */
-#define BSA_SYSTEM_READY "SYSTEM READY"
-#define BSA_SYSTEM_PREFIRE "! SYSTEM PREFIRING !"
-#define BSA_SYSTEM_FIRING "SYSTEM FIRING"
-#define BSA_SYSTEM_RELOADING "SYSTEM RELOADING"
-#define BSA_SYSTEM_LOW_POWER "SYSTEM POWER LOW"
-#define BSA_SYSTEM_CHARGE_CAPACITORS "SYSTEM CHARGING CAPACITORS"
-
-#define BSA_RELOAD_TIME 20 SECONDS
-#define BSA_FIRE_POWER_THRESHOLD 1000000 // 1 MW
-
 
 /**
  * BSA parts
@@ -35,12 +25,9 @@
 	desc = "Generates cannon pulse. Needs to be linked with a fusor."
 	icon_state = "power_box"
 
-/obj/machinery/bsa/back/multitool_act(mob/living/user, obj/item/tool)
-	if(!multitool_check_buffer(user, tool)) //make sure it has a data buffer
-		return
-	var/obj/item/multitool/multitool = tool
-	multitool.buffer = src
-	to_chat(user, span_notice("You store linkage information in [multitool]'s buffer."))
+/obj/machinery/bsa/back/multitool_act(mob/living/user, obj/item/multitool/tool)
+	tool.buffer = src
+	to_chat(user, span_notice("You store linkage information in [tool]'s buffer."))
 	return TRUE
 
 /obj/machinery/bsa/front
@@ -48,12 +35,9 @@
 	desc = "Do not stand in front of cannon during operation. Needs to be linked with a fusor."
 	icon_state = "emitter_center"
 
-/obj/machinery/bsa/front/multitool_act(mob/living/user, obj/item/tool)
-	if(!multitool_check_buffer(user, tool)) //make sure it has a data buffer
-		return
-	var/obj/item/multitool/multitool = tool
-	multitool.buffer = src
-	to_chat(user, span_notice("You store linkage information in [multitool]'s buffer."))
+/obj/machinery/bsa/front/multitool_act(mob/living/user, obj/item/multitool/tool)
+	tool.buffer = src
+	to_chat(user, span_notice("You store linkage information in [tool]'s buffer."))
 	return TRUE
 
 /obj/machinery/bsa/middle
@@ -65,21 +49,18 @@
 	/// Our linked front piece
 	var/datum/weakref/front_piece
 
-/obj/machinery/bsa/middle/multitool_act(mob/living/user, obj/item/tool)
-	if(!multitool_check_buffer(user, tool))
-		return
-	var/obj/item/multitool/multitool = tool
-	if(multitool.buffer)
-		if(istype(multitool.buffer, /obj/machinery/bsa/back))
-			back_piece = WEAKREF(multitool.buffer)
-			to_chat(user, span_notice("You link [src] with [multitool.buffer]."))
-			multitool.buffer = null
-		else if(istype(multitool.buffer, /obj/machinery/bsa/front))
-			front_piece = WEAKREF(multitool.buffer)
-			to_chat(user, span_notice("You link [src] with [multitool.buffer]."))
-			multitool.buffer = null
+/obj/machinery/bsa/middle/multitool_act(mob/living/user, obj/item/multitool/tool)
+	if(tool.buffer)
+		if(istype(tool.buffer, /obj/machinery/bsa/back))
+			back_piece = WEAKREF(tool.buffer)
+			to_chat(user, span_notice("You link [src] with [tool.buffer]."))
+			tool.buffer = null
+		else if(istype(tool.buffer, /obj/machinery/bsa/front))
+			front_piece = WEAKREF(tool.buffer)
+			to_chat(user, span_notice("You link [src] with [tool.buffer]."))
+			tool.buffer = null
 	else
-		to_chat(user, span_warning("[multitool]'s data buffer is empty!"))
+		to_chat(user, span_warning("[tool]'s data buffer is empty!"))
 	return TRUE
 
 /obj/machinery/bsa/middle/proc/check_completion()
@@ -126,7 +107,7 @@
  * The full BSA cannon
  *
  * This operates by charging a "capacitor" bank which is then discharged in the beam.
- * The capacitor bank is charged during the power up phase, it essentially drains the connected powernet until it reaches it's target power, and then fires.
+ * The capacitor bank is charged during the power up phase, it essentially drains the connected powernet until it reaches its target power, and then fires.
  */
 /obj/machinery/bsa/full
 	name = "Bluespace Artillery"
@@ -274,7 +255,7 @@
 	if(system_state != BSA_SYSTEM_READY)
 		return
 	system_state = BSA_SYSTEM_PREFIRE
-	priority_announce("BLUESPACE TARGETING PARAMETERS SET, PREIGNITION STARTING... CAPACITOR CHARGE AT [round(capacitor_power / 1000000, 0.1)] MW, FIRING IN T-20 SECONDS!", "BLUESPACE ARTILLERY", ANNOUNCER_BLUESPACEARTY)
+	priority_announce("BLUESPACE TARGETING PARAMETERS SET, PREIGNITION STARTING... CAPACITOR CHARGE AT [round(capacitor_power / BSA_FIRE_POWER_THRESHOLD, 0.1)] MW, FIRING IN T-20 SECONDS!", "BLUESPACE ARTILLERY", ANNOUNCER_BLUESPACEARTY)
 	alert_sound_to_playing('modular_nova/modules/bsa_overhaul/sound/superlaser_prefire.ogg', override_volume = TRUE)
 	message_admins("[user] has started the fire cycle of [src]! Firing at: [ADMIN_VERBOSEJMP(bullseye)]")
 	log_game("[key_name(user)] has aimed the bluespace artillery strike at [bullseye].")
@@ -297,6 +278,8 @@
 	var/turf/target = get_target_turf()
 	// Anything that blocks the BSA beam, if it's blocked, it hits that thing
 	var/atom/movable/blocker
+	// Intensity of the screen shake, capping at 0.75 with maximum charge, with a minimum of 0.25
+	var/camera_shake_intensity = ((round((capacitor_power / (50 * BSA_FIRE_POWER_THRESHOLD)), 1)) + 1) / 4
 	// Now we absolutely destroy everything in the beams path.
 	for(var/turf/iterating_turf as anything in get_line(get_step(point, dir), target))
 		if(SEND_SIGNAL(iterating_turf, COMSIG_ATOM_BSA_BEAM) & COMSIG_ATOM_BLOCKS_BSA_BEAM)
@@ -312,6 +295,8 @@
 		else
 			SSexplosions.highturf += iterating_turf //also fucks everything else on the turf
 	point.Beam(target, icon_state = "bsa_beam", time = 5 SECONDS, maxdistance = world.maxx) //ZZZAP
+	for(var/mob/living/witness in range(7, src))
+		shake_camera(witness, 5 SECONDS, camera_shake_intensity)
 	new /obj/effect/temp_visual/bsa_splash(point, dir)
 
 	if(!blocker)
@@ -357,7 +342,7 @@
 
 /obj/structure/filler/Destroy()
 	parent = null
-	. = ..()
+	return ..()
 
 
 

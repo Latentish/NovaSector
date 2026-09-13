@@ -12,7 +12,6 @@
 	lefthand_file = 'modular_nova/modules/modular_items/lewd_items/icons/mob/lewd_inhands/lewd_inhand_left.dmi'
 	righthand_file = 'modular_nova/modules/modular_items/lewd_items/icons/mob/lewd_inhands/lewd_inhand_right.dmi'
 	lewd_slot_flags = LEWD_SLOT_PENIS | LEWD_SLOT_VAGINA | LEWD_SLOT_NIPPLES | LEWD_SLOT_ANUS
-	clothing_flags = INEDIBLE_CLOTHING
 	/// Is the toy currently on
 	var/toy_on = FALSE
 	/// The current color of the toy, affects sprite
@@ -78,7 +77,7 @@
 	QDEL_NULL(soundloop2)
 	QDEL_NULL(soundloop3)
 	STOP_PROCESSING(SSobj, src)
-	. = ..()
+	return ..()
 
 /obj/item/clothing/sextoy/eggvib/update_icon_state()
 	. = ..()
@@ -94,19 +93,19 @@
 	switch(vibration_mode)
 		if("low")
 			toy_on = TRUE
-			play_lewd_sound(loc, 'sound/weapons/magin.ogg', 20, TRUE)
+			playsound_if_pref(loc, 'sound/items/weapons/magin.ogg', 20, TRUE)
 			soundloop1.start()
 		if("medium")
 			toy_on = TRUE
-			play_lewd_sound(loc, 'sound/weapons/magin.ogg', 20, TRUE)
+			playsound_if_pref(loc, 'sound/items/weapons/magin.ogg', 20, TRUE)
 			soundloop2.start()
 		if("high")
 			toy_on = TRUE
-			play_lewd_sound(loc, 'sound/weapons/magin.ogg', 20, TRUE)
+			playsound_if_pref(loc, 'sound/items/weapons/magin.ogg', 20, TRUE)
 			soundloop3.start()
 		if("off")
 			toy_on = FALSE
-			play_lewd_sound(loc, 'sound/weapons/magout.ogg', 20, TRUE)
+			playsound_if_pref(loc, 'sound/items/weapons/magout.ogg', 20, TRUE)
 
 /obj/item/clothing/sextoy/eggvib/lewd_equipped(mob/living/carbon/human/user, slot, initial)
 	. = ..()
@@ -169,7 +168,7 @@
 
 /obj/item/clothing/sextoy/eggvib/signalvib/Destroy()
 	SSradio.remove_object(src, frequency)
-	. = ..()
+	return ..()
 
 // A moment for the `attackby()` proc that used to lie here, letting you turn a vibrator into an electric chair.
 
@@ -190,7 +189,7 @@
 
 /obj/item/clothing/sextoy/eggvib/signalvib/click_alt(mob/user)
 	if(!color_changed)
-		var/choice = show_radial_menu(user, src, vib_designs, custom_check = CALLBACK(src, /obj/item/clothing/sextoy/proc/check_menu, user), radius = 36, require_near = TRUE)
+		var/choice = show_radial_menu(user, src, vib_designs, custom_check = CALLBACK(src, TYPE_PROC_REF(/obj/item/clothing/sextoy, check_menu), user), radius = 36, require_near = TRUE)
 		if(!choice)
 			return CLICK_ACTION_BLOCKING
 		current_color = choice
@@ -302,17 +301,15 @@
 				soundloop3.stop()
 			. = TRUE
 		if("freq")
-			var/value = unformat_frequency(params["freq"])
-			if(value)
-				frequency = sanitize_frequency(value, TRUE)
-				set_frequency(frequency)
-				. = TRUE
+			var/new_frequency = sanitize_frequency(unformat_frequency(params["freq"]), TRUE)
+			set_frequency(new_frequency)
+			name = initial(name) + " - freq: [frequency/10] code: [code]"
+			. = TRUE
 		if("code")
-			var/value = text2num(params["code"])
-			if(value)
-				value = round(value)
-				code = clamp(value, 1, 100)
-				. = TRUE
+			code = text2num(params["code"])
+			code = round(code)
+			name = initial(name) + " - freq: [frequency/10] code: [code]"
+			. = TRUE
 		if("reset")
 			if(params["reset"] == "freq")
 				frequency = initial(frequency)
@@ -326,10 +323,10 @@
 	switch(vibration_mode)
 		if("low")
 			vibration_mode = "low"
-			play_lewd_sound(loc, 'sound/weapons/magin.ogg', 20, TRUE)
+			playsound_if_pref(loc, 'sound/items/weapons/magin.ogg', 20, TRUE)
 		if("medium")
 			vibration_mode = "medium"
-			play_lewd_sound(loc, 'sound/weapons/magin.ogg', 20, TRUE)
+			playsound_if_pref(loc, 'sound/items/weapons/magin.ogg', 20, TRUE)
 		if("high")
 			vibration_mode = "high"
-			play_lewd_sound(loc, 'sound/weapons/magin.ogg', 20, TRUE)
+			playsound_if_pref(loc, 'sound/items/weapons/magin.ogg', 20, TRUE)

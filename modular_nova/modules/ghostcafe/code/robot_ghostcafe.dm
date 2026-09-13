@@ -13,7 +13,6 @@
 
 /mob/living/silicon/robot/model/roleplay/make_laws()
 	laws = new /datum/ai_laws/roleplay()
-	laws.associate(src)
 
 /mob/living/silicon/robot/model/roleplay/binarycheck()
 	return FALSE //Roleplay borgs aren't truly borgs
@@ -61,7 +60,7 @@
 		/obj/item/borg/apparatus/beaker,
 		/obj/item/borg/apparatus/beaker,
 		/obj/item/soap/nanotrasen,
-		/obj/item/mop/cyborg, // Soap's good and all, but a mop is good, too
+		/obj/item/mop, // Soap's good and all, but a mop is good, too
 		/obj/item/lightreplacer,
 		/obj/item/borg/cyborghug,
 		/obj/item/quadborg_nose,

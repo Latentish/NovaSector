@@ -4,6 +4,7 @@
 	icon = 'modular_nova/modules/wrestlingring/icons/wrestling.dmi'
 	icon_state = "ropes"
 	climbable = FALSE
+	custom_materials = list(/datum/material/iron = SHEET_MATERIAL_AMOUNT * 1.5)
 
 /obj/structure/railing/wrestling/CanPass(atom/movable/mover, border_dir)
 	..()
@@ -64,6 +65,7 @@
 	anchored = TRUE
 	armor_type = /datum/armor/structure_wrestling_corner
 	max_integrity = 75
+	custom_materials = list(/datum/material/iron = SHEET_MATERIAL_AMOUNT * 3)
 	var/ini_dir
 
 /datum/armor/structure_wrestling_corner
@@ -79,7 +81,7 @@
 	ini_dir = dir
 
 	AddElement(/datum/element/climbable, climb_time = 20, climb_stun = 0)
-	AddComponent(/datum/component/simple_rotation, ROTATION_NEEDS_ROOM)
+	AddElement(/datum/element/simple_rotation, ROTATION_NEEDS_ROOM)
 
 	var/static/list/loc_connections = list(
 		COMSIG_ATOM_ENTERED = PROC_REF(on_enter),
@@ -88,22 +90,23 @@
 
 	AddElement(/datum/element/connect_loc, loc_connections)
 
-/obj/structure/wrestling_corner/attackby(obj/item/I, mob/living/user, params)
-	..()
+/obj/structure/wrestling_corner/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
 	add_fingerprint(user)
 
-	if(I.tool_behaviour == TOOL_WELDER && !user.combat_mode)
+	if(tool.tool_behaviour == TOOL_WELDER && !user.combat_mode)
 		if(atom_integrity < max_integrity)
-			if(!I.tool_start_check(user, amount=0))
-				return
+			if(!tool.tool_start_check(user, amount=0))
+				return ITEM_INTERACT_BLOCKING
 
 			to_chat(user, span_notice("You begin repairing [src]..."))
-			if(I.use_tool(src, user, 40, volume=50))
+			if(tool.use_tool(src, user, 40, volume=50))
 				atom_integrity = max_integrity
 				to_chat(user, span_notice("You repair [src]."))
 		else
 			to_chat(user, span_warning("[src] is already in good condition!"))
-		return
+		return ITEM_INTERACT_SUCCESS
+
+	return ..()
 
 /obj/structure/wrestling_corner/wirecutter_act(mob/living/user, obj/item/tool)
 	. = ..()
@@ -150,6 +153,6 @@
 	SIGNAL_HANDLER
 
 	if(ishuman(leaving))
-		var/mob/living/carbon/human/H = leaving
-		var/datum/component/tackler/wrestling_tackler = H.GetComponent(/datum/component/tackler)
-		wrestling_tackler.Destroy()
+		var/mob/living/carbon/human/human_leaving = leaving
+		var/datum/component/tackler/wrestling_tackler = human_leaving.GetComponent(/datum/component/tackler)
+		qdel(wrestling_tackler)

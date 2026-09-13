@@ -5,6 +5,7 @@
 	icon_state = "water_basin"
 	anchored = TRUE
 	density = TRUE
+	custom_materials = list(/datum/material/wood = SHEET_MATERIAL_AMOUNT * 5)
 
 	/// Tracks if you can fish from this basin
 	var/datum/component/fishing_spot/fishable
@@ -33,27 +34,27 @@
 	balloon_alert(user, "the water deepens!")
 	fishable = AddComponent(/datum/component/fishing_spot, /datum/fish_source/water_basin)
 
-/obj/structure/reagent_water_basin/attackby(obj/item/attacking_item, mob/living/user, params)
-	if(istype(attacking_item, /obj/item/stack/ore/glass))
-		var/obj/item/stack/ore/glass/glass_obj = attacking_item
+/obj/structure/reagent_water_basin/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(istype(tool, /obj/item/stack/ore/glass))
+		var/obj/item/stack/ore/glass/glass_obj = tool
 		if(!glass_obj.use(1))
-			return
+			return ITEM_INTERACT_BLOCKING
 
 		new /obj/item/stack/clay(get_turf(src))
 		user.mind.adjust_experience(/datum/skill/production, 1)
-		return
+		return ITEM_INTERACT_SUCCESS
 
-	if(istype(attacking_item, /obj/item/stack/ore/bluespace_crystal))
+	if(istype(tool, /obj/item/stack/ore/bluespace_crystal))
 		if(fishable)
-			return
-		var/obj/item/stack/ore/bluespace_crystal/bs_crystal = attacking_item
+			return ITEM_INTERACT_BLOCKING
+		var/obj/item/stack/ore/bluespace_crystal/bs_crystal = tool
 
 		if(!bs_crystal.use(1))
-			return
+			return ITEM_INTERACT_BLOCKING
 
 		balloon_alert(user, "the water deepens!")
 		fishable = AddComponent(/datum/component/fishing_spot, /datum/fish_source/water_basin)
-		return
+		return ITEM_INTERACT_SUCCESS
 
 	return ..()
 
@@ -101,7 +102,7 @@
 		/obj/item/fish/cardinal = 15,
 		/obj/item/fish/greenchromis = 15,
 		/obj/item/fish/lanternfish = 5,
-		/obj/item/fish/dwarf_moonfish = 15,
+		/obj/item/fish/moonfish/dwarf = 15,
 		/obj/item/fish/gunner_jellyfish = 15,
 		/obj/item/fish/needlefish = 10,
 		/obj/item/fish/armorfish = 10,

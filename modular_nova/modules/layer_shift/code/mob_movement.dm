@@ -6,11 +6,8 @@
 //#define MOB_LAYER 4   // This is a byond standard define
 #define MOB_LAYER_SHIFT_MAX 4.05
 
-/mob/living/verb/shift_layer_up()
-	set name = "Shift Layer Upwards"
-	set category = "IC"
-
-	if(incapacitated())
+GAME_VERB(/mob/living, shift_layer_up, "Shift Layer Upwards", "IC")
+	if(incapacitated)
 		to_chat(src, span_warning("You can't do that right now!"))
 		return FALSE
 
@@ -25,11 +22,8 @@
 	return TRUE
 
 
-/mob/living/verb/shift_layer_down()
-	set name = "Shift Layer Downwards"
-	set category = "IC"
-
-	if(incapacitated())
+GAME_VERB(/mob/living, shift_layer_down, "Shift Layer Downwards", "IC")
+	if(incapacitated)
 		to_chat(src, span_warning("You can't do that right now!"))
 		return FALSE
 
@@ -76,3 +70,8 @@
 	var/mob/living/layer_shifter = user
 
 	return layer_shifter.shift_layer_down()
+
+#undef MOB_LAYER_SHIFT_INCREMENT
+#undef MOB_LAYER_MULTIPLIER
+#undef MOB_LAYER_SHIFT_MIN
+#undef MOB_LAYER_SHIFT_MAX

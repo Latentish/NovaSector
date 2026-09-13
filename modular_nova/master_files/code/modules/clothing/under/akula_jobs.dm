@@ -4,7 +4,7 @@
 #define TAIL_OVERLAY_LAYER 5.9
 
 /obj/item/clothing/under/akula_wetsuit
-	name = "Shoredress wetsuit"
+	name = "\improper Shoredress wetsuit"
 	desc = "The 'Wetworks'-pattern Shoredress is a long-standing template upon which most Azulean 'wetsuits' are made. \
 		This atmospheric exploration suit is a single form-fitting garment, designed to keep wearers comfortable in the harsh environment of dry land; \
 		even sometimes worn underneath orbital suits such as MODs. \n\n\
@@ -21,7 +21,7 @@
 	body_parts_covered = CHEST|GROIN|LEGS|FEET|ARMS|HANDS
 	can_adjust = FALSE
 	female_sprite_flags = NO_FEMALE_UNIFORM
-	supports_variations_flags = CLOTHING_DIGITIGRADE_VARIATION_NO_NEW_ICON
+	supports_variations_flags = CLOTHING_DIGITIGRADE_VARIATION_NO_NEW_ICON | CLOTHING_BIG_LEGS_MASK
 	/// If an akula tail accessory is present, we can overlay an additional icon
 	var/tail_overlay
 
@@ -32,16 +32,14 @@
 	update_appearance()
 
 /obj/item/clothing/under/akula_wetsuit/Destroy()
-	. = ..()
 	var/mob/user = loc
 	if(!istype(user))
-		return
+		return ..()
 
 	if(tail_overlay)
 		user.cut_overlay(tail_overlay)
 		tail_overlay = null
-
-	qdel(GetComponent(/datum/component/wetsuit))
+	return ..()
 
 /obj/item/clothing/under/akula_wetsuit/equipped(mob/user, slot)
 	. = ..()
@@ -60,20 +58,20 @@
 
 	update_appearance()
 
-/// This will check the wearer's bodytype and change the wetsuit worn sprite according to if its male/female
+/// This will check the wearer's bodytype and change the wetsuit worn sprite according to if it's male/female
 /obj/item/clothing/under/akula_wetsuit/proc/check_physique(mob/living/carbon/human/user)
-	icon_state = base_icon_state
+	worn_icon_state = base_icon_state
 	if(user.physique == FEMALE)
-		icon_state = "[icon_state]_f"
+		worn_icon_state = "[base_icon_state]_f"
 	return TRUE
 
 /// If the wearer has a compatible tail for the `tail_overlay` variable, render it
 /obj/item/clothing/under/akula_wetsuit/proc/add_tail_overlay(mob/living/carbon/human/user)
-	if(!user.dna.species.mutant_bodyparts["tail"])
+	var/datum/mutant_bodypart/tail = user.dna.mutant_bodyparts[FEATURE_TAIL]
+	if(isnull(tail))
 		return
 
-	var/tail = user.dna.species.mutant_bodyparts["tail"][MUTANT_INDEX_NAME]
-	switch(tail)
+	switch(tail.name)
 		if("Akula")
 			tail_overlay = mutable_appearance(TAIL_OVERLAY_DMI, "overlay_akula", -(TAIL_OVERLAY_LAYER))
 		if("Shark")
@@ -87,7 +85,7 @@
 
 	if(tail_overlay)
 		user.add_overlay(tail_overlay)
-		icon_state = "[icon_state]_tail"
+		worn_icon_state = "[worn_icon_state]_tail"
 
 	/// Suit armor
 /datum/armor/clothing_under/wetsuit
@@ -143,7 +141,7 @@
 
 /obj/item/clothing/under/akula_wetsuit/job/science
 	name = "science Shoredress wetsuit"
-	desc = "The 'Science'-Type Shoredress is yet another model commissioned by NanoTrasen. This suit has been adapted from 'Ordnance'-Type Shoredresses \
+	desc = "The 'Science'-Type Shoredress is yet another model commissioned by Nanotrasen. This suit has been adapted from 'Ordnance'-Type Shoredresses \
 		used in the New Principalities predominantly by mining teams. \n\
 		It is made of a special polymer that provides some minor protection against explosives \
 		such as abandoned naval or land-based mines, and features an inbuilt external sterilization field to protect against biohazards typically found in strange places."
@@ -157,7 +155,7 @@
 
 /obj/item/clothing/under/akula_wetsuit/job/medical
 	name = "medical Shoredress wetsuit"
-	desc = "The 'Medical'-Type Shoredress is yet another model commissioned by NanoTrasen. This suit has been adapted from exploration \
+	desc = "The 'Medical'-Type Shoredress is yet another model commissioned by Nanotrasen. This suit has been adapted from exploration \
 		Shoredresses meant for use in murky or even outright toxic environments, being predominantly composed of self-sterilizing polymers with \
 		a system able to filter out all sorts of hazardous particles in the air or water including fumes, smoke, allergens, or ocean-bound toxins. \n\
 		This has made it convenient for the Company's medical division, let alone the plush interior to allow for greater comfortable standing hours."
@@ -171,7 +169,7 @@
 
 /obj/item/clothing/under/akula_wetsuit/job/security
 	name = "security Shoredress wetsuit"
-	desc = "The 'Security'-Type Shoredress is a model commissioned by Lopland; but the origins of this wetsuit lie in designs belonging to \
+	desc = "The 'Security'-Type Shoredress is a model produced by Nanotrasen; but the origins of this wetsuit lie in designs belonging to \
 		rank-and-file warriors and fighters in the New Principalities. Designed to be protective over comfortable, these suits are no true \
 		replacement for true armor, but make an excellent undersuit for even civilian plate carriers. \n\
 		The systems inside have been reinforced to their logical endpoint, though their temperatures -- much like the attitude of their wearers, tends to run a bit hot due to a possible manufacturing defect."
@@ -181,105 +179,13 @@
 
 /obj/item/clothing/under/akula_wetsuit/job/command
 	name = "command Shoredress wetsuit"
-	desc = "The 'Command'-Type Shoredress is yet another model commissioned by NanoTrasen; but the origins of this wetsuit lie in designs belonging to, \
+	desc = "The 'Command'-Type Shoredress is yet another model commissioned by Nanotrasen; but the origins of this wetsuit lie in designs belonging to, \
 			typically, high-ranking officials and managers in the Old Principalities. \n\
 			The bright luminescent panels on the arms have been further set apart by similar paneling on the chest, meant to ensure the wearer looks distinct both in the water, on land, and even on camera. \n\
 			The temperature systems have been upgraded, as well as the choice to use more comfortable fabrics in the construction."
 	icon_state = "command"
 	base_icon_state = "command"
 	armor_type = /datum/armor/clothing_under/rank_security
-
-
-/obj/item/clothing/head/helmet/space/akula_wetsuit
-	name = "\improper Shoredress helm"
-	desc = "Known simply as a 'Glass' throughout Azulean society as a whole, these spheroidal helmets are often the main source of comfort for workers on land; domestic and abroad. \
-		More advanced than humans would ever give them credit for, a Shoredress's Glass is a piece of technology unto itself. \n\n\
-		These helmets employ a near-invisible system of cameras and sensors to prevent refraction from the water kept inside. \
-		The 'flexiglass' glass comprising the unit is chemically strengthened to be thin, light, and damage-resistant, but capable of bending even in half without shattering; all to allow you to touch your face. \n\
-		Some have taken to putting electronic displays around the face to help express emotion, or to signal nonverbally. \
-		These helms are normally attached to Shoredresses or Stardresses, but comes with a fitted neoprene collar to allow wear on essentially anything."
-	icon = 'modular_nova/master_files/icons/obj/clothing/head/akula.dmi'
-	worn_icon = 'modular_nova/master_files/icons/mob/clothing/head/akula.dmi'
-	clothing_flags = STOPSPRESSUREDAMAGE | THICKMATERIAL | SNUG_FIT | STACKABLE_HELMET_EXEMPT | HEADINTERNALS
-	icon_state = "helmet"
-	inhand_icon_state = "helmet"
-	strip_delay = 6 SECONDS
-	armor_type = /datum/armor/wetsuit_helmet
-	resistance_flags = FIRE_PROOF
-	/// Variable for storing hats which are worn inside the bubble helmet
-	var/obj/item/clothing/head/attached_hat
-	flags_inv = null
-	flags_cover = HEADCOVERSMOUTH | PEPPERPROOF
-
-	/// Helmet armor
-/datum/armor/wetsuit_helmet
-	bio = 100
-	fire = 100
-
-/obj/item/clothing/head/helmet/space/akula_wetsuit/Initialize(mapload)
-	. = ..()
-	AddComponent(/datum/component/wetsuit)
-	update_appearance()
-
-/obj/item/clothing/head/helmet/space/akula_wetsuit/Destroy()
-	. = ..()
-	var/mob/user = loc
-	if(attached_hat)
-		attached_hat.forceMove(drop_location())
-
-	if(!istype(user))
-		return
-
-	qdel(GetComponent(/datum/component/wetsuit))
-
-// Wearing hats inside the wetworks helmet
-/obj/item/clothing/head/helmet/space/akula_wetsuit/examine()
-	. = ..()
-	if(attached_hat)
-		. += span_notice("There's [attached_hat] placed in the helmet.")
-		. += span_bold("Right-click to remove it.")
-	else
-		. += span_notice("There's nothing placed in the helmet.")
-
-/obj/item/clothing/head/helmet/space/akula_wetsuit/attackby(obj/item/hitting_item, mob/living/user)
-	. = ..()
-	if(!istype(hitting_item, /obj/item/clothing/head))
-		return
-	var/obj/item/clothing/hitting_hat = hitting_item
-	if(hitting_hat.clothing_flags & STACKABLE_HELMET_EXEMPT)
-		balloon_alert(user, "doesn't fit!")
-		return
-	if(attached_hat)
-		balloon_alert(user, "already something inside!")
-		return
-
-	attached_hat = hitting_hat
-	balloon_alert(user, "[hitting_hat] put inside")
-	hitting_hat.forceMove(src)
-	icon_state = "empty"
-	update_appearance()
-
-/obj/item/clothing/head/helmet/space/akula_wetsuit/worn_overlays(mutable_appearance/standing, isinhands)
-	. = ..()
-	if(!attached_hat || isinhands)
-		return
-
-	var/mutable_appearance/attached_hat_appearance = mutable_appearance(attached_hat.worn_icon, attached_hat.icon_state, -(HEAD_LAYER-0.1))
-	attached_hat_appearance.add_overlay(mutable_appearance(worn_icon, "helmet", -HEAD_LAYER))
-	. += attached_hat_appearance
-
-
-/obj/item/clothing/head/helmet/space/akula_wetsuit/attack_hand_secondary(mob/user)
-	..()
-	if(!attached_hat)
-		return
-
-	user.put_in_active_hand(attached_hat)
-	balloon_alert(user, "[attached_hat] removed")
-	attached_hat = null
-	icon_state = "helmet"
-	update_appearance()
-	return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 
 #undef TAIL_OVERLAY_DMI
 #undef TAIL_OVERLAY_LAYER

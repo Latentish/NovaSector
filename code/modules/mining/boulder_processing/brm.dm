@@ -14,6 +14,7 @@
 	desc = "A teleportation matrix used to retrieve boulders excavated by mining NODEs from ore vents."
 	icon = 'icons/obj/machines/mining_machines.dmi'
 	icon_state = "brm"
+	base_icon_state = "brm"
 	active_power_usage = BASE_MACHINE_ACTIVE_CONSUMPTION * 0.5
 	circuit = /obj/item/circuitboard/machine/brm
 	processing_flags = START_PROCESSING_MANUALLY
@@ -31,6 +32,13 @@
 	COOLDOWN_DECLARE(manual_teleport_cooldown)
 	/// Cooldown used for automatic teleportation after processing boulders_processing_max number of boulders.
 	COOLDOWN_DECLARE(batch_start_cooldown)
+	// NOVA EDIT ADDITION START
+	/// Defines which areas this machine is allowed to operate. By default only the station but done this way in case its needed to be varedited by an admin. DO NOT ALLOW THIS FOR THE GHOST ROLES.
+	var/static/list/allowed_areas_to_work = typecacheof(list(
+		/area/station,
+		/area/mine,
+	))
+	// NOVA EDIT ADDITION END
 
 /obj/machinery/brm/Initialize(mapload)
 	. = ..()
@@ -46,7 +54,7 @@
 
 	if(!isnull(held_item))
 		if(held_item.tool_behaviour == TOOL_WRENCH)
-			context[SCREENTIP_CONTEXT_LMB] = "[anchored ? "Un" : ""]Anchor"
+			context[SCREENTIP_CONTEXT_LMB] = "[anchored ? "Unan" : "An"]chor"
 			return CONTEXTUAL_SCREENTIP_SET
 		else if(held_item.tool_behaviour == TOOL_SCREWDRIVER)
 			context[SCREENTIP_CONTEXT_LMB] = "[panel_open ? "Close" : "Open"] panel"
@@ -58,21 +66,21 @@
 /obj/machinery/brm/examine(mob/user)
 	. = ..()
 	. += span_notice("The small screen reads there are [span_boldnotice("[SSore_generation.available_boulders.len] boulders")] available to teleport.")
-	. += span_notice("Can collect upto <b>[boulders_processing_max] boulders</b> at a time.")
-	. += span_notice("Automatic boulder retrival can be toggled [EXAMINE_HINT("[toggled_on ? "Off" : "On"]")] with [EXAMINE_HINT("Right Click")].")
+	. += span_notice("Can collect up to <b>[boulders_processing_max] boulders</b> at a time.")
+	. += span_notice("Automatic boulder retrieval can be toggled [EXAMINE_HINT("[toggled_on ? "Off" : "On"]")] with [EXAMINE_HINT("Right Click")].")
 
 	if(anchored)
-		. += span_notice("Its [EXAMINE_HINT("anchored")] in place.")
+		. += span_notice("It's [EXAMINE_HINT("anchored")] in place.")
 	else
 		. += span_warning("It needs to be [EXAMINE_HINT("anchored")] to start operations.")
 
-	. += span_notice("Its maintainence panel can be [EXAMINE_HINT("screwed")] [panel_open ? "Closed" : "Open"].")
+	. += span_notice("Its maintenance panel can be [EXAMINE_HINT("screwed")] [panel_open ? "closed" : "open"].")
 
 	if(panel_open)
 		. += span_notice("The whole machine can be [EXAMINE_HINT("pried")] apart.")
 
 /obj/machinery/brm/update_icon_state()
-	icon_state = initial(icon_state)
+	icon_state = base_icon_state
 
 	if(!anchored || !is_operational || machine_stat & (BROKEN | NOPOWER) || panel_open)
 		icon_state = "[icon_state]-off"
@@ -91,15 +99,10 @@
 		return ITEM_INTERACT_SUCCESS
 
 /obj/machinery/brm/screwdriver_act(mob/living/user, obj/item/tool)
-	. = ITEM_INTERACT_BLOCKING
-	if(default_deconstruction_screwdriver(user, "[initial(icon_state)]-off", initial(icon_state), tool))
-		update_appearance(UPDATE_ICON_STATE)
-		return ITEM_INTERACT_SUCCESS
+	return default_deconstruction_screwdriver(user, tool)
 
 /obj/machinery/brm/crowbar_act(mob/living/user, obj/item/tool)
-	. = ITEM_INTERACT_BLOCKING
-	if(default_deconstruction_crowbar(tool))
-		return ITEM_INTERACT_SUCCESS
+	return default_deconstruction_crowbar(user, tool)
 
 ///To allow boulders on a conveyor belt to move unobstructed if multiple machines are made on a single line
 /obj/machinery/brm/CanAllowThrough(atom/movable/mover, border_dir)
@@ -127,7 +130,9 @@
 
 	var/result = pre_collect_boulder()
 	if(result == TURF_BLOCKED_BY_BOULDER)
-		balloon_alert(user, "no space")
+		balloon_alert(user, "no space!")
+	else if(result)
+		balloon_alert(user, "teleporting...")
 	COOLDOWN_START(src, manual_teleport_cooldown, TELEPORTATION_TIME)
 
 	return TRUE
@@ -142,6 +147,12 @@
 /obj/machinery/brm/proc/handle_teleport_conditions(mob/user)
 	PRIVATE_PROC(TRUE)
 
+	// NOVA EDIT ADDITION START
+	var/area/teleport_area = get_area(src)
+	if (!is_type_in_typecache(teleport_area, allowed_areas_to_work))
+		balloon_alert(user, "can't use this here!")
+		return FALSE
+	// NOVA EDIT ADDITION END
 	if(!COOLDOWN_FINISHED(src, manual_teleport_cooldown))
 		return FALSE
 	if(panel_open)
@@ -153,6 +164,23 @@
 	playsound(src, MANUAL_TELEPORT_SOUND, 50, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 	return TRUE
 
+/obj/machinery/brm/attack_ai(mob/user)
+	. = ..()
+	if(. || panel_open)
+		return
+	if(!handle_teleport_conditions(user))
+		return
+
+	var/result = pre_collect_boulder()
+	if(result == TURF_BLOCKED_BY_BOULDER)
+		balloon_alert(user, "no space!")
+	else if(result)
+		balloon_alert(user, "teleporting...")
+
+	COOLDOWN_START(src, manual_teleport_cooldown, TELEPORTATION_TIME)
+
+	return TRUE
+
 /obj/machinery/brm/attack_robot(mob/user)
 	. = ..()
 	if(. || panel_open)
@@ -162,9 +190,9 @@
 
 	var/result = pre_collect_boulder()
 	if(result == TURF_BLOCKED_BY_BOULDER)
-		balloon_alert(user, "no space")
+		balloon_alert(user, "no space!")
 	else if(result)
-		balloon_alert(user, "teleporting")
+		balloon_alert(user, "teleporting...")
 
 	COOLDOWN_START(src, manual_teleport_cooldown, TELEPORTATION_TIME)
 
@@ -175,7 +203,7 @@
 	if(. == SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN || panel_open)
 		return
 	if(!anchored)
-		balloon_alert(user, "anchor first!")
+		balloon_alert(user, "anchor it first!")
 		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 	toggle_auto_on(user)
 	return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
@@ -190,11 +218,17 @@
 /obj/machinery/brm/proc/toggle_auto_on(mob/user)
 	PRIVATE_PROC(TRUE)
 
+	// NOVA EDIT ADDITION START
+	var/area/teleport_area = get_area(src)
+	if (!is_type_in_typecache(teleport_area, allowed_areas_to_work))
+		balloon_alert(user, "can't use this here!")
+		return FALSE
+	// NOVA EDIT ADDITION END
 	if(panel_open)
 		balloon_alert(user, "close panel first!")
 		return
 	if(!anchored)
-		balloon_alert(user, "anchor first!")
+		balloon_alert(user, "anchor it first!")
 		return
 	if(!is_operational || machine_stat & (BROKEN | NOPOWER))
 		return
@@ -206,12 +240,25 @@
 		end_processing()
 	update_appearance(UPDATE_ICON_STATE)
 
-/obj/machinery/brm/attack_robot_secondary(mob/user, list/modifiers)
+/obj/machinery/brm/attack_ai_secondary(mob/user, list/modifiers)
 	. = ..()
 	if(. == SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN || panel_open)
 		return
 	if(!anchored)
-		balloon_alert(user, "anchor first!")
+		balloon_alert(user, "unanchored!")
+		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
+
+	toggle_auto_on(user)
+	return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
+
+/obj/machinery/brm/attack_robot_secondary(mob/user, list/modifiers)
+	. = ..()
+	if(. == SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN || panel_open)
+		return
+	if(!user.can_perform_action(src, ALLOW_SILICON_REACH | FORBID_TELEKINESIS_REACH))
+		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
+	if(!anchored)
+		balloon_alert(user, "unanchored!")
 		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 
 	toggle_auto_on(user)
@@ -254,7 +301,7 @@
 	//no more boulders
 	if(!SSore_generation.available_boulders.len)
 		if(feedback)
-			playsound(loc, 'sound/machines/synth_no.ogg', 30 , TRUE)
+			playsound(loc, 'sound/machines/synth/synth_no.ogg', 30 , TRUE)
 			balloon_alert_to_viewers("no boulders to collect!")
 		batch_processing = FALSE
 		return FALSE

@@ -9,23 +9,25 @@
 			if("genitals")
 				var/list/line = list()
 				for(var/genital in GLOB.possible_genitals)
-					if(!dna.species.mutant_bodyparts[genital])
+					var/datum/mutant_bodypart/genital_part = dna.mutant_bodyparts[genital]
+					if(isnull(genital_part))
 						continue
-					var/datum/sprite_accessory/genital/G = SSaccessories.sprite_accessories[genital][dna.species.mutant_bodyparts[genital][MUTANT_INDEX_NAME]]
-					if(!G)
+					var/datum/sprite_accessory/genital/genital_accessory = SSaccessories.sprite_accessories[genital][genital_part.name]
+					if(isnull(genital_accessory))
 						continue
-					if(G.is_hidden(src))
+					if(genital_accessory.is_hidden(src))
 						continue
-					var/obj/item/organ/external/genital/ORG = get_organ_slot(G.associated_organ_slot)
-					if(!ORG)
+					var/obj/item/organ/genital/genital_organ = get_organ_slot(genital_accessory.associated_organ_slot)
+					if(isnull(genital_organ))
 						continue
-					line += ORG.get_description_string(G)
+					line += genital_organ.get_description_string(genital_accessory)
 				if(length(line))
 					to_chat(usr, span_notice("[jointext(line, "\n")]"))
 			if("open_examine_panel")
 				mob_examine_panel.ui_interact(usr) //datum has a examine_panel component, here we open the window
 			if("open_character_ad")
-				usr.client?.show_character_directory(specific_ad = real_name)
+				if(usr.client)
+					INVOKE_GAME_VERB(usr.client, usr.client, /client, show_character_directory, specific_ad = real_name)
 
 /mob/living/carbon/human/species/vox
 	race = /datum/species/vox
@@ -72,21 +74,83 @@
 /mob/living/carbon/human/species/skrell
 	race = /datum/species/skrell
 
-/mob/living/carbon/human/verb/toggle_undies()
-	set category = "IC"
-	set name = "Toggle underwear visibility"
-	set desc = "Allows you to toggle which underwear should show or be hidden. Underwear will obscure genitals."
+/mob/living/carbon/human/species/abductorweak
+	race = /datum/species/abductor/abductorweak
 
-	if(stat != CONSCIOUS)
+/mob/living/carbon/human/species/golem/weak
+	race = /datum/species/golem/weak
+
+/mob/living/carbon/human/species/monkey/kobold
+	race = /datum/species/monkey/kobold
+
+/mob/living/carbon/human/species/monkey/roundstartkobold
+	race = /datum/species/monkey/kobold/roundstart
+
+/mob/living/carbon/human/species/protean
+	race = /datum/species/protean
+
+/mob/living/carbon/human/species/shadekin
+	race = /datum/species/shadekin
+
+/// Every toggleable underwear slot, by menu label, mapped to the flag that hides it.
+GLOBAL_LIST_INIT(underwear_visibility_slots, list(
+	"Underwear" = UNDERWEAR_HIDE_UNDIES,
+	"Bra" = UNDERWEAR_HIDE_BRA,
+	"Undershirt" = UNDERWEAR_HIDE_SHIRT,
+	"Socks" = UNDERWEAR_HIDE_SOCKS,
+))
+
+/// Shows or hides a single underwear slot by its menu label.
+/mob/living/carbon/human/proc/set_underwear_visibility(label, hidden)
+	var/flag = GLOB.underwear_visibility_slots[label]
+	if(isnull(flag))
+		return FALSE
+	if(hidden)
+		underwear_visibility |= flag
+	else
+		underwear_visibility &= ~flag
+	update_body()
+	return TRUE
+
+/// Shows or hides every underwear slot at once.
+/mob/living/carbon/human/proc/set_all_underwear_visibility(hidden)
+	underwear_visibility = hidden ? UNDERWEAR_HIDE_ALL : NONE
+	update_body()
+	return TRUE
+
+/// The per-slot underwear entries every configuring UI sends to tgui.
+/mob/living/carbon/human/proc/get_underwear_ui_entries()
+	var/list/entries = list()
+	for(var/label in GLOB.underwear_visibility_slots)
+		var/flag = GLOB.underwear_visibility_slots[label]
+		var/worn
+		switch(flag)
+			if(UNDERWEAR_HIDE_UNDIES)
+				worn = (underwear && underwear != "Nude")
+			if(UNDERWEAR_HIDE_BRA)
+				worn = (bra && bra != "Nude")
+			if(UNDERWEAR_HIDE_SHIRT)
+				worn = (undershirt && undershirt != "Nude")
+			if(UNDERWEAR_HIDE_SOCKS)
+				worn = (socks && socks != "Nude")
+		entries += list(list(
+			"name" = label,
+			"hidden" = !!(underwear_visibility & flag),
+			"worn" = !!worn,
+		))
+	return entries
+
+GAME_VERB_DESC(/mob/living/carbon/human, toggle_undies, "Toggle underwear visibility", "Allows you to toggle which underwear should show or be hidden. Underwear will obscure genitals.", "IC")
+
+	if(IS_UNCONSCIOUS_OR_CRIT(src))
 		to_chat(usr, span_warning("You can't toggle underwear visibility right now..."))
 		return
 
-	var/underwear_button = underwear_visibility & UNDERWEAR_HIDE_UNDIES ? "Show underwear" : "Hide underwear"
-	var/undershirt_button = underwear_visibility & UNDERWEAR_HIDE_SHIRT ? "Show shirt" : "Hide shirt"
-	var/socks_button = underwear_visibility & UNDERWEAR_HIDE_SOCKS ? "Show socks" : "Hide socks"
-	var/bra_button = underwear_visibility & UNDERWEAR_HIDE_BRA ? "Show bra" : "Hide bra"
+	var/list/choice_list = list()
 
-	var/list/choice_list = list("[underwear_button]" = "underwear", "[bra_button]" = "bra", "[undershirt_button]" = "shirt", "[socks_button]" = "socks")
+	for(var/label in GLOB.underwear_visibility_slots)
+		var/hidden = underwear_visibility & GLOB.underwear_visibility_slots[label]
+		choice_list["[hidden ? "Show" : "Hide"] [LOWER_TEXT(label)]"] = label
 
 	if(underwear_visibility != NONE)
 		choice_list += list("Show all" = "show")
@@ -102,20 +166,12 @@
 	var/picked_choice = choice_list[picked_visibility]
 
 	switch(picked_choice)
-		if("underwear")
-			underwear_visibility ^= UNDERWEAR_HIDE_UNDIES
-		if("bra")
-			underwear_visibility ^= UNDERWEAR_HIDE_BRA
-		if("shirt")
-			underwear_visibility ^= UNDERWEAR_HIDE_SHIRT
-		if("socks")
-			underwear_visibility ^= UNDERWEAR_HIDE_SOCKS
 		if("show")
-			underwear_visibility = NONE
+			set_all_underwear_visibility(FALSE)
 		if("hide")
-			underwear_visibility = UNDERWEAR_HIDE_ALL
-
-	update_body()
+			set_all_underwear_visibility(TRUE)
+		else
+			set_underwear_visibility(picked_choice, !(underwear_visibility & GLOB.underwear_visibility_slots[picked_choice]))
 
 /mob/living/carbon/human/revive(full_heal_flags = NONE, excess_healing = 0, force_grab_ghost = FALSE)
 	. = ..()
@@ -123,10 +179,7 @@
 		if(dna && dna.species)
 			dna.species.spec_revival(src)
 
-/mob/living/carbon/human/verb/toggle_mutant_part_visibility()
-	set category = "IC"
-	set name = "Show/Hide Mutant Parts"
-	set desc = "Allows you to choose to try and hide your mutant bodyparts under your clothes."
+GAME_VERB_DESC(/mob/living/carbon/human, toggle_mutant_part_visibility, "Show/Hide Mutant Parts", "Allows you to choose to try and hide your mutant bodyparts under your clothes.", "IC")
 
 	mutant_part_visibility()
 
@@ -135,28 +188,29 @@
 	var/list/available_selection
 	// The total list of parts choosable
 	var/static/list/total_selection = list(
-		ORGAN_SLOT_EXTERNAL_HORNS = "horns",
-		ORGAN_SLOT_EXTERNAL_EARS = "ears",
-		ORGAN_SLOT_EXTERNAL_WINGS = "wings",
-		ORGAN_SLOT_EXTERNAL_TAIL = "tail",
-		ORGAN_SLOT_EXTERNAL_SYNTH_ANTENNA = "ipc_antenna",
-		ORGAN_SLOT_EXTERNAL_ANTENNAE = "moth_antennae",
-		ORGAN_SLOT_EXTERNAL_XENODORSAL = "xenodorsal",
-		ORGAN_SLOT_EXTERNAL_SPINES = "spines",
+		ORGAN_SLOT_EXTERNAL_HORNS = FEATURE_HORNS,
+		ORGAN_SLOT_EARS = FEATURE_EARS,
+		ORGAN_SLOT_EXTERNAL_WINGS = FEATURE_WINGS,
+		ORGAN_SLOT_EXTERNAL_TAIL = FEATURE_TAIL,
+		ORGAN_SLOT_EXTERNAL_SYNTH_ANTENNA = FEATURE_SYNTH_ANTENNA,
+		ORGAN_SLOT_EXTERNAL_ANTENNAE = FEATURE_MOTH_ANTENNAE,
+		ORGAN_SLOT_EXTERNAL_XENODORSAL = FEATURE_XENODORSAL,
+		ORGAN_SLOT_EXTERNAL_SPINES = FEATURE_SPINES,
 	)
 
 	// Stat check
-	if(stat != CONSCIOUS)
+	if(IS_UNCONSCIOUS_OR_CRIT(src))
 		to_chat(usr, span_warning("You can't do this right now..."))
 		return
 
 	// Only show the 'reveal all' button if we are already hiding something
-	if(try_hide_mutant_parts)
-		LAZYOR(available_selection, "reveal all")
+	available_selection = list()
+	if(LAZYLEN(try_hide_mutant_parts))
+		available_selection["reveal all"] = TRUE
 	// Lets build our parts list
-	for(var/organ_slot in total_selection)
+	for(var/organ_slot, feature_string in total_selection)
 		if(get_organ_slot(organ_slot))
-			LAZYOR(available_selection, total_selection[organ_slot])
+			available_selection[feature_string] = TRUE
 
 	// If this proc is called with the 'quick_toggle' flag, we skip the rest
 	if(quick_toggle)
@@ -164,8 +218,8 @@
 			LAZYNULL(try_hide_mutant_parts)
 		else
 			for(var/part in available_selection)
-				LAZYOR(try_hide_mutant_parts, part)
-		update_mutant_bodyparts()
+				LAZYSET(try_hide_mutant_parts, part,  TRUE)
+		update_body_parts()
 		return
 
 	// Dont open the radial automatically just for one button
@@ -174,19 +228,40 @@
 	// If 'reveal all' is our only option just do it
 	if(!re_do && (("reveal all" in available_selection) && (length(available_selection) == 1)))
 		LAZYNULL(try_hide_mutant_parts)
-		update_mutant_bodyparts()
+		update_body_parts()
 		return
 
 	// Radial rendering
-	var/list/choices = list()
-	for(var/choice in available_selection)
-		var/datum/radial_menu_choice/option = new
-		var/image/part_image = image(icon = HIDING_RADIAL_DMI, icon_state = choice)
+	// Shared static caches so we never re-create objects
+	var/static/list/choice_icon_cache = list()
+	var/static/mutable_appearance/unusable_overlay = mutable_appearance(
+		icon = HIDING_RADIAL_DMI,
+		icon_state = "module_unable",
+	)
 
-		option.image = part_image
+	// Radial rendering
+	var/list/choices = list()
+
+	for(var/choice in available_selection)
+		// Build appearance once per icon_state
+		if(isnull(choice_icon_cache[choice]))
+			choice_icon_cache[choice] = mutable_appearance(
+				icon = HIDING_RADIAL_DMI,
+				icon_state = choice,
+			)
+
+		// Reuse cached appearance
+		var/mutable_appearance/choice_icon_appearance = new (choice_icon_cache[choice])
+
+		var/datum/radial_menu_choice/option = new
+		option.image = choice_icon_appearance
+
+		// Add overlay if hidden
 		if(choice in try_hide_mutant_parts)
-			part_image.underlays += image(icon = HIDING_RADIAL_DMI, icon_state = "module_unable")
+			choice_icon_appearance.overlays += unusable_overlay
+
 		choices[choice] = option
+
 	// Radial choices
 	sort_list(choices)
 	var/pick = show_radial_menu(usr, src, choices, custom_check = FALSE, tooltips = TRUE)
@@ -197,30 +272,25 @@
 	if(pick == "reveal all")
 		to_chat(usr, span_notice("You are no longer trying to hide your mutant parts."))
 		LAZYNULL(try_hide_mutant_parts)
-		update_mutant_bodyparts()
+		update_body_parts()
 		return
 
-	else if(pick in try_hide_mutant_parts)
+	else if(LAZYLEN(try_hide_mutant_parts) && try_hide_mutant_parts.Remove(pick))
 		to_chat(usr, span_notice("You are no longer trying to hide your [pick]."))
-		LAZYREMOVE(try_hide_mutant_parts, pick)
 	else
 		to_chat(usr, span_notice("You are now trying to hide your [pick]."))
-		LAZYOR(try_hide_mutant_parts, pick)
-	update_mutant_bodyparts()
+		LAZYSET(try_hide_mutant_parts, pick, TRUE)
+	update_body_parts()
 	// automatically re-do the menu after making a selection
 	mutant_part_visibility(re_do = TRUE)
-
 
 // Feign impairment verb
 #define DEFAULT_TIME 30
 #define MAX_TIME 36000 // 10 hours
 
-/mob/living/carbon/human/verb/acting()
-	set category = "IC"
-	set name = "Feign Impairment"
-	set desc = "Pretend to be impaired for a defined duration."
+GAME_VERB_DESC(/mob/living/carbon/human, acting, "Feign Impairment", "Pretend to be impaired for a defined duration.", "IC")
 
-	if(stat != CONSCIOUS)
+	if(IS_UNCONSCIOUS_OR_CRIT(src))
 		to_chat(usr, span_warning("You can't do this right now..."))
 		return
 

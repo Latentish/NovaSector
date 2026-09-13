@@ -1,56 +1,59 @@
-import { DmIcon, Icon } from '../../components';
-import { JOB2ICON } from '../common/JobToIcon';
-import { Antagonist, Observable } from './types';
+import { DmIcon, Icon } from 'tgui-core/components';
+
+import type { Antagonist, Observable } from './types';
 
 type Props = {
   item: Observable | Antagonist;
+  realNameDisplay: boolean;
 };
 
 type IconSettings = {
-  dmi: string;
   transform: string;
 };
 
 const normalIcon: IconSettings = {
-  dmi: 'modular_nova/master_files/icons/mob/huds/hud.dmi', // NOVA CHANGE - ORIGINAL 'icons/mob/huds/hud.dmi'
   transform: 'scale(2.3) translateX(9px) translateY(1px)',
 };
 
 const antagIcon: IconSettings = {
-  dmi: 'icons/mob/huds/antag_hud.dmi',
-  transform: 'scale(1.8) translateX(-16px) translateY(7px)',
+  transform: 'scale(2) translateX(-15px) translateY(8px)',
 };
 
 export function JobIcon(props: Props) {
-  const { item } = props;
+  const { item, realNameDisplay } = props;
+
+  // We don't need to cast here but typescript isn't smart enough to know that
+  const {
+    icon = '',
+    icon_state = '',
+    mind_job_icon = '',
+    mind_icon = '',
+    mind_icon_state = '',
+  } = item;
+  const usedIcon = realNameDisplay ? mind_icon || icon : icon;
+  const usedIconState = realNameDisplay
+    ? mind_icon_state || icon_state
+    : icon_state;
 
   let iconSettings: IconSettings;
-  if ('antag' in item) {
+  if ('antag' in item && !realNameDisplay) {
     iconSettings = antagIcon;
   } else {
     iconSettings = normalIcon;
   }
 
-  // We don't need to cast here but typescript isn't smart enough to know that
-  const { icon = '', job = '' } = item;
-
   return (
     <div className="JobIcon">
-      {icon === 'borg' ? (
-        <Icon color="lightblue" name={JOB2ICON[job]} mr={0.5} />
+      {icon_state === 'borg' ? (
+        <Icon color="lightblue" name={mind_job_icon} ml={0.3} mt={0.4} />
       ) : (
-        <div
+        <DmIcon
+          icon={usedIcon}
+          icon_state={usedIconState}
           style={{
-            height: '17px',
-            width: '18px',
+            transform: iconSettings.transform,
           }}
-        >
-          <DmIcon
-            icon={iconSettings.dmi}
-            icon_state={icon}
-            style={{ transform: iconSettings.transform }}
-          />
-        </div>
+        />
       )}
     </div>
   );

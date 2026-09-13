@@ -30,11 +30,11 @@
 	return ..()
 
 /datum/action/item_action/toggle_hide_face/Trigger(trigger_flags)
-    . = ..()
-    if(!.)
-        return
-    var/obj/item/clothing/mask/target_mask = target
-    target_mask.toggle_hide_face(usr)
+	. = ..()
+	if(!.)
+		return
+	var/obj/item/clothing/mask/target_mask = target
+	target_mask.toggle_hide_face(usr)
 
 /**
  * Toggles the HIDEFACE flag on the user's mask.
@@ -44,7 +44,7 @@
  * @return TRUE if the mask was toggled, FALSE otherwise.
  */
 /obj/item/clothing/mask/proc/toggle_hide_face(mob/living/carbon/user, force = FALSE)
-	if(!user.wear_mask && !force)
+	if(istype(user) && !user.get_item_by_slot(ITEM_SLOT_MASK) && !force)
 		return FALSE
 
 	if(src.flags_inv & HIDEFACE)

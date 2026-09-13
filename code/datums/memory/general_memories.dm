@@ -95,7 +95,7 @@
 
 /datum/memory/high_five/get_starts()
 	return list(
-		"[protagonist_name] and [deuteragonist_name] having a a legendary [high_five_type]",
+		"[protagonist_name] and [deuteragonist_name] having a legendary [high_five_type]",
 		"[protagonist_name] giving [deuteragonist_name] a [high_five_type]",
 		"[protagonist_name] and [deuteragonist_name] giving each other a [high_five_type]",
 	)
@@ -160,6 +160,28 @@
 		"[protagonist_name] [mood_verb] as the cream drips off their face",
 		"[protagonist_name] [mood_verb] because of their now expanded laundry task.",
 		"[protagonist_name] [mood_verb] as they lick off some of the pie",
+	)
+
+/// Witnessed someone get splashed with squid ink.
+/datum/memory/witnessed_inking
+	story_value = STORY_VALUE_OKAY
+	memory_flags = MEMORY_CHECK_BLINDNESS
+	// Protagonist - The mob that got pied
+
+/datum/memory/witnessed_inking/get_names()
+	return list("The inking of [protagonist_name].")
+
+/datum/memory/witnessed_inking/get_starts()
+	return list(
+		"[protagonist_name]'s face being covered in squid ink",
+		"[protagonist_name] getting squid-inked",
+	)
+
+/datum/memory/witnessed_inking/get_moods()
+	return list(
+		"[protagonist_name] [mood_verb] as ink drips off their face",
+		"[protagonist_name] [mood_verb] because of their now expanded laundry task.",
+		"[protagonist_name] [mood_verb] as they wipe the ink off their face.",
 	)
 
 /// Got slipped by something.
@@ -542,6 +564,25 @@
 		"[protagonist_name] [mood_verb] as they stare down [antagonist_name]'s barrel.",
 	)
 
+
+/datum/memory/won_jackpot
+	story_value = STORY_VALUE_AMAZING
+
+/datum/memory/won_jackpot/get_names()
+	return list("[protagonist_name] winning it big.")
+
+/datum/memory/won_jackpot/get_starts()
+	return list(
+		"[protagonist_name] hits [deuteragonist_name]'s lever, with money symbols in their eyes.",
+		"[deuteragonist_name] plays a jingle as [protagonist_name] pulls the lever.",
+	)
+
+/datum/memory/won_jackpot/get_moods()
+	return list(
+		"[protagonist_name] [mood_verb] as they collect the money from the [deuteragonist_name].",
+		"[protagonist_name] [mood_verb] as [deuteragonist_name] starts spitting out money with a blare.",
+	)
+
 /// Saw someone get gibbed.
 /datum/memory/witness_gib
 	story_value = STORY_VALUE_OKAY
@@ -588,19 +629,19 @@
 	// Antagonist - The supermatter
 
 /datum/memory/witness_supermatter_dusting/get_names()
-	return list("The dusting of [protagonist_name] by the [antagonist_name].")
+	return list("[protagonist_name] being blasted away by the [antagonist_name].") // NOVA EDIT CHANGE - ORIGINAL: return list("The dusting of [protagonist_name] by the [antagonist_name].")
 
 /datum/memory/witness_supermatter_dusting/get_starts()
 	return list(
-		"[protagonist_name] turning into a pile of bones after touching the [antagonist_name]",
-		"The [antagonist_name] turning [protagonist_name] into ash",
-		"The dusting of [protagonist_name] after they got too close to the [antagonist_name]",
+		"[protagonist_name] glowing white-hot after touching the [antagonist_name] before vanishing in a flash of heat", // NOVA EDIT CHANGE - ORIGINAL: "[protagonist_name] turning into a pile of bones after touching the [antagonist_name]",
+		"The [antagonist_name] blasting [protagonist_name] away in a flash of heat", // NOVA EDIT CHANGE - ORIGINAL: "The [antagonist_name] turning [protagonist_name] into ash",
+		"[protagonist_name] getting thrown away after they got too close to the [antagonist_name]", // NOVA EDIT CHANGE - ORIGINAL: "The dusting of [protagonist_name] after they got too close to the [antagonist_name]",
 	)
 
 /datum/memory/witness_supermatter_dusting/get_moods()
 	return list(
-		"[protagonist_name] [mood_verb] as they faded way.",
-		"[protagonist_name] [mood_verb] as they are reduced to atoms.",
+		"[protagonist_name] [mood_verb] as they vanished in a wash of heat.", // NOVA EDIT CHANGE - ORIGINAL: "[protagonist_name] [mood_verb] as they faded way.",
+		"[protagonist_name] [mood_verb] as they were hurled away.", // NOVA EDIT CHANGE - ORIGINAL: "[protagonist_name] [mood_verb] as they are reduced to atoms.",
 	)
 
 /// Played cards with another person.

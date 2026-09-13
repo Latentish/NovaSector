@@ -1,6 +1,23 @@
-/obj/item/clothing/suit
-	/// Does this object get cropped when worn by a taur on their suit or uniform slot?
-	var/gets_cropped_on_taurs = TRUE
+// taur suit blood overlays
+/obj/item/clothing/suit/get_blood_overlay(blood_state, bodyshape)
+	// worn_x_offset is only set to -16 when we're actually drawing a taur-fitted (64x32) worn icon.
+	// Suits without a taur-specific sprite fall back to the cropped generic icon and stay at offset 0,
+	// so using the wide blood overlay for them makes the blood render shifted off to the side.
+	if(!(bodyshape & BODYSHAPE_TAUR) || !worn_x_offset)
+		return ..()
+	if(!GET_ATOM_BLOOD_DNA_LENGTH(src))
+		return
+
+	var/mutable_appearance/blood_overlay = mutable_appearance('modular_nova/master_files/icons/mob/64x32_blood.dmi', "[blood_overlay_type]blood")
+
+	blood_overlay.color = get_blood_dna_color()
+
+	var/emissive_alpha = get_blood_emissive_alpha(is_worn = TRUE)
+	if (emissive_alpha)
+		var/mutable_appearance/emissive_overlay = emissive_appearance(blood_overlay.icon, blood_overlay.icon_state, src, alpha = emissive_alpha)
+		blood_overlay.overlays += emissive_overlay
+
+	return blood_overlay
 
 //Define worn_icon_digi below here for suits so we don't have to make whole new .dm files for each
 /obj/item/clothing/suit/armor
@@ -19,6 +36,9 @@
 /obj/item/clothing/suit/space
 	worn_icon_digi = 'modular_nova/master_files/icons/mob/clothing/suits/spacesuit_digi.dmi'
 
+/obj/item/clothing/suit/syndicatefake
+	worn_icon_digi = 'modular_nova/master_files/icons/mob/clothing/suits/spacesuit_digi.dmi'
+
 /obj/item/clothing/suit/chaplainsuit
 	worn_icon_digi = 'modular_nova/master_files/icons/mob/clothing/suits/chaplain_digi.dmi'
 
@@ -26,12 +46,18 @@
 	worn_icon_digi = 'modular_nova/master_files/icons/mob/clothing/suits/chaplain_digi.dmi'
 
 /obj/item/clothing/suit/chaplainsuit/habit
+	icon = 'icons/map_icons/clothing/suit/_suit.dmi'
+	icon_state = "/obj/item/clothing/suit/chaplainsuit/habit"
+	post_init_icon_state = "habit"
 	greyscale_config = /datum/greyscale_config/chappy_habit
 	greyscale_config_worn = /datum/greyscale_config/chappy_habit/worn
 	greyscale_colors = "#373548#FFFFFF#D29722"
 	flags_1 = IS_PLAYER_COLORABLE_1
 
 /obj/item/clothing/suit/hooded/chaplainsuit/monkhabit
+	icon = 'icons/map_icons/clothing/suit/_suit.dmi'
+	icon_state = "/obj/item/clothing/suit/hooded/chaplainsuit/monkhabit"
+	post_init_icon_state = "monkfrock"
 	greyscale_config = /datum/greyscale_config/monk_habit
 	greyscale_config_worn = /datum/greyscale_config/monk_habit/worn
 	greyscale_colors = "#8C531A#9C7132"

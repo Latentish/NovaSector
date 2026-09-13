@@ -19,14 +19,11 @@
 	resistance_flags = NONE
 	female_sprite_flags = NO_FEMALE_UNIFORM
 	supports_variations_flags = CLOTHING_DIGITIGRADE_VARIATION_NO_NEW_ICON
+	bodyshapes_with_variations = NONE
 
 /obj/item/clothing/under/skinsuit/Initialize(mapload)
 	. = ..()
 	AddComponent(/datum/component/wetsuit)
-
-/obj/item/clothing/under/skinsuit/Destroy()
-	. = ..()
-	qdel(GetComponent(/datum/component/wetsuit))
 
 /obj/item/clothing/head/helmet/space/skinsuit_helmet
 	name = "\improper Stardress helm"
@@ -43,10 +40,6 @@
 /obj/item/clothing/head/helmet/space/skinsuit_helmet/Initialize(mapload)
 	. = ..()
 	AddComponent(/datum/component/wetsuit)
-
-/obj/item/clothing/head/helmet/space/skinsuit_helmet/Destroy()
-	. = ..()
-	qdel(GetComponent(/datum/component/wetsuit))
 
 /obj/item/clothing/suit/armor/riot/skinsuit_armor
 	name = "\improper Shorebreaker plating"
@@ -80,7 +73,7 @@
 /// Pick an icon_state that matches nicer with tails if one is found on the wearer
 /obj/item/clothing/suit/armor/riot/skinsuit_armor/proc/check_tail(mob/living/carbon/human/user)
 	icon_state = base_icon_state
-	if(!user.dna.species.mutant_bodyparts["tail"])
+	if(isnull(user.dna.mutant_bodyparts[FEATURE_TAIL]))
 		return
 
 	icon_state = "skinsuitarmor_cutback"

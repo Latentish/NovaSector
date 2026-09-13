@@ -36,21 +36,22 @@
 /obj/item/circuit_component/compare/health_state/do_comparisons()
 	var/mob/living/organism = input_port.value
 	var/turf/current_turf = get_location()
-	if(!istype(organism) || current_turf.z != organism.z || get_dist(current_turf, organism) > max_range)
+	var/turf/target_location = get_turf(organism)
+	if(!istype(organism) || current_turf.z != target_location.z || get_dist(current_turf, target_location) > max_range)
 		return FALSE
 
 	var/current_option = state_option.value
 	var/state = organism.stat
 	switch(current_option)
 		if("Alive")
-			return state != DEAD
+			return !IS_DEAD_OR_FAKING(organism)
+		if("Deceased")
+			return IS_DEAD_OR_FAKING(organism)
 		if("Asleep")
-			return !!organism.IsSleeping() && !organism.IsUnconscious()
+			return IS_UNCONSCIOUS_AND_ALIVE(organism) && state == STABLE
+		if("Unconscious")
+			return IS_UNCONSCIOUS_AND_ALIVE(organism)
 		if("Critical")
 			return state == SOFT_CRIT || state == HARD_CRIT
-		if("Unconscious")
-			return state == UNCONSCIOUS || state == HARD_CRIT || !!organism.IsUnconscious()
-		if("Deceased")
-			return state == DEAD
 	//Unknown state, something fucked up really bad - just return false
 	return FALSE

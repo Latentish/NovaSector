@@ -1,17 +1,17 @@
 /datum/job/nanotrasen_consultant
 	title = JOB_NT_REP
 	description = "Represent Nanotrasen on the station, argue with the HoS about why he can't just field execute people for petty theft, get drunk in your office."
-	department_head = list(JOB_CENTCOM)
 	faction = FACTION_STATION
 	total_positions = 1
 	spawn_positions = 1
-	supervisors = "Central Command"
+	supervisors = JOB_CENTCOM
 	minimal_player_age = 14
 	exp_requirements = 600
 	exp_required_type = EXP_TYPE_CREW
 	exp_required_type_department = EXP_TYPE_COMMAND
 	exp_granted_type = EXP_TYPE_CREW
 	config_tag = "NANOTRASEN_CONSULTANT"
+	tgui_icon = FA_ICON_CLIPBOARD_CHECK
 
 	department_for_prefs = /datum/job_department/captain
 
@@ -32,13 +32,13 @@
 	family_heirlooms = list(/obj/item/book/manual/wiki/security_space_law)
 
 	mail_goodies = list(
-		/obj/item/clothing/mask/cigarette/cigar/havana = 20,
+		/obj/item/cigarette/cigar/havana = 20,
 		/obj/item/storage/fancy/cigarettes/cigars/havana = 15,
 		/obj/item/reagent_containers/cup/glass/bottle/champagne = 10
 	)
 
-	veteran_only = TRUE
-	job_flags = STATION_JOB_FLAGS | JOB_BOLD_SELECT_TEXT | JOB_CANNOT_OPEN_SLOTS
+	nova_stars_only = TRUE
+	job_flags = STATION_JOB_FLAGS | JOB_BOLD_SELECT_TEXT | JOB_CANNOT_OPEN_SLOTS | JOB_ANTAG_PROTECTED
 
 /datum/outfit/job/nanotrasen_consultant
 	name = "Nanotrasen Consultant"
@@ -47,7 +47,7 @@
 	belt = /obj/item/modular_computer/pda/nanotrasen_consultant
 	glasses = /obj/item/clothing/glasses/sunglasses
 	ears = /obj/item/radio/headset/heads/nanotrasen_consultant
-	gloves = /obj/item/clothing/gloves/combat
+	gloves = /obj/item/clothing/gloves/combat/naval/nanotrasen_consultant/black
 	uniform =  /obj/item/clothing/under/rank/nanotrasen_consultant
 	suit = /obj/item/clothing/suit/armor/vest/nanotrasen_consultant
 	shoes = /obj/item/clothing/shoes/jackboots
@@ -69,15 +69,19 @@
 
 	chameleon_extras = list(/obj/item/gun/energy/e_gun, /obj/item/stamp/centcom)
 
-	id = /obj/item/card/id/advanced/centcom
+	id = /obj/item/card/id/advanced/centcom/station
 	id_trim = /datum/id_trim/job/nanotrasen_consultant
+
+/obj/item/encryptionkey/headset_cent/ccrep
+	name = "\improper CentCom representative's encryption key"
+	channels = list(RADIO_CHANNEL_CENTCOM = 1, RADIO_CHANNEL_SECURITY = 1)
 
 /obj/item/radio/headset/heads/nanotrasen_consultant
 	name = "\proper the Nanotrasen consultant's headset"
 	desc = "An official Central Command headset."
 	icon_state = "cent_headset"
 	keyslot = new /obj/item/encryptionkey/headset_com
-	keyslot2 = new /obj/item/encryptionkey/headset_cent
+	keyslot2 = new /obj/item/encryptionkey/headset_cent/ccrep
 
 /obj/item/radio/headset/heads/nanotrasen_consultant/alt
 	name = "\proper the Nanotrasen consultant's bowman headset"
@@ -107,9 +111,21 @@
 
 /obj/item/modular_computer/pda/nanotrasen_consultant
 	name = "nanotrasen consultant's PDA"
-	inserted_disk = /obj/item/computer_disk/command/captain
-	inserted_item = /obj/item/pen/fountain/captain
+	inserted_disk = /obj/item/disk/computer/command/captain
+	inserted_item = /obj/item/pen/fountain/green
+	/// Fax type to connect their PDA to (for use with fax notification app)
+	var/fax_type = /obj/machinery/fax/heads/nanotrasen_consultant
 	greyscale_colors = "#017941#0060b8"
+
+/obj/item/modular_computer/pda/nanotrasen_consultant/Initialize(mapload)
+	. = ..()
+	var/datum/computer_file/program/faxbond/fax_app = new
+	store_file(fax_app)
+	if (ispath(fax_type, /obj/machinery/fax))
+		var/datum/computer_file/program/faxbond/fax_notifier = locate() in stored_files
+		var/list/faxes_list = SSmachines.get_machines_by_type(fax_type)
+		var/obj/machinery/fax/rep_fax = length(faxes_list) ? pick(faxes_list) : null //there really shouldnt be more than one
+		fax_notifier.connect_fax(rep_fax)
 
 /obj/item/storage/bag/garment/nanotrasen_consultant
 	name = "nanotrasen consultant's garment bag"
@@ -118,11 +134,13 @@
 /obj/item/storage/bag/garment/nanotrasen_consultant/PopulateContents()
 	new /obj/item/clothing/shoes/sneakers/brown(src)
 	new /obj/item/clothing/glasses/sunglasses/gar/giga(src)
-	new /obj/item/clothing/gloves/combat(src)
 	new /obj/item/clothing/gloves/combat/naval/nanotrasen_consultant(src)
+	new /obj/item/clothing/gloves/combat/naval/nanotrasen_consultant/black(src)
 	new /obj/item/clothing/suit/hooded/wintercoat/centcom/nt_consultant(src)
 	new /obj/item/clothing/under/rank/nanotrasen_consultant(src)
 	new /obj/item/clothing/under/rank/nanotrasen_consultant/skirt(src)
+	new /obj/item/clothing/under/imperial/nanotrasen_consultant(src)
+	new /obj/item/clothing/under/imperialskirt/nanotrasen_consultant(src)
 	new /obj/item/clothing/under/rank/centcom/officer(src)
 	new /obj/item/clothing/under/rank/centcom/officer_skirt(src)
 	new /obj/item/clothing/head/nanotrasen_consultant(src)
@@ -145,26 +163,77 @@
 	new /obj/item/clothing/neck/petcollar(src)
 	new /obj/item/pet_carrier(src)
 	new /obj/item/clothing/suit/armor/vest(src)
-	new /obj/item/computer_disk/command/captain(src)
+	new /obj/item/disk/computer/command/captain(src)
 	new /obj/item/radio/headset/heads/nanotrasen_consultant/alt(src)
 	new /obj/item/radio/headset/heads/nanotrasen_consultant(src)
 	new /obj/item/storage/photo_album/personal(src)
 	new /obj/item/bedsheet/centcom(src)
 	new /obj/item/storage/bag/garment/nanotrasen_consultant(src)
 
-//Choice Beacon, I hope in the future they're going to be given proper unique gun but this will do.
+/obj/machinery/fax/heads/nanotrasen_consultant
+	name = "Nanotrasen Consultant's Fax Machine"
+	fax_name = "Nanotrasen Consultant's Office"
 
+//Choice Beacon, I hope in the future they're going to be given proper unique gun but this will do.
 
 /obj/item/choice_beacon/ntc
 	name = "gunset beacon"
-	desc = "A single use beacon to deliver a gunset of your choice. Please only call this in your office"
-	company_source = "Trappiste Fabriek Company"
+	desc = "A single use beacon to deliver a gunset or weapon of your choice. Please only call this in your office"
+	icon_state = "cc_beacon"
+	inhand_icon_state = "cc_beacon"
+	icon = 'modular_nova/modules/modular_items/icons/remote.dmi'
+	lefthand_file = 'modular_nova/modules/modular_items/icons/inhand/mobs/lefthand_remote.dmi'
+	righthand_file = 'modular_nova/modules/modular_items/icons/inhand/mobs/righthand_remote.dmi'
+	company_source = "Nanotrasen™"
 	company_message = span_bold("Supply Pod incoming please stand by")
 
 /obj/item/choice_beacon/ntc/generate_display_names()
 	var/static/list/selectable_gun_types = list(
 		"Takbok Revolver Set" = /obj/item/storage/toolbox/guncase/nova/pistol/trappiste_small_case/takbok,
 		"Skild Pistol Set" = /obj/item/storage/toolbox/guncase/nova/pistol/trappiste_small_case/skild,
+		"Green Nanotrasen™ Sheath" = /obj/item/storage/belt/sheath/sabre/consultant,
+		"Black Nanotrasen™ Sheath" = /obj/item/storage/belt/sheath/sabre/admiral,
 	)
 
 	return selectable_gun_types
+
+/obj/item/pen/fountain/green
+	name = "nanotrasen fountain pen"
+	desc = "It's an expensive green fountain pen. The case may be plastic, but that gold is real!"
+	icon = 'modular_nova/master_files/icons/obj/bureaucracy.dmi'
+	icon_state = "pen-fountain-nt"
+	colour = "#18610D"
+	custom_materials = list(/datum/material/gold = SMALL_MATERIAL_AMOUNT*7.5)
+
+/obj/item/storage/belt/sheath/sabre/consultant
+	name = "\improper Nanotrasen™ sabre sheath"
+	desc = "An ornate sheath designed to hold an officer's blade. This one is in green and a distinct Nanotrasen corporate identity."
+	icon = 'modular_nova/master_files/icons/obj/clothing/belts.dmi'
+	icon_state = "cc-sheath"
+	worn_icon = 'modular_nova/master_files/icons/mob/clothing/belt.dmi'
+	worn_icon_state = "cc-sheath"
+	storage_type = /datum/storage/sabre_belt
+	stored_blade = /obj/item/melee/sabre/central_command
+
+/obj/item/storage/belt/sheath/sabre/admiral
+	name = "\improper Nanotrasen™ sabre sheath"
+	desc = "An ornate sheath designed to hold an officer's blade. This one comes in black and a distinct Nanotrasen corporate identity."
+	icon = 'modular_nova/master_files/icons/obj/clothing/belts.dmi'
+	icon_state = "admiral-sheath"
+	worn_icon = 'modular_nova/master_files/icons/mob/clothing/belt.dmi'
+	worn_icon_state = "admiral-sheath"
+	storage_type = /datum/storage/sabre_belt
+	stored_blade = /obj/item/melee/sabre/central_command
+
+/obj/item/melee/sabre/central_command
+	name = "\improper Nanotrasen™ sabre"
+	desc = "An well crafted and elegant weapon, this one came out poorly from the nanofabricator with a bilayer edge capable of cutting through flesh and bone, but not as well as finer samples. This one carries a distinct Nanotrasen corporate identity carved into the hilt."
+	block_chance = 40
+	armour_penetration = 40
+
+/obj/item/melee/sabre/central_command/Initialize(mapload)
+	. = ..()
+	// Remove every bane component since we don't want there to be any.
+	var/list/bane_components = GetComponents(/datum/component/bane)
+	QDEL_LIST(bane_components)
+

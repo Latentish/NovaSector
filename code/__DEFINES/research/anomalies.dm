@@ -1,51 +1,61 @@
 // Max amounts of cores you can make
 #define MAX_CORES_BLUESPACE 16 // NOVA EDIT CHANGE - ORIGINAL: #define MAX_CORES_BLUESPACE 3 - Higher pop + longer rounds means we probably could use a lot more of these as they are used for a lot of things.
-#define MAX_CORES_GRAVITATIONAL 8
-#define MAX_CORES_FLUX 8
-#define MAX_CORES_VORTEX 1
+#define MAX_CORES_GRAVITATIONAL 8 // NOVA EDIT CHANGE - ORIGINAL: #define MAX_CORES_GRAVITATIONAL 6 - Same reasons as the Bluespace cores above, and encourages Science to be less stingy.
+#define MAX_CORES_FLUX 8 // NOVA EDIT CHANGE - ORIGINAL: #define MAX_CORES_FLUX 5 - Also encourages science to be less stingy/choosy with what they use their flux cores.
+#define MAX_CORES_VORTEX 3
 #define MAX_CORES_PYRO 8
 #define MAX_CORES_HALLUCINATION 8
 #define MAX_CORES_BIOSCRAMBLER 8
 #define MAX_CORES_DIMENSIONAL 8
 #define MAX_CORES_ECTOPLASMIC 8
+#define MAX_CORES_WEATHER 5
 
 ///Defines for the different types of explosion a flux anomaly can have
-#define FLUX_NO_EXPLOSION 0
-#define FLUX_EXPLOSIVE 1
-#define FLUX_LOW_EXPLOSIVE 2
+#define FLUX_NO_EMP 0
+#define FLUX_EMP 1
+#define FLUX_LIGHT_EMP 2
 
 /// Chance of anomalies moving every process tick
 #define ANOMALY_MOVECHANCE 45
 
 /// Blacklist of parts which should not appear when bioscrambled, largely because they will make you look totally fucked up
 GLOBAL_LIST_INIT(bioscrambler_parts_blacklist, typecacheof(list(
-	/obj/item/bodypart/chest/larva,
-	/obj/item/bodypart/head/larva,
+	/obj/item/bodypart/head/psyker,
+	/obj/item/bodypart/arm/left/skeleton/nonfunctional,
+	/obj/item/bodypart/arm/right/skeleton/nonfunctional,
+	/obj/item/bodypart/chest/skeleton/nonfunctional,
+	/obj/item/bodypart/head/skeleton/nonfunctional,
+	/obj/item/bodypart/leg/left/skeleton/nonfunctional,
+	/obj/item/bodypart/leg/right/skeleton/nonfunctional,
 )))
 
 /// Blacklist of organs which should not appear when bioscrambled.
 /// Either will look terrible outside of intended host, give you magical powers, are irreversible, or kill you
 GLOBAL_LIST_INIT(bioscrambler_organs_blacklist, typecacheof(list (
-	/obj/item/organ/external/pod_hair,
-	/obj/item/organ/external/spines,
-	/obj/item/organ/external/wings,
-	/obj/item/organ/external/wings/functional,
-	/obj/item/organ/internal/alien,
-	/obj/item/organ/internal/brain,
-	/obj/item/organ/internal/body_egg,
-	/obj/item/organ/internal/cyberimp,
-	/obj/item/organ/internal/ears/dullahan,
-	/obj/item/organ/internal/eyes/dullahan,
-	/obj/item/organ/internal/heart/cursed,
-	/obj/item/organ/internal/heart/demon,
-	/obj/item/organ/internal/lungs,
-	/obj/item/organ/internal/monster_core,
-	/obj/item/organ/internal/tongue/dullahan,
-	/obj/item/organ/internal/vocal_cords/colossus,
-	/obj/item/organ/internal/zombie_infection,
-	/obj/item/organ/internal/empowered_borer_egg, // NOVA EDIT ADDITION
-	/obj/item/organ/internal/eyes/robotic, // NOVA EDIT ADDITION
-	/obj/item/organ/internal/eyes/night_vision/cyber, // NOVA EDIT ADDITION
+	/obj/item/organ/pod_hair,
+	/obj/item/organ/spines,
+	/obj/item/organ/wings,
+	/obj/item/organ/alien,
+	/obj/item/organ/brain,
+	/obj/item/organ/body_egg,
+	/obj/item/organ/cyberimp,
+	/obj/item/organ/ears/dullahan,
+	/obj/item/organ/eyes/dullahan,
+	/obj/item/organ/heart/cursed,
+	/obj/item/organ/heart/demon,
+	/obj/item/organ/lungs,
+	/obj/item/organ/monster_core,
+	/obj/item/organ/tongue/dullahan,
+	/obj/item/organ/vocal_cords/colossus,
+	/obj/item/organ/zombie_infection,
+	// NOVA EDIT ADDITION START
+	/obj/item/organ/empowered_borer_egg,
+	/obj/item/organ/eyes/robotic,
+	/obj/item/organ/eyes/night_vision/cyber,
+	/obj/item/organ/genital,
+	/obj/item/organ/head_accessory,
+	/obj/item/organ/neck_accessory,
+	// NOVA EDIT ADDITION END
 )))
 
 /// List of body parts we can apply to people
